@@ -304,6 +304,14 @@ Checklist de producao:
 6. `WHATSAPP_MODE=cloud_api` depois dos templates aprovados.
 7. Webhooks apontados para `/api/webhooks/meta` e `/api/webhooks/whatsapp`.
 
+## Planejamento vindo do Notion
+
+Cada cliente pode apontar para a sua pagina de cronograma no Notion; o botao
+**Sincronizar com o Notion** no planejamento le as linhas de dia
+(`## Sexta-feira — 09/10 | Titulo`) e cria a pauta. Casa pelo titulo, nao
+duplica e nao mexe no que ja virou post. Passo a passo em
+[docs/notion.md](docs/notion.md).
+
 ## Configurar o app na Meta
 
 Passo a passo em [docs/meta-setup.md](docs/meta-setup.md). Resumo:

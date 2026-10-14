@@ -24,6 +24,17 @@ export default async function AjustesDoCliente({ params }: { params: Promise<{ i
           <Campo rotulo="Nome">
             <input name="nome" defaultValue={cliente.name} className={classeInput} />
           </Campo>
+          <Campo
+            rotulo="Planejamento no Notion"
+            dica="Cole o link da pagina de cronograma desse cliente. E dela que o botao Sincronizar le as pautas."
+          >
+            <input
+              name="notionPageId"
+              defaultValue={cliente.notionPageId ?? ""}
+              className={classeInput}
+              placeholder="https://app.notion.com/p/..."
+            />
+          </Campo>
           <Campo rotulo="Observacoes">
             <textarea name="notas" rows={4} defaultValue={cliente.notes ?? ""} className={classeInput} />
           </Campo>

@@ -15,6 +15,8 @@ export type ClienteDaCarteira = {
   nome: string;
   slug?: string;
   ativos: AtivoDaCarteira[];
+  /** Pagina de cronograma no Notion, se o cliente tiver uma. */
+  notion?: string;
   pendencia?: string;
 };
 
@@ -74,6 +76,15 @@ export async function importarCarteira(
         actorUserId: ator.usuarioId ?? null,
         actorName: ator.nome ?? null,
         metadata: { nome, origem: "importacao_carteira" },
+      });
+    }
+
+    // So preenche o Notion quando ainda nao ha nada: link ajustado a mao na
+    // tela de Ajustes vale mais que o do arquivo.
+    if (entrada.notion && !cliente.notionPageId) {
+      await prisma.client.update({
+        where: { id: cliente.id },
+        data: { notionPageId: entrada.notion },
       });
     }
 

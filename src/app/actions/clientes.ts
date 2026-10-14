@@ -69,9 +69,37 @@ export async function acaoAtualizarCliente(dados: FormData) {
     nome: String(dados.get("nome") ?? "") || undefined,
     notas: String(dados.get("notas") ?? ""),
     ativo: dados.get("ativo") === "sim",
+    notionPageId: String(dados.get("notionPageId") ?? ""),
     ator,
   });
   revalidatePath(`/clientes/${clienteId}`);
+}
+
+/**
+ * Puxa o calendario do cliente no Notion para o planejamento.
+ * Nao mexe no que ja virou post: mudar data de post agendado passa pelo
+ * reagendamento, que invalida a aprovacao.
+ */
+export async function acaoSincronizarNotion(
+  _estado: EstadoSimples,
+  dados: FormData,
+): Promise<EstadoSimples> {
+  const ator = await atorAtual();
+  const clienteId = String(dados.get("clienteId") ?? "");
+  try {
+    const { sincronizarCalendarioDoNotion } = await import("@/services/notion-planejamento.ts");
+    const r = await sincronizarCalendarioDoNotion({ clienteId, ator });
+    revalidatePath(`/clientes/${clienteId}/planejamento`);
+    revalidatePath(`/clientes/${clienteId}`);
+    return {
+      sucesso:
+        `Notion lido: ${r.lidos} dia(s) no calendario, ${r.criados} pauta(s) nova(s), ` +
+        `${r.atualizados} atualizada(s)` +
+        (r.jaEramPost > 0 ? `, ${r.jaEramPost} ja viraram post e ficaram como estao.` : "."),
+    };
+  } catch (erro) {
+    return { erro: mensagem(erro) };
+  }
 }
 
 export async function acaoAdicionarContato(

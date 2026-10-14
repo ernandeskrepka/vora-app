@@ -157,6 +157,9 @@ model Client {
   timezone  String   @default("America/Sao_Paulo")
   notes     String?
   active    Boolean  @default(true)
+  /// Pagina do Notion com o calendario/planejamento do cliente (link ou id).
+  notionPageId   String?
+  notionSyncedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

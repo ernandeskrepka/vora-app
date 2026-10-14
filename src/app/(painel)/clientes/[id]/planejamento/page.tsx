@@ -5,8 +5,10 @@ import { formatInTimeZone } from "date-fns-tz";
 import { carregarQuadro } from "@/services/planejamento.ts";
 import { COLUNAS, ROTULO_PAUTA, destinosPossiveis, podeVirarPost, type StatusPauta } from "@/domain/planejamento.ts";
 import { acaoCriarPauta, acaoMoverPauta, acaoRemoverPauta } from "@/app/actions/cliente-area.ts";
+import { acaoSincronizarNotion } from "@/app/actions/clientes.ts";
 import { FormAcao } from "@/components/form-acao.tsx";
-import { Campo, Cartao, classeInput } from "@/components/ui.tsx";
+import { Aviso, Campo, Cartao, classeInput } from "@/components/ui.tsx";
+import { formatarDataHora } from "@/lib/datetime.ts";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,45 @@ export default async function Planejamento({ params }: { params: Promise<{ id: s
         quando o criativo existe, vira post com um clique.
         {arquivadas > 0 && ` ${arquivadas} arquivada(s).`}
       </p>
+
+      <Cartao titulo="Calendario no Notion">
+        {cliente.notionPageId ? (
+          <>
+            <p className="text-sm text-zinc-600">
+              Le o cronograma do cliente no Notion e cria a pauta aqui. Casa pelo titulo, entao
+              rodar de novo atualiza o que mudou em vez de duplicar. O que ja virou post fica como
+              esta - mudar a data de um post agendado passa pelo reagendamento, que invalida a
+              aprovacao do cliente.
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              <a
+                href={cliente.notionPageId}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2"
+              >
+                Abrir a pagina no Notion
+              </a>
+              {cliente.notionSyncedAt
+                ? ` · ultima leitura em ${formatarDataHora(cliente.notionSyncedAt)}`
+                : " · nunca sincronizado"}
+            </p>
+            <div className="mt-3">
+              <FormAcao acao={acaoSincronizarNotion} textoBotao="Sincronizar com o Notion">
+                <input type="hidden" name="clienteId" value={id} />
+              </FormAcao>
+            </div>
+          </>
+        ) : (
+          <Aviso tom="info">
+            Esse cliente ainda nao tem pagina do Notion configurada. Cole o link do cronograma em{" "}
+            <Link href={`/clientes/${id}/ajustes`} className="font-semibold underline">
+              Ajustes
+            </Link>
+            .
+          </Aviso>
+        )}
+      </Cartao>
 
       <div className="grid gap-4 lg:grid-cols-3">
         {COLUNAS.map((coluna) => {

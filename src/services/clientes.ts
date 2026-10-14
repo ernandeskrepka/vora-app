@@ -65,6 +65,7 @@ export async function atualizarCliente(input: {
   nome?: string;
   notas?: string | null;
   ativo?: boolean;
+  notionPageId?: string | null;
   ator: Ator;
 }) {
   const cliente = await prisma.client.update({
@@ -73,6 +74,9 @@ export async function atualizarCliente(input: {
       ...(input.nome ? { name: input.nome.trim() } : {}),
       ...(input.notas !== undefined ? { notes: input.notas?.trim() || null } : {}),
       ...(input.ativo !== undefined ? { active: input.ativo } : {}),
+      ...(input.notionPageId !== undefined
+        ? { notionPageId: input.notionPageId?.trim() || null }
+        : {}),
     },
   });
 

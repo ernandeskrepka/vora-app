@@ -71,6 +71,9 @@ const schema = z.object({
   REMINDER_OFFSETS_HOURS: z.string().default("24,2"),
   PUBLISH_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
 
+  // Integracao interna do Notion (planejamento dos clientes).
+  NOTION_TOKEN: z.string().optional(),
+
   SENTRY_DSN: z.string().optional(),
 
   // Protege a rota que dispara a agenda quando nao ha worker.
