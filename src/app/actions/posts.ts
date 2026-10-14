@@ -14,6 +14,7 @@ import {
   reagendarPost,
   reenviarLinkDeAprovacao,
 } from "@/services/posts.ts";
+import { marcarPautaComoPost } from "@/services/planejamento.ts";
 import { ErroDeRegra } from "@/services/erros.ts";
 import type { Ator } from "@/services/transicoes.ts";
 
@@ -83,8 +84,12 @@ export async function acaoCriarPost(
   }
 
   const arquivos = await lerArquivos(dados);
-  if (arquivos.length === 0) return { erro: "Suba ao menos um arquivo de criativo." };
+  const materiaisIds = dados.getAll("materiais").map(String).filter(Boolean);
+  if (arquivos.length === 0 && materiaisIds.length === 0) {
+    return { erro: "Suba um arquivo ou escolha um material da biblioteca do cliente." };
+  }
 
+  const pautaId = String(dados.get("pautaId") ?? "");
   const enviarAgora = dados.get("enviarAprovacao") === "sim";
 
   let postId: string;
@@ -98,9 +103,14 @@ export async function acaoCriarPost(
         scheduledAt: doFusoParaUtc(analise.data.dataHora),
       },
       arquivos,
+      materiaisIds,
       ator,
     });
     postId = r.postId;
+
+    if (pautaId) {
+      await marcarPautaComoPost({ pautaId, postId, ator });
+    }
 
     if (enviarAgora) {
       await enviarParaAprovacao({ postId, ator, motivo: "primeiro_envio" });

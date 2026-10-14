@@ -1,188 +1,96 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db.ts";
-import { exigirUsuario } from "@/lib/auth.ts";
-import { formatarDataHora } from "@/lib/datetime.ts";
-import {
-  acaoAdicionarContato,
-  acaoAtualizarCliente,
-  acaoRemoverContato,
-  acaoSalvarConexao,
-} from "@/app/actions/clientes.ts";
-import { Botao, Cartao, Campo, Etiqueta, Vazio, classeInput } from "@/components/ui.tsx";
-import { FormAcao } from "@/components/form-acao.tsx";
+import { storage } from "@/lib/storage/index.ts";
+import { FUSO_PADRAO, formatarDataHora, intervaloDoMes } from "@/lib/datetime.ts";
+import { formatInTimeZone } from "date-fns-tz";
+import { ROTULO_PAUTA, type StatusPauta } from "@/domain/planejamento.ts";
+import { Aviso, BotaoLink, Cartao, Etiqueta, Vazio } from "@/components/ui.tsx";
 import type { PostStatus } from "@/domain/post-status.ts";
 
 export const dynamic = "force-dynamic";
 
-const ATIVOS = [
-  { valor: "INSTAGRAM", rotulo: "Instagram (conta profissional)" },
-  { valor: "FACEBOOK_PAGE", rotulo: "Pagina do Facebook" },
-  { valor: "AD_ACCOUNT", rotulo: "Conta de anuncios (fase 2)" },
-];
-
-export default async function DetalheCliente({ params }: { params: Promise<{ id: string }> }) {
-  await exigirUsuario();
+export default async function VisaoGeralCliente({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const agora = new Date();
+  const { inicio, fim } = intervaloDoMes(agora.getUTCFullYear(), agora.getUTCMonth() + 1);
 
-  const cliente = await prisma.client.findUnique({
-    where: { id },
-    include: {
-      contacts: { orderBy: { createdAt: "asc" } },
-      metaConnections: true,
-      posts: { orderBy: { scheduledAt: "desc" }, take: 10 },
-    },
-  });
-  if (!cliente) notFound();
+  const [cliente, doMes, proximos, pendentes, pautas, materiais, conexoes] = await Promise.all([
+    prisma.client.findUniqueOrThrow({ where: { id }, include: { contacts: true } }),
+    prisma.post.groupBy({
+      by: ["status"],
+      where: { clientId: id, scheduledAt: { gte: inicio, lt: fim } },
+      _count: true,
+    }),
+    prisma.post.findMany({
+      where: { clientId: id, scheduledAt: { gte: agora }, status: { notIn: ["CANCELADO", "PUBLICADO"] } },
+      orderBy: { scheduledAt: "asc" },
+      take: 5,
+    }),
+    prisma.post.findMany({
+      where: { clientId: id, status: { in: ["AGUARDANDO_APROVACAO", "REPROVADO", "POST_SEM_RESPOSTA", "FALHOU"] } },
+      orderBy: { scheduledAt: "desc" },
+      take: 5,
+    }),
+    prisma.planningItem.findMany({
+      where: { clientId: id, status: { in: ["IDEIA", "EM_PRODUCAO", "PRONTO"] } },
+      orderBy: [{ targetDate: "asc" }, { createdAt: "asc" }],
+      take: 6,
+    }),
+    prisma.clientAsset.findMany({
+      where: { clientId: id, kind: { not: "DOCUMENTO" } },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+    prisma.metaConnection.findMany({ where: { clientId: id } }),
+  ]);
+
+  const miniaturas = await Promise.all(
+    materiais.map(async (m) => ({ id: m.id, url: await storage.urlTemporaria(m.storageKey) })),
+  );
+
+  const totalMes = doMes.reduce((t, l) => t + l._count, 0);
+  const contagem = (s: PostStatus) => doMes.find((l) => l.status === s)?._count ?? 0;
+  const problemas = conexoes.filter((c) => c.status !== "CONECTADO");
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold text-zinc-900">{cliente.name}</h1>
-          <p className="text-sm text-zinc-500">
-            {cliente.slug} - fuso {cliente.timezone}
-          </p>
-        </div>
-        <Link href="/clientes" className="text-sm underline">
-          Voltar
-        </Link>
-      </header>
+      {problemas.length > 0 && (
+        <Aviso tom="erro" titulo="Conexao com a Meta precisando de atencao">
+          {problemas.map((c) => `${c.assetType}: ${c.status}`).join(" · ")}{" "}
+          <Link href={`/clientes/${id}/conexoes`} className="font-semibold underline">
+            abrir conexoes
+          </Link>
+        </Aviso>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ["Posts no mes", String(totalMes)],
+          ["Aguardando o cliente", String(contagem("AGUARDANDO_APROVACAO"))],
+          ["Publicados no mes", String(contagem("PUBLICADO"))],
+          ["Sem resposta no mes", String(contagem("POST_SEM_RESPOSTA"))],
+        ].map(([rotulo, valor]) => (
+          <div key={rotulo} className="rounded-xl border border-zinc-200 bg-white p-4">
+            <p className="text-xs text-zinc-500">{rotulo}</p>
+            <p className="titulo mt-1 text-2xl text-zinc-900">{valor}</p>
+          </div>
+        ))}
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Cartao titulo="Dados do cliente">
-          <form action={acaoAtualizarCliente} className="space-y-3">
-            <input type="hidden" name="clienteId" value={cliente.id} />
-            <Campo rotulo="Nome">
-              <input name="nome" defaultValue={cliente.name} className={classeInput} />
-            </Campo>
-            <Campo rotulo="Observacoes">
-              <textarea name="notas" rows={3} defaultValue={cliente.notes ?? ""} className={classeInput} />
-            </Campo>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="ativo" value="sim" defaultChecked={cliente.active} />
-              Cliente ativo
-            </label>
-            <Botao type="submit">Salvar</Botao>
-          </form>
-        </Cartao>
-
-        <Cartao titulo="Contatos aprovadores (WhatsApp)">
-          <ul className="mb-4 divide-y divide-zinc-100">
-            {cliente.contacts.length === 0 && <Vazio>Nenhum contato.</Vazio>}
-            {cliente.contacts.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-2 py-2">
-                <div>
-                  <p className="text-sm font-medium text-zinc-800">{c.name}</p>
-                  <p className="text-xs text-zinc-500">
-                    {c.phoneE164}
-                    {c.isApprover ? " - aprovador" : ""}
-                    {c.receivesReminders ? " - recebe lembrete" : ""}
-                  </p>
-                </div>
-                <form action={acaoRemoverContato}>
-                  <input type="hidden" name="contatoId" value={c.id} />
-                  <input type="hidden" name="clienteId" value={cliente.id} />
-                  <button type="submit" className="text-xs text-rose-700 underline">
-                    remover
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-
-          <FormAcao
-            acao={acaoAdicionarContato}
-            textoBotao="Adicionar contato"
-            className="border-t border-zinc-100 pt-4"
-          >
-            <input type="hidden" name="clienteId" value={cliente.id} />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Campo rotulo="Nome">
-                <input name="nome" required className={classeInput} />
-              </Campo>
-              <Campo rotulo="WhatsApp">
-                <input name="telefone" required className={classeInput} placeholder="49 99999-9999" />
-              </Campo>
-            </div>
-            <div className="mt-3 flex gap-4 text-sm">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="aprovador" value="sim" defaultChecked /> Aprovador
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="lembretes" value="sim" defaultChecked /> Recebe lembretes
-              </label>
-            </div>
-          </FormAcao>
-        </Cartao>
-
-        <Cartao titulo="Conexoes da Meta" className="lg:col-span-2">
-          <ul className="mb-4 divide-y divide-zinc-100">
-            {cliente.metaConnections.length === 0 && <Vazio>Nenhum ativo conectado.</Vazio>}
-            {cliente.metaConnections.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                <div>
-                  <p className="font-medium text-zinc-800">
-                    {c.assetType} - {c.assetName ?? c.assetId}
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    id {c.assetId} - {c.authMode === "SYSTEM_USER" ? "System User" : "OAuth"}
-                    {c.lastCheckedAt ? ` - testado em ${formatarDataHora(c.lastCheckedAt)}` : ""}
-                    {c.lastError ? ` - ${c.lastError}` : ""}
-                  </p>
-                </div>
-                <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-xs">
-                  {c.status}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <FormAcao
-            acao={acaoSalvarConexao}
-            textoBotao="Salvar e testar"
-            variante="primario"
-            className="border-t border-zinc-100 pt-4"
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-            <input type="hidden" name="clienteId" value={cliente.id} />
-            <Campo rotulo="Ativo">
-              <select name="assetType" className={classeInput}>
-                {ATIVOS.map((a) => (
-                  <option key={a.valor} value={a.valor}>
-                    {a.rotulo}
-                  </option>
-                ))}
-              </select>
-            </Campo>
-            <Campo rotulo="ID do ativo" dica="IG User ID, Page ID ou act_<id> da conta de anuncios.">
-              <input name="assetId" required className={classeInput} />
-            </Campo>
-            <Campo rotulo="Nome (opcional)">
-              <input name="assetName" className={classeInput} placeholder="@danielimoveis" />
-            </Campo>
-            <Campo rotulo="Forma de acesso">
-              <select name="authMode" className={classeInput}>
-                <option value="SYSTEM_USER">System User da agencia (recomendado)</option>
-                <option value="OAUTH">Login Meta do cliente (OAuth)</option>
-              </select>
-            </Campo>
-            <Campo
-              rotulo="Token (opcional)"
-              dica="Em branco usa o META_SYSTEM_USER_TOKEN. O token e guardado cifrado."
-            >
-              <input name="token" type="password" className={classeInput} />
-            </Campo>
-            </div>
-          </FormAcao>
-        </Cartao>
-
-        <Cartao titulo="Ultimos posts" className="lg:col-span-2">
-          {cliente.posts.length === 0 ? (
-            <Vazio>Nenhum post.</Vazio>
+        <Cartao
+          titulo={`Precisa de atencao (${pendentes.length})`}
+          acao={
+            <Link href={`/clientes/${id}/posts`} className="text-xs underline">
+              ver todos
+            </Link>
+          }
+        >
+          {pendentes.length === 0 ? (
+            <Vazio>Nada pendente por aqui.</Vazio>
           ) : (
             <ul className="divide-y divide-zinc-100">
-              {cliente.posts.map((p) => (
+              {pendentes.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 py-2">
                   <Link href={`/posts/${p.id}`} className="text-sm hover:underline">
                     {formatarDataHora(p.scheduledAt, cliente.timezone)}
@@ -193,7 +101,98 @@ export default async function DetalheCliente({ params }: { params: Promise<{ id:
             </ul>
           )}
         </Cartao>
+
+        <Cartao titulo="Proximos posts">
+          {proximos.length === 0 ? (
+            <Vazio>Nenhum post agendado.</Vazio>
+          ) : (
+            <ul className="divide-y divide-zinc-100">
+              {proximos.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+                  <Link href={`/posts/${p.id}`} className="text-sm hover:underline">
+                    {formatInTimeZone(p.scheduledAt, cliente.timezone, "dd/MM 'as' HH:mm")}
+                  </Link>
+                  <Etiqueta status={p.status as PostStatus} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Cartao>
+
+        <Cartao
+          titulo={`Planejamento (${pautas.length})`}
+          acao={
+            <Link href={`/clientes/${id}/planejamento`} className="text-xs underline">
+              abrir quadro
+            </Link>
+          }
+        >
+          {pautas.length === 0 ? (
+            <Vazio>Nenhuma pauta em producao. Comece pelo planejamento.</Vazio>
+          ) : (
+            <ul className="divide-y divide-zinc-100">
+              {pautas.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-zinc-800">{p.title}</p>
+                    {p.targetDate && (
+                      <p className="text-xs text-zinc-500">
+                        {formatInTimeZone(p.targetDate, FUSO_PADRAO, "dd/MM")}
+                      </p>
+                    )}
+                  </div>
+                  <span className="shrink-0 rounded-full border border-zinc-300 px-2 py-0.5 text-[11px] text-zinc-600">
+                    {ROTULO_PAUTA[p.status as StatusPauta]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Cartao>
+
+        <Cartao
+          titulo="Material recente"
+          acao={
+            <Link href={`/clientes/${id}/materiais`} className="text-xs underline">
+              abrir biblioteca
+            </Link>
+          }
+        >
+          {miniaturas.length === 0 ? (
+            <Vazio>Nenhum arquivo na biblioteca ainda.</Vazio>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {miniaturas.map((m) => (
+                <img
+                  key={m.id}
+                  src={m.url}
+                  alt=""
+                  className="aspect-square w-full rounded-lg border border-zinc-200 object-cover"
+                />
+              ))}
+            </div>
+          )}
+        </Cartao>
       </div>
+
+      <Cartao titulo="Contatos aprovadores">
+        {cliente.contacts.length === 0 ? (
+          <Vazio>
+            Nenhum contato. Sem um WhatsApp aprovador, o post nao pode ser enviado para aprovacao.
+          </Vazio>
+        ) : (
+          <ul className="flex flex-wrap gap-2">
+            {cliente.contacts.map((c) => (
+              <li key={c.id} className="rounded-full border border-zinc-200 px-3 py-1 text-sm">
+                {c.name} · {c.phoneE164}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-4">
+          <BotaoLink href={`/clientes/${id}/ajustes`}>Editar cliente e contatos</BotaoLink>
+        </div>
+      </Cartao>
     </div>
   );
 }

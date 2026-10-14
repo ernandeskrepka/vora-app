@@ -97,6 +97,20 @@ enum NotificationStatus {
   FALHOU
 }
 
+enum PlanningStatus {
+  IDEIA
+  EM_PRODUCAO
+  PRONTO
+  VIROU_POST
+  ARQUIVADO
+}
+
+enum AssetKind {
+  IMAGEM
+  VIDEO
+  DOCUMENTO
+}
+
 enum ActorType {
   USUARIO
   CLIENTE
@@ -150,6 +164,8 @@ model Client {
   metaConnections MetaConnection[]
   posts           Post[]
   adInsights      AdInsightDaily[]
+  planningItems   PlanningItem[]
+  assets          ClientAsset[]
 }
 
 model ClientContact {
@@ -192,6 +208,50 @@ model MetaConnection {
   @@index([status])
 }
 
+// ----------------------------------------------------- area do cliente
+
+/// Pauta: a ideia antes de virar post. E onde a equipe planeja o mes.
+model PlanningItem {
+  id          String         @id @default(cuid())
+  clientId    String
+  title       String
+  notes       String?
+  targetDate  DateTime?
+  status      PlanningStatus @default(IDEIA)
+  /// Preenchido quando a pauta vira um post de verdade.
+  postId      String?        @unique
+  createdById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  post   Post?  @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([clientId, status])
+}
+
+/// Biblioteca de material do cliente: arquivos soltos que a equipe vai
+/// juntando e depois usa para montar os posts.
+model ClientAsset {
+  id               String    @id @default(cuid())
+  clientId         String
+  kind             AssetKind
+  storageKey       String
+  mimeType         String
+  sizeBytes        Int
+  width            Int?
+  height           Int?
+  durationSeconds  Float?
+  originalFilename String?
+  label            String?
+  uploadedById     String?
+  createdAt        DateTime  @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt])
+}
+
 // ---------------------------------------------------------------- posts
 
 model Post {
@@ -221,6 +281,7 @@ model Post {
   publishAttempts  PublishAttempt[]
   publications     PostPublication[]
   notifications    Notification[]
+  planningItem     PlanningItem?
 
   @@index([clientId, scheduledAt])
   @@index([status, scheduledAt])

@@ -293,6 +293,34 @@ e a ordem dos parametros no painel da Meta tem que ser a mesma do arquivo
 
 ## Operacao do dia a dia
 
+### A area de cada cliente
+
+Cada cliente tem o seu proprio espaco em `/clientes/<id>`, com menu proprio:
+
+| Aba | Para que serve |
+| --- | --- |
+| Visao geral | numeros do mes, o que precisa de atencao, proximos posts, atalhos |
+| Planejamento | quadro de pautas: Ideia, Em producao, Pronto para agendar |
+| Materiais | biblioteca do cliente: fotos, artes e briefings que a equipe vai juntando |
+| Posts | todos os posts daquele cliente, com filtro por status |
+| Relatorio | o relatorio mensal do cliente |
+| Conexoes | Instagram, Pagina e conta de anuncios, com teste |
+| Ajustes | dados do cliente e contatos aprovadores |
+
+O fluxo pensado para o dia a dia:
+
+1. **Planejamento** - a equipe lanca as pautas do mes (titulo, data prevista,
+   notas) e vai movendo entre as colunas.
+2. **Materiais** - conforme o material chega (sessao de fotos, arte pronta,
+   briefing em PDF), sobe para a biblioteca daquele cliente.
+3. Com o criativo pronto, **seleciona os arquivos na biblioteca** e clica em
+   "Criar post com estes": o formulario ja abre com eles na ordem escolhida.
+   Pela pauta, o botao "Virar post" faz o mesmo e deixa a pauta apontando para
+   o post criado.
+4. Dali em diante e o fluxo normal: aprovacao do cliente, fila, publicacao.
+
+### Geral
+
 - **Dashboard**: pendentes de aprovacao, proximas publicacoes, POST SEM RESPOSTA,
   reprovados, falhas e conexoes com problema.
 - **Calendario**: visao de mes por cliente, com cor por status.

@@ -53,6 +53,41 @@ export function linkDeAprovacao(token: string) {
 type MidiaPreparada = Awaited<ReturnType<typeof processarArquivo>>;
 
 /**
+ * Converte itens da biblioteca do cliente em midia de post. O arquivo ja foi
+ * processado quando entrou na biblioteca, entao aqui so lemos os bytes.
+ */
+async function midiasDeMateriais(assetIds: string[]): Promise<MidiaPreparada[]> {
+  if (assetIds.length === 0) return [];
+
+  const itens = await prisma.clientAsset.findMany({ where: { id: { in: assetIds } } });
+  const porId = new Map(itens.map((i) => [i.id, i]));
+
+  const midias: MidiaPreparada[] = [];
+  for (const id of assetIds) {
+    const item = porId.get(id);
+    if (!item) throw new ErroDeRegra("Material nao encontrado na biblioteca do cliente.");
+    if (item.kind === "DOCUMENTO") {
+      throw new ErroDeRegra(
+        `"${item.originalFilename ?? "arquivo"}" e um documento e nao pode virar criativo.`,
+      );
+    }
+    midias.push({
+      kind: item.kind as "IMAGEM" | "VIDEO",
+      mimeType: item.mimeType,
+      conteudo: await storage.ler(item.storageKey),
+      extensao: item.storageKey.split(".").pop() ?? "jpg",
+      sizeBytes: item.sizeBytes,
+      width: item.width,
+      height: item.height,
+      durationSeconds: item.durationSeconds,
+      originalFilename: item.originalFilename ?? "material",
+      convertido: false,
+    });
+  }
+  return midias;
+}
+
+/**
  * Processa (converte imagens para JPEG, mede video) e valida antes de
  * gravar qualquer coisa: post invalido nao chega ao banco.
  */
@@ -60,8 +95,10 @@ async function prepararMidia(input: {
   arquivos: ArquivoRecebido[];
   formato: PostFormat;
   networks: Network[];
+  /** Midia que ja veio pronta (biblioteca do cliente), na frente da fila. */
+  jaPreparadas?: MidiaPreparada[];
 }): Promise<{ midias: MidiaPreparada[]; avisos: Problema[] }> {
-  const midias: MidiaPreparada[] = [];
+  const midias: MidiaPreparada[] = [...(input.jaPreparadas ?? [])];
   for (const arquivo of input.arquivos) {
     midias.push(await processarArquivo(arquivo));
   }
@@ -134,6 +171,8 @@ export type DadosDoPost = {
 export async function criarPost(input: {
   dados: DadosDoPost;
   arquivos: ArquivoRecebido[];
+  /** Itens da biblioteca do cliente usados como criativo. */
+  materiaisIds?: string[];
   ator: Ator;
 }): Promise<{ postId: string; avisos: Problema[] }> {
   const cliente = await prisma.client.findUnique({ where: { id: input.dados.clientId } });
@@ -142,10 +181,12 @@ export async function criarPost(input: {
     throw new ErroDeRegra("A data e hora de publicacao precisa estar no futuro.");
   }
 
+  const daBiblioteca = await midiasDeMateriais(input.materiaisIds ?? []);
   const { midias, avisos } = await prepararMidia({
     arquivos: input.arquivos,
     formato: input.dados.formato,
     networks: input.dados.networks,
+    jaPreparadas: daBiblioteca,
   });
 
   const post = await prisma.post.create({

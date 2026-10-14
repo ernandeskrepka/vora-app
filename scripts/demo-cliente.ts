@@ -233,6 +233,57 @@ async function main() {
     );
   }
 
+  // Planejamento e biblioteca, para a area do cliente nao nascer vazia.
+  const pautas = [
+    { title: "Serie sobre exames de rotina", status: "IDEIA" as const, dias: 12 },
+    { title: "Depoimento de paciente (gravar na terca)", status: "EM_PRODUCAO" as const, dias: 7 },
+    { title: "Card de horario estendido no sabado", status: "PRONTO" as const, dias: 4 },
+  ];
+  for (const pauta of pautas) {
+    await prisma.planningItem.create({
+      data: {
+        clientId: cliente.id,
+        title: pauta.title,
+        status: pauta.status,
+        targetDate: new Date(Date.now() + pauta.dias * 86_400_000),
+        notes:
+          pauta.status === "EM_PRODUCAO"
+            ? "Confirmar autorizacao de imagem antes de publicar."
+            : null,
+        createdById: usuario?.id ?? null,
+      },
+    });
+  }
+
+  // Alguns arquivos tambem vao para a biblioteca do cliente.
+  for (const nome of todos.slice(0, 4)) {
+    const conteudo = await readFile(path.join(pasta, nome));
+    const midia = await processarArquivo({
+      nome,
+      mimeType: nome.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg",
+      conteudo,
+    });
+    const id = randomUUID();
+    const key = `clientes/${cliente.slug}/materiais/${id}.${midia.extensao}`;
+    await storage.salvar(key, midia.conteudo, midia.mimeType);
+    await prisma.clientAsset.create({
+      data: {
+        id,
+        clientId: cliente.id,
+        kind: midia.kind,
+        storageKey: key,
+        mimeType: midia.mimeType,
+        sizeBytes: midia.sizeBytes,
+        width: midia.width,
+        height: midia.height,
+        originalFilename: midia.originalFilename,
+        label: "Material de outubro",
+        uploadedById: usuario?.id ?? null,
+      },
+    });
+  }
+  console.log(`  biblioteca: 4 arquivo(s) | planejamento: ${pautas.length} pauta(s)`);
+
   console.log("\n-------------------------------------------------");
   console.log(`Cliente: ${nomeCliente}  (@${handle})`);
   if (linkDoPendente) {

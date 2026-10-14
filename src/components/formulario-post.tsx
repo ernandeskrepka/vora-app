@@ -8,6 +8,9 @@ type Cliente = { id: string; name: string };
 
 type MidiaExistente = { id: string; url: string; kind: "IMAGEM" | "VIDEO" };
 
+/** Itens escolhidos na biblioteca do cliente, ja na ordem do carrossel. */
+type MaterialEscolhido = { id: string; url: string; kind: "IMAGEM" | "VIDEO"; nome: string };
+
 const FORMATOS = [
   { valor: "IMAGEM_UNICA", rotulo: "Imagem unica" },
   { valor: "CARROSSEL", rotulo: "Carrossel (2 a 10)" },
@@ -20,6 +23,8 @@ export function FormularioPost({
   clientes,
   inicial,
   midiaExistente = [],
+  materiais = [],
+  pautaId,
   modo,
 }: {
   acao: (estado: EstadoFormulario, dados: FormData) => Promise<EstadoFormulario>;
@@ -33,6 +38,8 @@ export function FormularioPost({
     dataHora?: string;
   };
   midiaExistente?: MidiaExistente[];
+  materiais?: MaterialEscolhido[];
+  pautaId?: string;
   modo: "criar" | "editar";
 }) {
   const [estado, enviar, enviando] = useActionState<EstadoFormulario, FormData>(acao, null);
@@ -48,6 +55,10 @@ export function FormularioPost({
   return (
     <form action={enviar} className="grid gap-5 lg:grid-cols-[1fr_340px]">
       {inicial?.postId && <input type="hidden" name="postId" value={inicial.postId} />}
+      {pautaId && <input type="hidden" name="pautaId" value={pautaId} />}
+      {materiais.map((m) => (
+        <input key={m.id} type="hidden" name="materiais" value={m.id} />
+      ))}
 
       <div className="space-y-5">
         {estado?.erro && (
@@ -94,8 +105,40 @@ export function FormularioPost({
               </select>
             </Campo>
 
+            {materiais.length > 0 && (
+              <div className="rounded-lg border border-vora-verde/40 bg-emerald-50 p-3">
+                <p className="mb-2 text-sm font-medium text-emerald-900">
+                  {materiais.length} arquivo(s) da biblioteca do cliente
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {materiais.map((m, i) => (
+                    <div key={m.id} className="relative">
+                      {m.kind === "VIDEO" ? (
+                        <video src={m.url} className="h-16 w-16 rounded border border-emerald-200 object-cover" />
+                      ) : (
+                        <img src={m.url} alt="" className="h-16 w-16 rounded border border-emerald-200 object-cover" />
+                      )}
+                      <span className="absolute -top-1.5 -left-1.5 grid h-5 w-5 place-items-center rounded-full bg-vora-verde text-[10px] font-bold text-black">
+                        {i + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-emerald-800">
+                  Para trocar, volte em Materiais e selecione de novo. Arquivos enviados abaixo
+                  entram depois destes.
+                </p>
+              </div>
+            )}
+
             <Campo
-              rotulo={modo === "editar" ? "Trocar arquivos (opcional)" : "Arquivos"}
+              rotulo={
+                modo === "editar"
+                  ? "Trocar arquivos (opcional)"
+                  : materiais.length > 0
+                    ? "Mais arquivos (opcional)"
+                    : "Arquivos"
+              }
               dica={
                 formato === "CARROSSEL"
                   ? "De 2 a 10 arquivos. A ordem de selecao e a ordem do carrossel."
