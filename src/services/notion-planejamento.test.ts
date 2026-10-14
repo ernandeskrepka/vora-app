@@ -235,3 +235,89 @@ describe("cronograma em lista de posts", () => {
     expect(itens).toHaveLength(0);
   });
 });
+
+/**
+ * Terceiro formato real: pagina de roteiros, um titulo por roteiro, sem data e
+ * sem caixa de marcar. Linhas do Dr. Maykon e do Fleming.
+ */
+const LISTA_DE_ROTEIROS = [
+  { tipo: "heading_1", texto: "ROTEIRO 01 \u00b7 INSTITUCIONAL" },
+  {
+    tipo: "paragraph",
+    texto:
+      "Refer\u00eancia est\u00e9tica para o v\u00eddeo: https://www.instagram.com/reel/DUjUFh8j4L0/",
+  },
+  {
+    tipo: "paragraph",
+    texto: "Aqui n\u00e3o \u00e9 s\u00f3 um consult\u00f3rio.",
+  },
+  { tipo: "heading_1", texto: "ROTEIRO 02: AUTORIDADE" },
+  {
+    tipo: "heading_2",
+    texto: "Por que voc\u00ea n\u00e3o emagrece: Usar o roteiro como um guia!",
+  },
+  { tipo: "heading_1", texto: "ROTEIRO 03 \u00b7" },
+  { tipo: "paragraph", texto: "Metabolismo lento!" },
+  {
+    tipo: "paragraph",
+    texto:
+      "**V\u00eddeo 04: Outubro Rosa! Ser\u00e1 postado no inicio de outubro**",
+  },
+  {
+    tipo: "heading_2",
+    texto: "V\u00eddeo 05: Emagrecer n\u00e3o \u00e9 s\u00f3 perder peso",
+  },
+];
+
+describe("cronograma em lista de roteiros", () => {
+  it("le um item por roteiro, sem data e sem caixa", () => {
+    const itens = interpretarCalendario(LISTA_DE_ROTEIROS, REFERENCIA);
+
+    expect(itens.map((i) => i.titulo)).toEqual([
+      "INSTITUCIONAL",
+      "AUTORIDADE",
+      "ROTEIRO 3",
+      "Outubro Rosa! Ser\u00e1 postado no inicio de outubro",
+      "Emagrecer n\u00e3o \u00e9 s\u00f3 perder peso",
+    ]);
+    expect(itens.every((i) => i.data === null)).toBe(true);
+    expect(itens.every((i) => i.concluido === false)).toBe(true);
+  });
+
+  it("roteiro e roteiro de video: entra como VIDEO", () => {
+    const itens = interpretarCalendario(LISTA_DE_ROTEIROS, REFERENCIA);
+    expect(itens.map((i) => i.formato)).toEqual([
+      "VIDEO",
+      "VIDEO",
+      "VIDEO",
+      "VIDEO",
+      "VIDEO",
+    ]);
+  });
+
+  it("guarda o roteiro inteiro nas notas do item", () => {
+    const itens = interpretarCalendario(LISTA_DE_ROTEIROS, REFERENCIA);
+    expect(itens[0].notas).toContain(
+      "Aqui n\u00e3o \u00e9 s\u00f3 um consult\u00f3rio",
+    );
+    expect(itens[0].notas).not.toContain("emagrece");
+    expect(itens[1].notas).toContain("Usar o roteiro como um guia");
+  });
+
+  it("nao confunde o numero da cena com item", () => {
+    const itens = interpretarCalendario(
+      [
+        {
+          tipo: "heading_1",
+          texto: "V\u00eddeo 02 \u00b7 Seu Fran\u00e7a e Fabr\u00edcio",
+        },
+        { tipo: "heading_3", texto: "CENA 1" },
+        { tipo: "heading_3", texto: "1. ABERTURA" },
+        { tipo: "paragraph", texto: "FRASE 2" },
+      ],
+      REFERENCIA,
+    );
+    expect(itens).toHaveLength(1);
+    expect(itens[0].titulo).toBe("Seu Fran\u00e7a e Fabr\u00edcio");
+  });
+});

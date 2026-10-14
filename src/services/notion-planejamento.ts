@@ -44,22 +44,41 @@ const LINHA_DE_DIA = new RegExp(
 const LINHA_DE_FORMATO = /^\s*\**\s*formato\s*:?\**\s*:?\s*(.+?)\s*$/i;
 
 /**
- * O outro jeito que a VORA escreve o planejamento: lista numerada de posts,
- * com ou sem data, com ou sem caixa de marcar.
+ * O outro jeito que a VORA escreve o planejamento: lista numerada de posts ou
+ * de roteiros, com ou sem data, com ou sem caixa de marcar.
  *
  *   - [x] **Post 04 REELS 12/10 Dia das Criancas**
  *   - [x] Post 07 CARROSSEL (OUTUBRO ROSA)
  *   POST 12 REELS (Nov Azul - Prevencao)
  *   Video 01: REELS - OUTUBRO ROSA
+ *   ROTEIRO 01 - INSTITUCIONAL
+ *   Video 02 - Seu Franca e Fabricio
  *
- * Aqui o que identifica o item e "post/video/card + numero", nao a data.
+ * Aqui o que identifica o item e "post/video/roteiro/card + numero", nao a
+ * data. O separador pode ser ":", "-", "." ou o ponto medio que o Notion
+ * sugere no menu de titulo.
  */
 const LINHA_DE_POST = new RegExp(
-  String.raw`^\s*(?:[-*]\s*\[(?<marca>[ xX])\]\s*)?\**\s*` +
-    String.raw`(?<tipo>posts?|v[ií]deos?|cards?|reels?|stories)\s*0*(?<numero>\d{1,2})\b` +
-    String.raw`\s*[:.\-–—]?\s*(?<resto>.*?)\s*\**\s*$`,
+  String.raw`^\s*(?:#+\s*)?(?:[-*]\s*\[(?<marca>[ xX])\]\s*)?\**\s*` +
+    String.raw`(?<tipo>posts?|v[ií]deos?|roteiros?|cards?|reels?|stories)\s*0*(?<numero>\d{1,2})\b` +
+    String.raw`\s*[:.\-–—·•]?\s*(?<resto>.*?)\s*\**\s*$`,
   "i",
 );
+
+/**
+ * Formato implicito no proprio tipo da linha. "Roteiro" e sempre roteiro de
+ * video na VORA - as paginas de roteiro abrem com a referencia estetica do
+ * video.
+ */
+const FORMATO_DO_TIPO: Record<string, string> = {
+  post: "",
+  video: "VIDEO",
+  roteiro: "VIDEO",
+  card: "CARD UNICO",
+  reel: "REELS",
+  storie: "STORIES",
+  story: "STORIES",
+};
 
 /** Formatos que a equipe escreve dentro do titulo do item. */
 const FORMATOS_CONHECIDOS = [
@@ -205,8 +224,13 @@ function lerLinhaDePost(
       break;
     }
   }
-  if (!formato && /^(reels?|v[ií]deos?|cards?|stories)$/i.test(tipo)) {
-    formato = tipo.toUpperCase();
+  if (!formato) {
+    const chave = tipo
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/s$/, "");
+    formato = FORMATO_DO_TIPO[chave] || null;
   }
 
   // Data solta no titulo, quando a equipe escreveu uma.
@@ -238,8 +262,8 @@ function lerLinhaDePost(
 
 function limparTitulo(texto: string): string {
   return texto
-    .replace(/^[\s:.\-–—]+/, "")
-    .replace(/[\s:.\-–—]+$/, "")
+    .replace(/^[\s:.\-–—·•]+/, "")
+    .replace(/[\s:.\-–—·•]+$/, "")
     .replace(/^\((.*)\)$/, "$1")
     .replace(/\s{2,}/g, " ")
     .trim();
