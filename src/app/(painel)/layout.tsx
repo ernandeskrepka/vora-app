@@ -20,8 +20,8 @@ export default async function LayoutPainel({ children }: { children: React.React
     <div className="flex min-h-screen flex-col lg:flex-row">
       <aside className="flex shrink-0 flex-col bg-vora-preto px-5 py-6 lg:w-60">
         <Link href="/" className="mb-6 block">
-          <span className="text-2xl font-bold tracking-tight text-vora-verde">VORA</span>
-          <span className="mt-0.5 block text-[11px] uppercase tracking-widest text-zinc-500">
+          <img src="/marca/vora-logo.svg" alt="VORA" className="h-6 w-auto" />
+          <span className="mt-1.5 block text-[11px] uppercase tracking-widest text-zinc-500">
             Aprovacao e postagem
           </span>
         </Link>

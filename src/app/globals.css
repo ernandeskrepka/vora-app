@@ -1,15 +1,32 @@
 @import "tailwindcss";
 
-/* Paleta da VORA: verde da marca sobre quase-preto. */
+/* Creato Display - fonte da marca VORA. Temos dois pesos: Regular e Black. */
+@font-face {
+  font-family: "Creato Display";
+  src: url("/fontes/creato-display-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Creato Display";
+  src: url("/fontes/creato-display-black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-vora-verde: #02d89e;
   --color-vora-verde-escuro: #01a076;
   --color-vora-preto: #0a0a0a;
-  --color-vora-grafite: #121212;
-  --color-vora-cinza: #858481;
-  --color-vora-claro: #f8f8f7;
+  --color-vora-grafite: #141615;
+  --color-vora-borda: #222724;
+  --color-vora-cinza: #8b918d;
+  --color-vora-claro: #f5f6f7;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Creato Display", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Creato Display", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
@@ -18,9 +35,16 @@
 
 body {
   background: var(--color-vora-claro);
-  color: #1a1a19;
+  color: #16191a;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Titulo com o peso Black da Creato. */
+.titulo {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 /* Status: uma cor por status, usada no calendario, nas listas e nos cartoes. */

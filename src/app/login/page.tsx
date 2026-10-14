@@ -10,9 +10,9 @@ export default function PaginaLogin() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-vora-preto px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <p className="text-3xl font-bold tracking-tight text-vora-verde">VORA</p>
-          <p className="mt-1 text-sm text-zinc-400">Aprovacao e publicacao de criativos</p>
+        <div className="mb-8 flex flex-col items-center text-center">
+          <img src="/marca/vora-logo.svg" alt="VORA" className="h-8 w-auto" />
+          <p className="mt-3 text-sm text-zinc-400">Aprovacao e publicacao de criativos</p>
         </div>
 
         <form action={acao} className="space-y-4 rounded-xl bg-white p-6 shadow-xl">

@@ -22,6 +22,22 @@ export type MidiaParaCliente = {
   height: number | null;
 };
 
+export type ItemDoPerfil = {
+  id: string;
+  url: string;
+  carrossel: boolean;
+  video: boolean;
+  quando: Date | null;
+};
+
+/** Dados para a previa de como o post fica na grade do perfil. */
+export type PerfilDoCliente = {
+  handle: string;
+  nome: string;
+  totalPublicados: number;
+  publicados: ItemDoPerfil[];
+};
+
 export type VisaoAprovacao = {
   /** PENDENTE = da para decidir. Os outros estados sao somente leitura. */
   estado: "PENDENTE" | "JA_DECIDIDO" | "EXPIRADO" | "SUBSTITUIDO" | "ENCERRADO";
@@ -42,6 +58,7 @@ export type VisaoAprovacao = {
   } | null;
   publicadoEm: Date | null;
   links: Array<{ network: Network; permalink: string | null }>;
+  perfil: PerfilDoCliente;
 };
 
 /**
@@ -55,7 +72,7 @@ export async function carregarPorToken(token: string): Promise<VisaoAprovacao | 
       decision: true,
       post: {
         include: {
-          client: true,
+          client: { include: { metaConnections: true } },
           media: { orderBy: { position: "asc" } },
           publications: true,
         },
@@ -76,6 +93,8 @@ export async function carregarPorToken(token: string): Promise<VisaoAprovacao | 
       height: m.height,
     })),
   );
+
+  const perfil = await montarPerfil(post.clientId, post.client.name, post.client.metaConnections);
 
   const expirado = pedido.expiresAt.getTime() < Date.now();
   const estado: VisaoAprovacao["estado"] = pedido.decision
@@ -109,7 +128,53 @@ export async function carregarPorToken(token: string): Promise<VisaoAprovacao | 
       : null,
     publicadoEm: post.publishedAt,
     links: post.publications.map((p) => ({ network: p.network, permalink: p.permalink })),
+    perfil,
   };
+}
+
+/**
+ * Monta a previa do perfil: o @ do cliente e os posts que ja publicamos para
+ * ele, para o cliente ver como o criativo novo fica na grade.
+ *
+ * Usa o que o proprio sistema publicou (nao lemos a grade real do Instagram:
+ * isso exigiria outra permissao da Meta e nao muda a decisao do cliente).
+ */
+async function montarPerfil(
+  clientId: string,
+  nomeCliente: string,
+  conexoes: Array<{ assetType: string; assetName: string | null }>,
+): Promise<PerfilDoCliente> {
+  const instagram = conexoes.find((c) => c.assetType === "INSTAGRAM");
+  const handle = (instagram?.assetName ?? nomeCliente)
+    .replace(/^@/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9._]/g, "");
+
+  const [publicados, total] = await Promise.all([
+    prisma.post.findMany({
+      where: { clientId, status: "PUBLICADO" },
+      include: { media: { orderBy: { position: "asc" } } },
+      orderBy: { publishedAt: "desc" },
+      take: 11,
+    }),
+    prisma.post.count({ where: { clientId, status: "PUBLICADO" } }),
+  ]);
+
+  const itens: ItemDoPerfil[] = await Promise.all(
+    publicados
+      .filter((p) => p.media.length > 0)
+      .map(async (p) => ({
+        id: p.id,
+        url: await storage.urlTemporaria(p.media[0].storageKey),
+        carrossel: p.media.length > 1,
+        video: p.media[0].kind === "VIDEO",
+        quando: p.publishedAt,
+      })),
+  );
+
+  return { handle, nome: nomeCliente, totalPublicados: total, publicados: itens };
 }
 
 export type EntradaDecisao = {

@@ -107,6 +107,23 @@ npx tsx scripts/link-pendente.ts
 Em desenvolvimento, `META_DRY_RUN=true` e `WHATSAPP_MODE=log`: nada e publicado
 na Meta e nenhuma mensagem sai: tudo fica no log e no banco.
 
+### Montar um exemplo com material de um cliente
+
+Para mostrar o sistema a um cliente antes de ligar de verdade, use uma pasta com
+as artes dele (as mesmas que ja estao no Drive):
+
+```bash
+npx tsx scripts/demo-cliente.ts ./pasta-de-artes --nome "Santa Rita" --handle santarita
+```
+
+O script agrupa os arquivos (`nome_01`, `nome_02`... viram um carrossel), cria o
+cliente, deixa os posts anteriores como publicados — para a previa do perfil ter
+grade — e o mais recente aguardando aprovacao, imprimindo o link para abrir no
+celular.
+
+Material de cliente nao entra no repositorio: a pasta `demo-midia/` esta no
+`.gitignore`.
+
 ### Testes de fumaca (com o worker rodando)
 
 ```bash
@@ -122,8 +139,14 @@ carrossel), legenda, redes, data e hora. As imagens sao convertidas para JPEG
 duracao de video e quantidade de itens do carrossel.
 
 **2. O cliente recebe um link pelo WhatsApp.** Pagina publica, pensada para
-celular. Ele ve o criativo, a legenda, as redes e o horario previsto, **digita o
-nome** e escolhe Aprovar ou Reprovar (reprovar exige comentario).
+celular, com a marca da VORA. Duas abas: **O post** (criativo, legenda, redes e
+horario) e **No perfil**, que mostra como o post fica na grade do Instagram, ao
+lado do que ja publicamos para ele. Ele **digita o nome** e escolhe Aprovar ou
+Reprovar (reprovar exige comentario).
+
+A grade usa os posts que o proprio sistema publicou. Nao lemos a grade real do
+Instagram: isso exigiria outra permissao da Meta e nao mudaria a decisao do
+cliente.
 
 **3. Aprovado entra na fila.** O worker dispara no horario marcado. Antes de
 chamar a Meta, **revalida tudo**: o post continua aprovado? a aprovacao e da
