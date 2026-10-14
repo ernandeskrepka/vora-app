@@ -7,7 +7,7 @@
 # - o banco e Postgres gerenciado (Netlify DB ou externo), via DATABASE_URL.
 
 [build]
-  command = "prisma generate && next build"
+  command = "prisma generate && node scripts/preparar-hospedagem.mjs && next build"
   publish = ".next"
 
 [build.environment]

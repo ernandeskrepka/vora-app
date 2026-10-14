@@ -12,7 +12,10 @@ const booleanish = z
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 
-  DATABASE_URL: z.string().min(1),
+  // Opcional no schema de proposito: o build da hospedagem roda antes de
+  // existir banco. Quem cobra a presenca e o src/lib/db.ts, na primeira
+  // consulta de verdade.
+  DATABASE_URL: z.string().min(1).optional(),
   REDIS_URL: z.string().default("redis://127.0.0.1:6379"),
   // "bullmq" usa Redis e um worker dedicado (producao normal).
   // "none" nao agenda nada: quem dispara e a rotina de agenda, chamada por
@@ -80,12 +83,16 @@ const schema = z.object({
 });
 
 /**
- * Na Netlify o banco e provisionado pela plataforma e chega em NETLIFY_DB_URL.
- * Em qualquer outra hospedagem vale o DATABASE_URL normal.
+ * Na Netlify o banco e provisionado pela plataforma: a extensao atual entrega
+ * NETLIFY_DB_URL e a antiga entregava NETLIFY_DATABASE_URL. Em qualquer outra
+ * hospedagem vale o DATABASE_URL normal.
  */
 const bruto = {
   ...process.env,
-  DATABASE_URL: process.env.DATABASE_URL || process.env.NETLIFY_DB_URL,
+  DATABASE_URL:
+    process.env.DATABASE_URL ||
+    process.env.NETLIFY_DB_URL ||
+    process.env.NETLIFY_DATABASE_URL,
 };
 
 const parsed = schema.safeParse(bruto);

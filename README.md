@@ -260,8 +260,11 @@ venceu, marca POST SEM RESPOSTA e envia lembretes. Tudo idempotente, entao
 rodar de minuto em minuto nao duplica nada.
 
 O banco e provisionado pela propria Netlify (`NETLIFY_DB_URL`, usado como
-`DATABASE_URL` quando essa nao existe) e o esquema vai como migracao SQL em
-`netlify/database/migrations/`.
+`DATABASE_URL` quando essa nao existe) e as tabelas sao criadas no build por
+`scripts/preparar-hospedagem.mjs`. Sem banco configurado o build nao quebra: ele
+avisa e segue, para o site existir antes das variaveis.
+
+Passo a passo com cliques em [docs/deploy-netlify.md](docs/deploy-netlify.md).
 
 Primeira instalacao, depois do deploy:
 
