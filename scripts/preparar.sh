@@ -81,7 +81,15 @@ else
   ok "dependencias instaladas"
 fi
 
-# 5. Banco
+# 5. Cliente do Prisma
+# E codigo gerado, fica fora do git; sem ele o seed e o worker nao sobem.
+npx prisma generate > /dev/null 2>&1 || {
+  erro "Falhou ao gerar o cliente do Prisma."
+  exit 1
+}
+ok "cliente do Prisma gerado"
+
+# 6. Banco
 echo "  criando as tabelas..."
 npm run db:push > /dev/null 2>&1 || {
   erro "Nao consegui conectar no banco. Confira o DATABASE_URL no .env e rode de novo."
