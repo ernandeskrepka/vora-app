@@ -1,15 +1,24 @@
 import { prisma } from "@/lib/db.ts";
 import { registrarAuditoria } from "@/lib/audit.ts";
-import { idDaPagina, lerPagina, type LinhaDaPagina } from "@/lib/notion/client.ts";
+import {
+  idDaPagina,
+  lerPagina,
+  type LinhaDaPagina,
+} from "@/lib/notion/client.ts";
 import { ErroDeRegra } from "./erros.ts";
 import type { Ator } from "./transicoes.ts";
 
 export type ItemDoCalendario = {
-  /** Dia previsto, ja resolvido para um ano. */
-  data: Date;
+  /**
+   * Dia previsto, ja resolvido para um ano. Nulo quando o cronograma lista o
+   * post sem data - metade dos clientes da VORA escreve assim.
+   */
+  data: Date | null;
   titulo: string;
   formato: string | null;
   notas: string;
+  /** Caixa marcada no Notion: a equipe ja tocou nesse item. */
+  concluido: boolean;
 };
 
 const DIAS_DA_SEMANA =
@@ -35,11 +44,49 @@ const LINHA_DE_DIA = new RegExp(
 const LINHA_DE_FORMATO = /^\s*\**\s*formato\s*:?\**\s*:?\s*(.+?)\s*$/i;
 
 /**
+ * O outro jeito que a VORA escreve o planejamento: lista numerada de posts,
+ * com ou sem data, com ou sem caixa de marcar.
+ *
+ *   - [x] **Post 04 REELS 12/10 Dia das Criancas**
+ *   - [x] Post 07 CARROSSEL (OUTUBRO ROSA)
+ *   POST 12 REELS (Nov Azul - Prevencao)
+ *   Video 01: REELS - OUTUBRO ROSA
+ *
+ * Aqui o que identifica o item e "post/video/card + numero", nao a data.
+ */
+const LINHA_DE_POST = new RegExp(
+  String.raw`^\s*(?:[-*]\s*\[(?<marca>[ xX])\]\s*)?\**\s*` +
+    String.raw`(?<tipo>posts?|v[ií]deos?|cards?|reels?|stories)\s*0*(?<numero>\d{1,2})\b` +
+    String.raw`\s*[:.\-–—]?\s*(?<resto>.*?)\s*\**\s*$`,
+  "i",
+);
+
+/** Formatos que a equipe escreve dentro do titulo do item. */
+const FORMATOS_CONHECIDOS = [
+  "CARROSSEL",
+  "REELS",
+  "CARD UNICO",
+  "CARD ÚNICO",
+  "STORIES",
+  "VIDEO",
+  "VÍDEO",
+  "FOTO",
+];
+
+/** Data solta dentro do titulo: "Post 04 REELS 12/10 Dia das Criancas". */
+const DATA_NO_TITULO = /(?<![\d/])(\d{1,2})[/\.](\d{1,2})(?![\d/])/;
+
+/**
  * Resolve o ano de um dia/mes sem ano: usa o ano de referencia e, se a data
  * cair muito para tras, assume que o planejamento e do ano seguinte. Sem isso,
  * um cronograma de janeiro lido em dezembro entraria com 11 meses de atraso.
  */
-function resolverData(dia: number, mes: number, ano: number | null, referencia: Date): Date | null {
+function resolverData(
+  dia: number,
+  mes: number,
+  ano: number | null,
+  referencia: Date,
+): Date | null {
   if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
 
   if (ano !== null) {
@@ -52,7 +99,15 @@ function resolverData(dia: number, mes: number, ano: number | null, referencia: 
   const seisMesesAtras = new Date(referencia);
   seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
   if (candidato < seisMesesAtras) {
-    candidato = new Date(referencia.getFullYear() + 1, mes - 1, dia, 9, 0, 0, 0);
+    candidato = new Date(
+      referencia.getFullYear() + 1,
+      mes - 1,
+      dia,
+      9,
+      0,
+      0,
+      0,
+    );
   }
   return Number.isNaN(candidato.getTime()) ? null : candidato;
 }
@@ -71,20 +126,18 @@ export function interpretarCalendario(
   let atual: ItemDoCalendario | null = null;
 
   for (const linha of linhas) {
-    const achado = linha.texto.match(LINHA_DE_DIA);
-    if (achado) {
-      const data = resolverData(
-        Number(achado[1]),
-        Number(achado[2]),
-        achado[3] ? Number(achado[3]) : null,
-        referencia,
-      );
-      const titulo = achado[4].replace(/\\\|/g, "|").trim();
-      if (data && titulo) {
-        atual = { data, titulo, formato: null, notas: "" };
-        itens.push(atual);
-        continue;
-      }
+    const porDia = lerLinhaDeDia(linha.texto, referencia);
+    if (porDia) {
+      atual = porDia;
+      itens.push(atual);
+      continue;
+    }
+
+    const porPost = lerLinhaDePost(linha, referencia);
+    if (porPost) {
+      atual = porPost;
+      itens.push(atual);
+      continue;
     }
 
     if (!atual) continue;
@@ -98,8 +151,98 @@ export function interpretarCalendario(
     atual.notas = atual.notas ? `${atual.notas}\n${linha.texto}` : linha.texto;
   }
 
-  // Corta o que nao tem conteudo nenhum: linha de data solta nao e pauta.
   return itens.map((i) => ({ ...i, notas: i.notas.slice(0, 1800) }));
+}
+
+/** "## Sexta-feira - 09/10 | Um passeio pela loja" */
+function lerLinhaDeDia(
+  texto: string,
+  referencia: Date,
+): ItemDoCalendario | null {
+  const achado = texto.match(LINHA_DE_DIA);
+  if (!achado) return null;
+
+  const data = resolverData(
+    Number(achado[1]),
+    Number(achado[2]),
+    achado[3] ? Number(achado[3]) : null,
+    referencia,
+  );
+  const titulo = achado[4].replace(/\\\|/g, "|").trim();
+  if (!data || !titulo) return null;
+
+  return { data, titulo, formato: null, notas: "", concluido: false };
+}
+
+/** "- [x] **Post 04 REELS 12/10 Dia das Criancas**" */
+function lerLinhaDePost(
+  linha: LinhaDaPagina,
+  referencia: Date,
+): ItemDoCalendario | null {
+  const achado = linha.texto.match(LINHA_DE_POST);
+  if (!achado?.groups) return null;
+
+  const { marca, tipo, numero } = achado.groups;
+
+  // A caixa de marcar pode vir de dois lugares: do bloco "to_do" do Notion
+  // (que entrega o estado fora do texto) ou escrita a mao como "- [x]", que e
+  // como ela aparece quando alguem cola a pagina de outro lugar.
+  const temCaixa = linha.tipo === "to_do" || Boolean(marca);
+  const marcado = linha.marcado === true || (marca ?? "").toLowerCase() === "x";
+
+  // "CARD 1", "CARD 3" sao marcacao de slide dentro do roteiro, nao item do
+  // cronograma. So contam como item quando vem com caixa de marcar.
+  if (/^cards?$/i.test(tipo) && !temCaixa) return null;
+  let resto = (achado.groups.resto ?? "").replace(/\*/g, "").trim();
+
+  // Formato escrito dentro do titulo (REELS, CARROSSEL, CARD UNICO...).
+  let formato: string | null = null;
+  for (const candidato of FORMATOS_CONHECIDOS) {
+    const regex = new RegExp(`\\b${candidato.replace(/ /g, "\\s+")}\\b`, "i");
+    if (regex.test(resto)) {
+      formato = candidato;
+      resto = resto.replace(regex, " ").trim();
+      break;
+    }
+  }
+  if (!formato && /^(reels?|v[ií]deos?|cards?|stories)$/i.test(tipo)) {
+    formato = tipo.toUpperCase();
+  }
+
+  // Data solta no titulo, quando a equipe escreveu uma.
+  let data: Date | null = null;
+  const comData = resto.match(DATA_NO_TITULO);
+  if (comData) {
+    data = resolverData(
+      Number(comData[1]),
+      Number(comData[2]),
+      null,
+      referencia,
+    );
+    resto = resto.replace(DATA_NO_TITULO, " ").trim();
+  }
+
+  // Sobras de pontuacao de quem escreveu "Post 07 CARROSSEL (OUTUBRO ROSA)".
+  const titulo =
+    limparTitulo(resto) ||
+    `${tipo.replace(/s$/i, "").toUpperCase()} ${Number(numero)}`;
+
+  return {
+    data,
+    titulo,
+    formato,
+    notas: "",
+    concluido: marcado,
+  };
+}
+
+function limparTitulo(texto: string): string {
+  return texto
+    .replace(/^[\s:.\-–—]+/, "")
+    .replace(/[\s:.\-–—]+$/, "")
+    .replace(/^\((.*)\)$/, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export type ResultadoSincronizacao = {
@@ -108,6 +251,10 @@ export type ResultadoSincronizacao = {
   criados: number;
   atualizados: number;
   jaEramPost: number;
+  /** Pautas que viraram rascunho no calendario nesta sincronizacao. */
+  postosNoCalendario: number;
+  /** Dias do cronograma que ja passaram: viram pauta, nunca post. */
+  noPassado: number;
 };
 
 /**
@@ -122,8 +269,18 @@ export async function sincronizarCalendarioDoNotion(input: {
   clienteId: string;
   ator: Ator;
   referencia?: Date;
+  /**
+   * Alem da pauta, criar o rascunho do post no calendario, na data do
+   * cronograma. Fica desligado por padrao: a equipe decide quando o
+   * calendario passa a existir.
+   */
+  criarPostos?: boolean;
+  /** Hora do dia dos rascunhos criados (o Notion so da o dia). */
+  hora?: number;
 }): Promise<ResultadoSincronizacao> {
-  const cliente = await prisma.client.findUniqueOrThrow({ where: { id: input.clienteId } });
+  const cliente = await prisma.client.findUniqueOrThrow({
+    where: { id: input.clienteId },
+  });
   const pageId = cliente.notionPageId ? idDaPagina(cliente.notionPageId) : null;
   if (!pageId) {
     throw new ErroDeRegra(
@@ -140,7 +297,12 @@ export async function sincronizarCalendarioDoNotion(input: {
     criados: 0,
     atualizados: 0,
     jaEramPost: 0,
+    postosNoCalendario: 0,
+    noPassado: 0,
   };
+
+  const agora = input.referencia ?? new Date();
+  const hora = input.hora ?? 9;
 
   for (const item of itens) {
     const existente = await prisma.planningItem.findFirst({
@@ -152,28 +314,81 @@ export async function sincronizarCalendarioDoNotion(input: {
       .join("\n\n")
       .trim();
 
-    if (!existente) {
-      await prisma.planningItem.create({
+    let pauta = existente;
+
+    if (!pauta) {
+      pauta = await prisma.planningItem.create({
         data: {
           clientId: cliente.id,
           title: item.titulo,
           notes: notas || null,
           targetDate: item.data,
-          status: "IDEIA",
+          // Item marcado no Notion ja teve roteiro escrito; sem marca, e ideia.
+          status: item.concluido ? "EM_PRODUCAO" : "IDEIA",
         },
       });
       r.criados += 1;
-      continue;
-    }
-
-    if (existente.postId) {
+    } else if (pauta.postId) {
       r.jaEramPost += 1;
       continue;
     }
 
+    // Calendario: a pauta vira rascunho de post na data do cronograma.
+    // Item sem data (metade dos cronogramas e lista de posts, nao agenda)
+    // continua so como pauta - inventar data seria agendar publicacao no
+    // escuro.
+    if (input.criarPostos && !pauta.postId && item.data) {
+      const quando = new Date(item.data);
+      quando.setHours(hora, 0, 0, 0);
+
+      if (quando.getTime() <= agora.getTime()) {
+        // Dia que ja passou nao vira post: o sistema agenda publicacao, e
+        // agendar para tras nao significa nada. Fica como pauta.
+        r.noPassado += 1;
+      } else {
+        const { criarPost } = await import("./posts.ts");
+        const { marcarPautaComoPost } = await import("./planejamento.ts");
+
+        const { postId } = await criarPost({
+          dados: {
+            clientId: cliente.id,
+            caption: [
+              item.titulo,
+              item.formato ? `Formato: ${item.formato}` : null,
+              item.notas,
+            ]
+              .filter(Boolean)
+              .join("\n\n"),
+            formato: "IMAGEM_UNICA",
+            networks: ["INSTAGRAM"],
+            scheduledAt: quando,
+          },
+          arquivos: [],
+          ator: input.ator,
+        });
+
+        // A pauta precisa estar em producao para virar post: o cronograma do
+        // Notion e justamente o combinado de producao daquele dia.
+        await prisma.planningItem.update({
+          where: { id: pauta.id },
+          data: { status: "EM_PRODUCAO" },
+        });
+        await marcarPautaComoPost({
+          pautaId: pauta.id,
+          postId,
+          ator: input.ator,
+        });
+        r.postosNoCalendario += 1;
+        continue;
+      }
+    }
+
+    if (!existente) continue;
+
     const mudou =
       existente.notes !== (notas || null) ||
-      existente.targetDate?.getTime() !== item.data.getTime();
+      (existente.targetDate?.getTime() ?? null) !==
+        (item.data?.getTime() ?? null);
     if (mudou) {
       await prisma.planningItem.update({
         where: { id: existente.id },
@@ -195,7 +410,11 @@ export async function sincronizarCalendarioDoNotion(input: {
     actorType: input.ator.tipo,
     actorUserId: input.ator.usuarioId ?? null,
     actorName: input.ator.nome ?? null,
-    metadata: { lidos: r.lidos, criados: r.criados, atualizados: r.atualizados },
+    metadata: {
+      lidos: r.lidos,
+      criados: r.criados,
+      atualizados: r.atualizados,
+    },
   });
 
   return r;

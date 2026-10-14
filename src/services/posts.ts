@@ -4,7 +4,10 @@ import { prisma } from "@/lib/db.ts";
 import { logger } from "@/lib/logger.ts";
 import { hashToken, tokenDoPedido } from "@/lib/crypto.ts";
 import { chaveDeMidia, storage } from "@/lib/storage/index.ts";
-import { processarArquivo, type ArquivoRecebido } from "@/lib/media/processar.ts";
+import {
+  processarArquivo,
+  type ArquivoRecebido,
+} from "@/lib/media/processar.ts";
 import { registrarAuditoria } from "@/lib/audit.ts";
 import {
   agendarCorteSemResposta,
@@ -13,7 +16,11 @@ import {
   cancelarJobsDoPost,
 } from "@/lib/queue/filas.ts";
 import { validarMidiaDoPost, type Problema } from "@/domain/formatos.ts";
-import { podeEditar, podeEnviarParaAprovacao, type PostStatus } from "@/domain/post-status.ts";
+import {
+  podeEditar,
+  podeEnviarParaAprovacao,
+  type PostStatus,
+} from "@/domain/post-status.ts";
 import { aplicarTransicao, type Ator } from "./transicoes.ts";
 import { ErroDeRegra, NaoEncontradoError } from "./erros.ts";
 import { enviarPedidoDeAprovacao, notificarEquipe } from "./notificacoes.ts";
@@ -56,16 +63,23 @@ type MidiaPreparada = Awaited<ReturnType<typeof processarArquivo>>;
  * Converte itens da biblioteca do cliente em midia de post. O arquivo ja foi
  * processado quando entrou na biblioteca, entao aqui so lemos os bytes.
  */
-async function midiasDeMateriais(assetIds: string[]): Promise<MidiaPreparada[]> {
+async function midiasDeMateriais(
+  assetIds: string[],
+): Promise<MidiaPreparada[]> {
   if (assetIds.length === 0) return [];
 
-  const itens = await prisma.clientAsset.findMany({ where: { id: { in: assetIds } } });
+  const itens = await prisma.clientAsset.findMany({
+    where: { id: { in: assetIds } },
+  });
   const porId = new Map(itens.map((i) => [i.id, i]));
 
   const midias: MidiaPreparada[] = [];
   for (const id of assetIds) {
     const item = porId.get(id);
-    if (!item) throw new ErroDeRegra("Material nao encontrado na biblioteca do cliente.");
+    if (!item)
+      throw new ErroDeRegra(
+        "Material nao encontrado na biblioteca do cliente.",
+      );
     if (item.kind === "DOCUMENTO") {
       throw new ErroDeRegra(
         `"${item.originalFilename ?? "arquivo"}" e um documento e nao pode virar criativo.`,
@@ -175,19 +189,40 @@ export async function criarPost(input: {
   materiaisIds?: string[];
   ator: Ator;
 }): Promise<{ postId: string; avisos: Problema[] }> {
-  const cliente = await prisma.client.findUnique({ where: { id: input.dados.clientId } });
+  const cliente = await prisma.client.findUnique({
+    where: { id: input.dados.clientId },
+  });
   if (!cliente) throw new ErroDeRegra("Cliente nao encontrado.");
   if (input.dados.scheduledAt.getTime() < Date.now()) {
-    throw new ErroDeRegra("A data e hora de publicacao precisa estar no futuro.");
+    throw new ErroDeRegra(
+      "A data e hora de publicacao precisa estar no futuro.",
+    );
   }
 
   const daBiblioteca = await midiasDeMateriais(input.materiaisIds ?? []);
-  const { midias, avisos } = await prepararMidia({
-    arquivos: input.arquivos,
-    formato: input.dados.formato,
-    networks: input.dados.networks,
-    jaPreparadas: daBiblioteca,
-  });
+
+  // Rascunho pode nascer sem criativo: e o caso do post que vem do cronograma
+  // do Notion, onde a data existe antes da arte. Nao abre brecha nenhuma - o
+  // envio para aprovacao recusa post sem criativo e revalida o formato.
+  const semCriativo = input.arquivos.length === 0 && daBiblioteca.length === 0;
+
+  const { midias, avisos } = semCriativo
+    ? {
+        midias: [] as MidiaPreparada[],
+        avisos: [
+          {
+            campo: "criativo",
+            mensagem:
+              "Post sem criativo: suba a arte antes de pedir aprovacao ao cliente.",
+          },
+        ] as Problema[],
+      }
+    : await prepararMidia({
+        arquivos: input.arquivos,
+        formato: input.dados.formato,
+        networks: input.dados.networks,
+        jaPreparadas: daBiblioteca,
+      });
 
   const post = await prisma.post.create({
     data: {
@@ -265,7 +300,9 @@ export async function atualizarPost(input: {
   if (!mudou) return { avisos: [], novoPedidoEnviado: false };
 
   if (scheduledAt.getTime() < Date.now()) {
-    throw new ErroDeRegra("A data e hora de publicacao precisa estar no futuro.");
+    throw new ErroDeRegra(
+      "A data e hora de publicacao precisa estar no futuro.",
+    );
   }
 
   // Valida o conjunto final (midia nova ou a que ja estava no post).
@@ -273,7 +310,11 @@ export async function atualizarPost(input: {
   let avisos: Problema[] = [];
 
   if (trocaMidia) {
-    const r = await prepararMidia({ arquivos: input.arquivos!, formato, networks });
+    const r = await prepararMidia({
+      arquivos: input.arquivos!,
+      formato,
+      networks,
+    });
     midias = r.midias;
     avisos = r.avisos;
   } else {
@@ -291,17 +332,25 @@ export async function atualizarPost(input: {
       })),
     });
     if (!validacao.ok) {
-      throw new ErroDeRegra("A alteracao deixa o criativo fora das regras de formato.", validacao.erros);
+      throw new ErroDeRegra(
+        "A alteracao deixa o criativo fora das regras de formato.",
+        validacao.erros,
+      );
     }
     avisos = validacao.avisos;
   }
 
-  const estavaComCliente = post.status === "AGUARDANDO_APROVACAO" || post.status === "APROVADO";
+  const estavaComCliente =
+    post.status === "AGUARDANDO_APROVACAO" || post.status === "APROVADO";
   const chavesAntigas = post.media.map((m) => m.storageKey);
 
   await prisma.$transaction(async (tx) => {
     await aplicarTransicao(tx, {
-      post: { id: post.id, status: post.status as PostStatus, version: post.version },
+      post: {
+        id: post.id,
+        status: post.status as PostStatus,
+        version: post.version,
+      },
       evento: "AGENCIA_EDITOU",
       ator: input.ator,
       acao: "post_editado",
@@ -338,22 +387,37 @@ export async function atualizarPost(input: {
   });
 
   if (midias) {
-    await gravarMidia({ postId: post.id, clientSlug: post.client.slug, midias });
+    await gravarMidia({
+      postId: post.id,
+      clientSlug: post.client.slug,
+      midias,
+    });
     // Arquivos antigos: remocao e melhor esforco, nao bloqueia a edicao.
     for (const key of chavesAntigas) {
       await storage.remover(key).catch(() => undefined);
     }
   }
 
-  await cancelarJobsDoPost(post.id, (await obterConfiguracoes()).lembretesHoras);
+  await cancelarJobsDoPost(
+    post.id,
+    (await obterConfiguracoes()).lembretesHoras,
+  );
 
   let novoPedidoEnviado = false;
   if (estavaComCliente) {
-    await enviarParaAprovacao({ postId: post.id, ator: input.ator, motivo: "nova_versao" });
+    await enviarParaAprovacao({
+      postId: post.id,
+      ator: input.ator,
+      motivo: "nova_versao",
+    });
     novoPedidoEnviado = true;
   }
 
-  log.info("post editado", { postId: post.id, novaVersao: post.version + 1, novoPedidoEnviado });
+  log.info("post editado", {
+    postId: post.id,
+    novaVersao: post.version + 1,
+    novoPedidoEnviado,
+  });
   return { avisos, novoPedidoEnviado };
 }
 
@@ -376,10 +440,14 @@ export async function enviarParaAprovacao(input: {
     );
   }
   if (post.media.length === 0) {
-    throw new ErroDeRegra("O post nao tem criativo. Suba o arquivo antes de pedir aprovacao.");
+    throw new ErroDeRegra(
+      "O post nao tem criativo. Suba o arquivo antes de pedir aprovacao.",
+    );
   }
 
-  const aprovadores = post.client.contacts.filter((c) => c.isApprover && c.active);
+  const aprovadores = post.client.contacts.filter(
+    (c) => c.isApprover && c.active,
+  );
   if (aprovadores.length === 0) {
     throw new ErroDeRegra(
       `O cliente ${post.client.name} nao tem contato aprovador cadastrado. Cadastre um WhatsApp em Clientes.`,
@@ -400,11 +468,16 @@ export async function enviarParaAprovacao(input: {
     })),
   });
   if (!validacao.ok) {
-    throw new ErroDeRegra("O criativo nao passou na validacao de formato.", validacao.erros);
+    throw new ErroDeRegra(
+      "O criativo nao passou na validacao de formato.",
+      validacao.erros,
+    );
   }
 
   // O link morre no horario do post; se o post esta muito longe, limita no TTL.
-  const tetoTtl = new Date(Date.now() + env.APPROVAL_TOKEN_TTL_HOURS * 3_600_000);
+  const tetoTtl = new Date(
+    Date.now() + env.APPROVAL_TOKEN_TTL_HOURS * 3_600_000,
+  );
   const expiresAt = post.scheduledAt < tetoTtl ? post.scheduledAt : tetoTtl;
 
   // O id e gerado aqui para podermos derivar o token antes de gravar.
@@ -431,7 +504,11 @@ export async function enviarParaAprovacao(input: {
     });
 
     await aplicarTransicao(tx, {
-      post: { id: post.id, status: post.status as PostStatus, version: post.version },
+      post: {
+        id: post.id,
+        status: post.status as PostStatus,
+        version: post.version,
+      },
       evento: "ENVIAR_PARA_APROVACAO",
       ator: input.ator,
       acao: "pedido_de_aprovacao_enviado",
@@ -474,19 +551,29 @@ export async function enviarParaAprovacao(input: {
  * Reenvia pelo WhatsApp o MESMO link que ja esta valendo. Nao troca o
  * token: a mensagem antiga do cliente continua funcionando.
  */
-export async function reenviarLinkDeAprovacao(input: { postId: string; ator: Ator }) {
+export async function reenviarLinkDeAprovacao(input: {
+  postId: string;
+  ator: Ator;
+}) {
   const post = await carregarPost(input.postId);
   if (post.status !== "AGUARDANDO_APROVACAO") {
-    throw new ErroDeRegra("So e possivel reenviar o link de um post aguardando aprovacao.");
+    throw new ErroDeRegra(
+      "So e possivel reenviar o link de um post aguardando aprovacao.",
+    );
   }
 
   const pendente = post.approvalRequests.find((r) => r.status === "PENDENTE");
   if (!pendente) {
-    throw new ErroDeRegra("Nao ha pedido de aprovacao ativo. Envie um novo pedido.");
+    throw new ErroDeRegra(
+      "Nao ha pedido de aprovacao ativo. Envie um novo pedido.",
+    );
   }
 
-  const aprovadores = post.client.contacts.filter((c) => c.isApprover && c.active);
-  if (aprovadores.length === 0) throw new ErroDeRegra("Cliente sem contato aprovador cadastrado.");
+  const aprovadores = post.client.contacts.filter(
+    (c) => c.isApprover && c.active,
+  );
+  if (aprovadores.length === 0)
+    throw new ErroDeRegra("Cliente sem contato aprovador cadastrado.");
 
   const link = linkDeAprovacao(tokenDoPedido(pendente.id));
 
@@ -503,18 +590,30 @@ export async function reenviarLinkDeAprovacao(input: { postId: string; ator: Ato
     actorName: input.ator.nome ?? null,
     fromStatus: post.status,
     toStatus: post.status,
-    metadata: { contatos: aprovadores.map((c) => c.phoneE164), pedidoId: pendente.id },
+    metadata: {
+      contatos: aprovadores.map((c) => c.phoneE164),
+      pedidoId: pendente.id,
+    },
     ipAddress: input.ator.ipAddress ?? null,
     userAgent: input.ator.userAgent ?? null,
   });
 
-  await enviarPedidoDeAprovacao({ post, cliente: post.client, contatos: aprovadores, link });
+  await enviarPedidoDeAprovacao({
+    post,
+    cliente: post.client,
+    contatos: aprovadores,
+    link,
+  });
   return { link, contatos: aprovadores.length };
 }
 
 /* --------------------------------------------------- reagendar/cancelar */
 
-export async function reagendarPost(input: { postId: string; novaData: Date; ator: Ator }) {
+export async function reagendarPost(input: {
+  postId: string;
+  novaData: Date;
+  ator: Ator;
+}) {
   const post = await carregarPost(input.postId);
 
   if (input.novaData.getTime() < Date.now()) {
@@ -525,15 +624,25 @@ export async function reagendarPost(input: { postId: string; novaData: Date; ato
   if (post.status === "FALHOU") {
     await prisma.$transaction(async (tx) => {
       await aplicarTransicao(tx, {
-        post: { id: post.id, status: post.status as PostStatus, version: post.version },
+        post: {
+          id: post.id,
+          status: post.status as PostStatus,
+          version: post.version,
+        },
         evento: "REAGENDAR_APOS_FALHA",
         ator: input.ator,
         acao: "reagendado_apos_falha",
-        metadata: { de: post.scheduledAt.toISOString(), para: input.novaData.toISOString() },
+        metadata: {
+          de: post.scheduledAt.toISOString(),
+          para: input.novaData.toISOString(),
+        },
         dadosExtra: { scheduledAt: input.novaData, lastError: null },
       });
     });
-    await cancelarJobsDoPost(post.id, (await obterConfiguracoes()).lembretesHoras);
+    await cancelarJobsDoPost(
+      post.id,
+      (await obterConfiguracoes()).lembretesHoras,
+    );
     await agendarPublicacao({
       postId: post.id,
       postVersion: post.version,
@@ -551,12 +660,20 @@ export async function reagendarPost(input: { postId: string; novaData: Date; ato
   return { exigiuNovaAprovacao: r.novoPedidoEnviado };
 }
 
-export async function cancelarPost(input: { postId: string; ator: Ator; motivo?: string }) {
+export async function cancelarPost(input: {
+  postId: string;
+  ator: Ator;
+  motivo?: string;
+}) {
   const post = await carregarPost(input.postId);
 
   await prisma.$transaction(async (tx) => {
     await aplicarTransicao(tx, {
-      post: { id: post.id, status: post.status as PostStatus, version: post.version },
+      post: {
+        id: post.id,
+        status: post.status as PostStatus,
+        version: post.version,
+      },
       evento: "CANCELAR",
       ator: input.ator,
       acao: "post_cancelado",
@@ -569,7 +686,10 @@ export async function cancelarPost(input: { postId: string; ator: Ator; motivo?:
     });
   });
 
-  await cancelarJobsDoPost(post.id, (await obterConfiguracoes()).lembretesHoras);
+  await cancelarJobsDoPost(
+    post.id,
+    (await obterConfiguracoes()).lembretesHoras,
+  );
 }
 
 /* ----------------------------------------------- corte: sem resposta */
@@ -578,7 +698,9 @@ export async function cancelarPost(input: { postId: string; ator: Ator; motivo?:
  * Chamado pelo worker no horario do post. Se ninguem respondeu, o post
  * NAO e publicado: vira POST SEM RESPOSTA e a equipe e avisada.
  */
-export async function marcarPostSemResposta(input: { postId: string }): Promise<"marcado" | "ignorado"> {
+export async function marcarPostSemResposta(input: {
+  postId: string;
+}): Promise<"marcado" | "ignorado"> {
   const post = await carregarPost(input.postId);
 
   if (post.status !== "AGUARDANDO_APROVACAO") {
@@ -591,7 +713,11 @@ export async function marcarPostSemResposta(input: { postId: string }): Promise<
 
   await prisma.$transaction(async (tx) => {
     await aplicarTransicao(tx, {
-      post: { id: post.id, status: post.status as PostStatus, version: post.version },
+      post: {
+        id: post.id,
+        status: post.status as PostStatus,
+        version: post.version,
+      },
       evento: "HORARIO_SEM_RESPOSTA",
       ator: { tipo: "SISTEMA", nome: "worker" },
       acao: "marcado_sem_resposta",
@@ -603,7 +729,10 @@ export async function marcarPostSemResposta(input: { postId: string }): Promise<
     });
   });
 
-  await cancelarJobsDoPost(post.id, (await obterConfiguracoes()).lembretesHoras);
+  await cancelarJobsDoPost(
+    post.id,
+    (await obterConfiguracoes()).lembretesHoras,
+  );
 
   await notificarEquipe({
     tipo: "POST_SEM_RESPOSTA",

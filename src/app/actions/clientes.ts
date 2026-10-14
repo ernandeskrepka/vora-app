@@ -30,7 +30,9 @@ async function atorAtual(): Promise<Ator> {
 
 function mensagem(erro: unknown) {
   if (erro instanceof ErroDeRegra) return erro.message;
-  return erro instanceof Error ? erro.message : "Nao foi possivel concluir a acao.";
+  return erro instanceof Error
+    ? erro.message
+    : "Nao foi possivel concluir a acao.";
 }
 
 export async function acaoCriarCliente(
@@ -87,15 +89,32 @@ export async function acaoSincronizarNotion(
   const ator = await atorAtual();
   const clienteId = String(dados.get("clienteId") ?? "");
   try {
-    const { sincronizarCalendarioDoNotion } = await import("@/services/notion-planejamento.ts");
-    const r = await sincronizarCalendarioDoNotion({ clienteId, ator });
+    const { sincronizarCalendarioDoNotion } =
+      await import("@/services/notion-planejamento.ts");
+    const criarPostos = dados.get("criarPostos") === "sim";
+    const hora = Number(String(dados.get("hora") ?? "9"));
+    const r = await sincronizarCalendarioDoNotion({
+      clienteId,
+      ator,
+      criarPostos,
+      hora: Number.isFinite(hora) && hora >= 0 && hora <= 23 ? hora : 9,
+    });
     revalidatePath(`/clientes/${clienteId}/planejamento`);
     revalidatePath(`/clientes/${clienteId}`);
     return {
       sucesso:
-        `Notion lido: ${r.lidos} dia(s) no calendario, ${r.criados} pauta(s) nova(s), ` +
+        `Notion lido: ${r.lidos} dia(s) no cronograma, ${r.criados} pauta(s) nova(s), ` +
         `${r.atualizados} atualizada(s)` +
-        (r.jaEramPost > 0 ? `, ${r.jaEramPost} ja viraram post e ficaram como estao.` : "."),
+        (r.postosNoCalendario > 0
+          ? `, ${r.postosNoCalendario} no calendario`
+          : "") +
+        (r.noPassado > 0
+          ? `, ${r.noPassado} de dia que ja passou (ficaram so como pauta)`
+          : "") +
+        (r.jaEramPost > 0
+          ? `, ${r.jaEramPost} ja eram post e ficaram como estao`
+          : "") +
+        ".",
     };
   } catch (erro) {
     return { erro: mensagem(erro) };
@@ -126,7 +145,10 @@ export async function acaoAdicionarContato(
 
 export async function acaoRemoverContato(dados: FormData) {
   const ator = await atorAtual();
-  await removerContato({ contatoId: String(dados.get("contatoId") ?? ""), ator });
+  await removerContato({
+    contatoId: String(dados.get("contatoId") ?? ""),
+    ator,
+  });
   revalidatePath(`/clientes/${String(dados.get("clienteId") ?? "")}`);
 }
 

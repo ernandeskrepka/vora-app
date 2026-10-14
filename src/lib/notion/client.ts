@@ -7,7 +7,9 @@ const VERSAO = "2022-06-28";
 
 export class NotionNaoConfigurado extends Error {
   constructor() {
-    super("NOTION_TOKEN nao configurado: crie a integracao interna no Notion e compartilhe as paginas com ela.");
+    super(
+      "NOTION_TOKEN nao configurado: crie a integracao interna no Notion e compartilhe as paginas com ela.",
+    );
   }
 }
 
@@ -24,7 +26,9 @@ export class NotionErro extends Error {
 export function idDaPagina(entrada: string): string | null {
   const limpo = entrada.trim();
   if (!limpo) return null;
-  const achado = limpo.match(/[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/);
+  const achado = limpo.match(
+    /[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/,
+  );
   if (!achado) return null;
   const so = achado[0].replace(/-/g, "").toLowerCase();
   return `${so.slice(0, 8)}-${so.slice(8, 12)}-${so.slice(12, 16)}-${so.slice(16, 20)}-${so.slice(20)}`;
@@ -49,7 +53,10 @@ async function chamar<T>(caminho: string): Promise<T> {
         : r.status === 401
           ? " Token invalido ou revogado."
           : "";
-    throw new NotionErro(`Notion respondeu ${r.status}.${dica} ${corpo.slice(0, 200)}`, r.status);
+    throw new NotionErro(
+      `Notion respondeu ${r.status}.${dica} ${corpo.slice(0, 200)}`,
+      r.status,
+    );
   }
   return (await r.json()) as T;
 }
@@ -62,12 +69,28 @@ type BlocoNotion = {
 };
 
 function textoDoBloco(bloco: BlocoNotion): string {
-  const corpo = bloco[bloco.type] as { rich_text?: Array<{ plain_text?: string }> } | undefined;
+  const corpo = bloco[bloco.type] as
+    | { rich_text?: Array<{ plain_text?: string }> }
+    | undefined;
   if (!corpo?.rich_text) return "";
   return corpo.rich_text.map((p) => p.plain_text ?? "").join("");
 }
 
-export type LinhaDaPagina = { tipo: string; texto: string };
+/** Caixa de marcar do bloco "to_do": vem em to_do.checked, nao no texto. */
+function marcaDoBloco(bloco: BlocoNotion): boolean {
+  const corpo = bloco.to_do as { checked?: boolean } | undefined;
+  return corpo?.checked === true;
+}
+
+export type LinhaDaPagina = {
+  tipo: string;
+  texto: string;
+  /**
+   * Estado da caixa de marcar, nos blocos "to_do". O Notion entrega isso fora
+   * do texto (o texto vem sem o "- [x]"), entao a marca viaja aqui.
+   */
+  marcado?: boolean;
+};
 
 /**
  * Le a pagina do Notion como uma lista de linhas (tipo + texto puro).
@@ -83,13 +106,18 @@ export async function lerPagina(pageId: string): Promise<LinhaDaPagina[]> {
   for (let pagina = 0; pagina < 3; pagina++) {
     const qs = new URLSearchParams({ page_size: "100" });
     if (cursor) qs.set("start_cursor", cursor);
-    const r = await chamar<{ results: BlocoNotion[]; next_cursor: string | null; has_more: boolean }>(
-      `/blocks/${pageId}/children?${qs}`,
-    );
+    const r = await chamar<{
+      results: BlocoNotion[];
+      next_cursor: string | null;
+      has_more: boolean;
+    }>(`/blocks/${pageId}/children?${qs}`);
 
     for (const bloco of r.results) {
       const texto = textoDoBloco(bloco).trim();
-      if (texto) linhas.push({ tipo: bloco.type, texto });
+      if (!texto) continue;
+      const linha: LinhaDaPagina = { tipo: bloco.type, texto };
+      if (bloco.type === "to_do") linha.marcado = marcaDoBloco(bloco);
+      linhas.push(linha);
     }
 
     if (!r.has_more || !r.next_cursor) break;
@@ -100,9 +128,12 @@ export async function lerPagina(pageId: string): Promise<LinhaDaPagina[]> {
 }
 
 export async function tituloDaPagina(pageId: string): Promise<string | null> {
-  const r = await chamar<{ properties?: Record<string, { type: string; title?: Array<{ plain_text?: string }> }> }>(
-    `/pages/${pageId}`,
-  );
+  const r = await chamar<{
+    properties?: Record<
+      string,
+      { type: string; title?: Array<{ plain_text?: string }> }
+    >;
+  }>(`/pages/${pageId}`);
   for (const prop of Object.values(r.properties ?? {})) {
     if (prop.type === "title" && prop.title) {
       return prop.title.map((p) => p.plain_text ?? "").join("") || null;
