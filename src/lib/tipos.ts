@@ -31,6 +31,7 @@ export {
   Network,
   NotificationChannel,
   NotificationStatus,
+  PlanningStatus,
   PostFormat,
   PostStatus,
   PublishAttemptStatus,

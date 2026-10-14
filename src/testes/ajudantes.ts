@@ -7,6 +7,8 @@ import type { Network, PostFormat, PostStatus } from "@/lib/tipos.ts";
 export async function limparBanco() {
   await prisma.$transaction([
     prisma.auditLog.deleteMany(),
+    prisma.planningItem.deleteMany(),
+    prisma.clientAsset.deleteMany(),
     prisma.notification.deleteMany(),
     prisma.approvalDecision.deleteMany(),
     prisma.approvalRequest.deleteMany(),

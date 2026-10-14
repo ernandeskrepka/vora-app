@@ -17,12 +17,41 @@ export type StorageDriver = {
   urlTemporaria(key: string, ttlSegundos?: number): Promise<string>;
 };
 
-export const storage: StorageDriver =
+const driver: StorageDriver =
   env.STORAGE_DRIVER === "s3"
     ? s3StorageDriver()
     : env.STORAGE_DRIVER === "netlify"
       ? netlifyStorageDriver()
       : localStorageDriver();
+
+/**
+ * Prefixo da midia de demonstracao, que mora em public/demonstracao e e
+ * servida como arquivo estatico. Fica fora do driver de proposito: e material
+ * versionado no repositorio, nao upload de cliente, entao nao deve ocupar
+ * Blobs nem bucket, nem ser apagado junto com um post.
+ */
+export const PREFIXO_DEMO = "demonstracao/";
+
+export const storage: StorageDriver = {
+  ...driver,
+  async urlTemporaria(key, ttlSegundos) {
+    if (key.startsWith(PREFIXO_DEMO)) return `/${key}`;
+    return driver.urlTemporaria(key, ttlSegundos);
+  },
+  async ler(key) {
+    if (key.startsWith(PREFIXO_DEMO)) {
+      const { readFile } = await import("node:fs/promises");
+      const path = await import("node:path");
+      return readFile(path.join(process.cwd(), "public", key));
+    }
+    return driver.ler(key);
+  },
+  async remover(key) {
+    // Midia de demonstracao e do repositorio: apagar post nao apaga o arquivo.
+    if (key.startsWith(PREFIXO_DEMO)) return;
+    return driver.remover(key);
+  },
+};
 
 /** Caminho no storage: separado por cliente e post para facilitar limpeza. */
 export function chaveDeMidia(input: {

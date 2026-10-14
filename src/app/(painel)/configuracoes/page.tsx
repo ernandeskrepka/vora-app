@@ -5,6 +5,7 @@ import { formatarDataHora } from "@/lib/datetime.ts";
 import { obterConfiguracoes } from "@/services/configuracoes.ts";
 import {
   acaoAlternarUsuario,
+  acaoCarregarDemonstracao,
   acaoCriarUsuario,
   acaoImportarCarteira,
   acaoSalvarConfiguracoes,
@@ -85,6 +86,24 @@ export default async function Configuracoes() {
           </div>
         </Cartao>
       )}
+
+      <Cartao titulo="Demonstracao para a equipe">
+        <p className="text-sm text-zinc-600">
+          Enche o sistema com uma semana tipica da agencia usando material de verdade: artes do
+          Drive, legendas das campanhas e numeros dos anuncios. Serve para mostrar o fluxo inteiro
+          funcionando antes de ligar a Meta. Pode rodar quantas vezes quiser - nao duplica nada.
+        </p>
+        <p className="mt-2 text-xs text-zinc-500">
+          Nenhuma regra e burlada: post publicado aqui tem decisao de aprovacao registrada antes,
+          post sem resposta nao tem publicacao, e tudo entra na auditoria. As publicacoes ficam
+          marcadas como dry-run, entao nada foi para a Meta.
+        </p>
+        <div className="mt-4">
+          <FormAcao acao={acaoCarregarDemonstracao} textoBotao="Carregar demonstracao" variante="primario">
+            <span className="sr-only">Carregar a demonstracao</span>
+          </FormAcao>
+        </div>
+      </Cartao>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Cartao titulo="Lembretes e avisos">

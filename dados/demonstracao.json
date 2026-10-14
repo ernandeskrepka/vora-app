@@ -1,0 +1,647 @@
+{
+ "comentario": "Demonstracao do painel com material real da VORA (artes do Drive e numeros de anuncios da Meta, janela de 30 dias ate 14/10/2026). Carregada pelo botao em Configuracoes. As datas sao relativas ao dia em que a carga roda, para a demonstracao nunca parecer velha.",
+ "clientes": [
+  {
+   "slug": "santa-rita",
+   "contatos": [
+    {
+     "nome": "Ana Paula",
+     "telefone": "+5549999010001",
+     "aprovador": true,
+     "lembretes": true
+    },
+    {
+     "nome": "Recepcao Martello",
+     "telefone": "+5549999010002",
+     "aprovador": false,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Serie: o que cada exame do check-up mostra",
+     "status": "IDEIA",
+     "dias": 9,
+     "notas": "Tres cards explicando hemograma, glicose e colesterol em linguagem simples."
+    },
+    {
+     "titulo": "Depoimento da paciente sobre a unidade Martello",
+     "status": "EM_PRODUCAO",
+     "dias": 5,
+     "notas": "Gravar na recepcao, aproveitar luz da manha."
+    },
+    {
+     "titulo": "Horario estendido no sabado",
+     "status": "PRONTO",
+     "dias": 3
+    }
+   ],
+   "posts": [
+    {
+     "ref": "sr-outubro-rosa",
+     "legenda": "Seu cuidado tambem merece espaco na sua rotina.\nNeste Outubro Rosa, o Santa Rita preparou uma condicao especial para voce: 12 exames por apenas R$ 139,00.\nSabemos que, na correria, e facil deixar a propria saude para depois. Mas o melhor momento para olhar para voce e agora.\n\n#OutubroRosa #SantaRita #Cacador",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": -6,
+      "hora": "09:00"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/santa-rita/capa-1.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Ana Paula Vieira",
+      "comentario": "Perfeito, pode subir!",
+      "dias": -7
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650192837",
+      "FACEBOOK": "650347181506686_1029384756"
+     }
+    },
+    {
+     "ref": "sr-martello",
+     "legenda": "O Martello agora tem Santa Rita.\n\nA qualidade e a confianca que Cacador ja conhece chegaram mais perto de voce. Nossa nova unidade foi pensada para facilitar sua rotina de cuidados com a saude: estrutura moderna, atendimento acolhedor e toda a expertise Santa Rita perto da sua familia.\n\nLaboratorio Santa Rita - Unidade Martello, Cacador/SC.",
+     "formato": "IMAGEM_UNICA",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": -3,
+      "hora": "11:30"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/santa-rita/capa-2.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Ana Paula Vieira",
+      "comentario": null,
+      "dias": -4
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650192901",
+      "FACEBOOK": "650347181506686_1029384799"
+     }
+    },
+    {
+     "ref": "sr-memora",
+     "legenda": "Voce conhece o Memora?\n\nO exame que acompanha a saude da sua memoria, com coleta simples e resultado comentado pela nossa equipe.\n\nAgende pelo WhatsApp.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": 1,
+      "hora": "09:00"
+     },
+     "status": "AGUARDANDO_APROVACAO",
+     "midias": [
+      "demonstracao/santa-rita/capa-3.jpg"
+     ],
+     "pauta": {
+      "titulo": "Reels Memora",
+      "status": "PRONTO"
+     }
+    }
+   ],
+   "anuncios": {
+    "conta": "act_4152717795011460",
+    "campanhas": [
+     {
+      "id": "120243233097110244",
+      "nome": "[LAB ST RT 01.05.2026] [ENGAJAMENTO] [MSG WPP] [PUBLIS IG]",
+      "gasto": 208.2,
+      "impressoes": 30287,
+      "alcance": 10829,
+      "cliques": 430,
+      "ctr": 1.42,
+      "cpm": 6.87,
+      "resultados": 118
+     },
+     {
+      "id": "120248398076930244",
+      "nome": "[LAB ST RT 30.07.2026] [ENGAJAMENTO] [MSG WPP] [ADS ESTATICOS] [BAIRRO MARTELLO]",
+      "gasto": 313.66,
+      "impressoes": 54924,
+      "alcance": 13517,
+      "cliques": 598,
+      "ctr": 1.09,
+      "cpm": 5.71,
+      "resultados": 164
+     }
+    ]
+   }
+  },
+  {
+   "slug": "amigovida",
+   "contatos": [
+    {
+     "nome": "Juliana",
+     "telefone": "+5549999020001",
+     "aprovador": true,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Coleta em casa: como funciona",
+     "status": "EM_PRODUCAO",
+     "dias": 6
+    },
+    {
+     "titulo": "Novembro Azul - abrir campanha",
+     "status": "IDEIA",
+     "dias": 18
+    }
+   ],
+   "posts": [
+    {
+     "ref": "av-checkup",
+     "legenda": "Nao deixe o cuidado para depois!\n\nNeste Outubro Rosa, o AmigoVida reforca a importancia de manter a saude em dia. Por R$ 99,90 voce realiza 11 exames: hemograma, glicose, colesterol total, HDL, LDL, VLDL, triglicerideos, ureia, creatinina, TGO e TGP.\n\nSeu cuidado nao precisa esperar.",
+     "formato": "IMAGEM_UNICA",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": -5,
+      "hora": "10:00"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/amigovida/capa-1.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Juliana Boff",
+      "comentario": "Aprovado, so conferir se o valor esta certo na arte.",
+      "dias": -6
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650193011",
+      "FACEBOOK": "142388579199856_9988776"
+     }
+    },
+    {
+     "ref": "av-coleta-casa",
+     "legenda": "Cuidar de voce e um presente para si mesma.\n\nE se preferir, voce pode contar com coleta em casa: a gente vai ate voce, com a mesma seguranca do laboratorio.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": 2,
+      "hora": "19:00"
+     },
+     "status": "APROVADO",
+     "midias": [
+      "demonstracao/amigovida/capa-2.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Juliana Boff",
+      "comentario": null,
+      "dias": 0
+     }
+    }
+   ],
+   "anuncios": {
+    "conta": "act_1110798207630789",
+    "campanhas": [
+     {
+      "id": "23855738640090794",
+      "nome": "[LAB AVIDA 01.05.2026] [ENGAJAMENTO] [MSG WPP] [PUBLIS IG]",
+      "gasto": 552.69,
+      "impressoes": 63450,
+      "alcance": 16538,
+      "cliques": 750,
+      "ctr": 1.18,
+      "cpm": 8.71,
+      "resultados": 203
+     },
+     {
+      "id": "23854919914410794",
+      "nome": "[LAB AVIDA 07.04.2026] [ENGAJAMENTO] [MSG WPP] [PUBLIS IG]",
+      "gasto": 256.6,
+      "impressoes": 8945,
+      "alcance": 7127,
+      "cliques": 260,
+      "ctr": 2.91,
+      "cpm": 28.69,
+      "resultados": 71
+     }
+    ]
+   }
+  },
+  {
+   "slug": "camati",
+   "contatos": [
+    {
+     "nome": "Marcia",
+     "telefone": "+5549999030001",
+     "aprovador": true,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Carrossel: combo de exames explicado",
+     "status": "PRONTO",
+     "dias": 2
+    }
+   ],
+   "posts": [
+    {
+     "ref": "cm-carrossel-combo",
+     "legenda": "Combo Outubro Rosa do Camati: os exames que toda mulher deveria manter em dia.\n\nArraste para ver o que esta incluido e agende pelo WhatsApp.",
+     "formato": "CARROSSEL",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": 1,
+      "hora": "08:30"
+     },
+     "status": "AGUARDANDO_APROVACAO",
+     "midias": [
+      "demonstracao/camati/carrossel-1.jpg",
+      "demonstracao/camati/carrossel-2.jpg",
+      "demonstracao/camati/carrossel-3.jpg"
+     ]
+    },
+    {
+     "ref": "cm-capa-1",
+     "legenda": "Outubro Rosa e sobre lembrar de voce.\n\nAgende seus exames e passe esse recado para quem voce ama.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": -4,
+      "hora": "18:00"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/camati/capa-1.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Marcia Camati",
+      "comentario": null,
+      "dias": -5
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650193377"
+     }
+    },
+    {
+     "ref": "cm-capa-2",
+     "legenda": "A rotina nao para, mas a sua saude tambem nao pode parar.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": -1,
+      "hora": "12:00"
+     },
+     "status": "POST_SEM_RESPOSTA",
+     "midias": [
+      "demonstracao/camati/capa-2.jpg"
+     ]
+    }
+   ],
+   "anuncios": {
+    "conta": "act_1267399364934763",
+    "campanhas": []
+   }
+  },
+  {
+   "slug": "cepac-joacaba",
+   "contatos": [
+    {
+     "nome": "Recepcao CEPAC",
+     "telefone": "+5549999040001",
+     "aprovador": true,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Combo 12 exames - renovar arte para novembro",
+     "status": "IDEIA",
+     "dias": 20
+    }
+   ],
+   "posts": [
+    {
+     "ref": "cp-combo",
+     "legenda": "Outubro Rosa com foco em voce!\n\nO CEPAC preparou um combo especial com 12 exames por R$ 149,90 para voce manter seus cuidados em dia.\n\nSeu cuidado merece atencao.",
+     "formato": "IMAGEM_UNICA",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": -8,
+      "hora": "09:30"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/cepac-joacaba/capa-1.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Patricia Lenz",
+      "comentario": null,
+      "dias": -9
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650193455",
+      "FACEBOOK": "350939055038999_5544332"
+     }
+    },
+    {
+     "ref": "cp-prevencao",
+     "legenda": "A prevencao comeca com atencao, acompanhamento e exames em dia.\n\nConfira nosso combo especial deste mes.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": 3,
+      "hora": "17:00"
+     },
+     "status": "RASCUNHO",
+     "midias": [
+      "demonstracao/cepac-joacaba/capa-2.jpg"
+     ]
+    },
+    {
+     "ref": "cp-equipe",
+     "legenda": "Por tras de cada resultado existe uma equipe inteira cuidando do seu exame.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": 5,
+      "hora": "10:00"
+     },
+     "status": "RASCUNHO",
+     "midias": [
+      "demonstracao/cepac-joacaba/capa-3.jpg"
+     ]
+    }
+   ],
+   "anuncios": {
+    "conta": "act_514166179857942",
+    "campanhas": []
+   }
+  },
+  {
+   "slug": "laborali",
+   "contatos": [
+    {
+     "nome": "Equipe Laborali",
+     "telefone": "+5549999050001",
+     "aprovador": true,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Saude ocupacional: serie para empresas",
+     "status": "EM_PRODUCAO",
+     "dias": 7
+    }
+   ],
+   "posts": [
+    {
+     "ref": "lb-outubro",
+     "legenda": "Cuide de voce neste Outubro Rosa.\n\nO Laborali preparou condicoes especiais para os exames de prevencao. Fale com a gente e agende o seu.",
+     "formato": "IMAGEM_UNICA",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": -2,
+      "hora": "09:00"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/laborali/capa-1.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Camila Reis",
+      "comentario": "Pode publicar.",
+      "dias": -3
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650193511",
+      "FACEBOOK": "546299468780455_7766554"
+     }
+    },
+    {
+     "ref": "lb-reels",
+     "legenda": "O exame certo, no momento certo, muda o desfecho.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": 4,
+      "hora": "19:30"
+     },
+     "status": "AGUARDANDO_APROVACAO",
+     "midias": [
+      "demonstracao/laborali/capa-2.jpg"
+     ]
+    }
+   ],
+   "anuncios": {
+    "conta": "act_1252752712730362",
+    "campanhas": []
+   }
+  },
+  {
+   "slug": "dr-maykon-ribeiro",
+   "contatos": [
+    {
+     "nome": "Secretaria Dr. Maykon",
+     "telefone": "+5549999060001",
+     "aprovador": true,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Carrossel sobre sono e hormonios",
+     "status": "IDEIA",
+     "dias": 12
+    },
+    {
+     "titulo": "Responder duvidas dos stories",
+     "status": "EM_PRODUCAO",
+     "dias": 4
+    }
+   ],
+   "posts": [
+    {
+     "ref": "mk-cortisol",
+     "legenda": "Cortisol alto: os sinais que o corpo da antes de voce perceber.\n\nArraste para ver os principais sintomas e quando procurar avaliacao.",
+     "formato": "CARROSSEL",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": -1,
+      "hora": "20:00"
+     },
+     "status": "PUBLICADO",
+     "midias": [
+      "demonstracao/dr-maykon-ribeiro/cortisol-1.jpg",
+      "demonstracao/dr-maykon-ribeiro/cortisol-2.jpg",
+      "demonstracao/dr-maykon-ribeiro/cortisol-3.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Dr. Maykon Ribeiro",
+      "comentario": "Trocar a palavra 'cura' do card 3 por 'tratamento'. Resto aprovado.",
+      "dias": -2
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650193622"
+     }
+    },
+    {
+     "ref": "mk-dor",
+     "legenda": "A dor nao precisa fazer parte da sua rotina.\n\nQuando ela comeca a limitar seus movimentos ou fazer voce deixar de fazer o que gosta, e hora de olhar para isso com atencao.",
+     "formato": "REELS",
+     "redes": [
+      "INSTAGRAM"
+     ],
+     "quando": {
+      "dias": 2,
+      "hora": "19:00"
+     },
+     "status": "APROVADO",
+     "midias": [
+      "demonstracao/dr-maykon-ribeiro/cortisol-2.jpg"
+     ],
+     "aprovacao": {
+      "nome": "Dr. Maykon Ribeiro",
+      "comentario": null,
+      "dias": -1
+     }
+    }
+   ],
+   "anuncios": {
+    "conta": "act_953937683981451",
+    "campanhas": [
+     {
+      "id": "120248122428160499",
+      "nome": "[DMR 23.07.2026] [ENGAJAMENTO] [MSG WPP] [ADS ESTATICOS]",
+      "gasto": 54.97,
+      "impressoes": 6605,
+      "alcance": 3103,
+      "cliques": 177,
+      "ctr": 2.68,
+      "cpm": 8.32,
+      "resultados": 48
+     },
+     {
+      "id": "120247385746390499",
+      "nome": "[DMR 15.07.2026] [ENGAJAMENTO] [MSG WPP] [POST IG]",
+      "gasto": 58.21,
+      "impressoes": 4796,
+      "alcance": 2342,
+      "cliques": 123,
+      "ctr": 2.56,
+      "cpm": 12.14,
+      "resultados": 33
+     }
+    ]
+   }
+  },
+  {
+   "slug": "colegio-drummond",
+   "contatos": [
+    {
+     "nome": "Coordenacao Drummond",
+     "telefone": "+5549999070001",
+     "aprovador": true,
+     "lembretes": true
+    }
+   ],
+   "pautas": [
+    {
+     "titulo": "Matriculas 2027 - serie de depoimentos",
+     "status": "EM_PRODUCAO",
+     "dias": 8
+    },
+    {
+     "titulo": "Bastidores da feira de ciencias",
+     "status": "IDEIA",
+     "dias": 15
+    }
+   ],
+   "posts": [
+    {
+     "ref": "dm-matriculas",
+     "legenda": "MATRICULAS ABERTAS 2027\n\nO Colegio Drummond esta com matriculas abertas. Venha conhecer a escola, converse com a nossa equipe e veja de perto o dia a dia dos nossos alunos.",
+     "formato": "IMAGEM_UNICA",
+     "redes": [
+      "INSTAGRAM",
+      "FACEBOOK"
+     ],
+     "quando": {
+      "dias": -4,
+      "hora": "08:00"
+     },
+     "status": "PUBLICADO",
+     "midias": [],
+     "aprovacao": {
+      "nome": "Coordenacao Drummond",
+      "comentario": null,
+      "dias": -5
+     },
+     "publicacao": {
+      "INSTAGRAM": "17928374650193755",
+      "FACEBOOK": "210651029007595_3322110"
+     }
+    }
+   ],
+   "anuncios": {
+    "conta": "act_2473932342985083",
+    "campanhas": [
+     {
+      "id": "120245054693630398",
+      "nome": "[DMD 15.04.2026] [ENGAJAMENTO] [THRU PLAY] [POST IG]",
+      "gasto": 96.05,
+      "impressoes": 12231,
+      "alcance": 4471,
+      "cliques": 58,
+      "ctr": 0.47,
+      "cpm": 7.85,
+      "resultados": 21
+     },
+     {
+      "id": "120244685218820398",
+      "nome": "[DMD 07.04.2026] [TRAFEGO] [+SEGUIDORES]",
+      "gasto": 138.77,
+      "impressoes": 24914,
+      "alcance": 8736,
+      "cliques": 417,
+      "ctr": 1.67,
+      "cpm": 5.57,
+      "resultados": 96
+     }
+    ]
+   }
+  }
+ ]
+}

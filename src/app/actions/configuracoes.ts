@@ -128,3 +128,35 @@ export async function acaoImportarCarteira(
     return { erro: erro instanceof Error ? erro.message : String(erro) };
   }
 }
+
+/**
+ * Carrega a demonstracao: clientes, pauta, posts com material real, aprovacoes
+ * registradas e numeros de anuncio. Para apresentar o sistema funcionando
+ * antes da Meta estar ligada. Idempotente.
+ */
+export async function acaoCarregarDemonstracao(
+  _estado: EstadoSimples,
+  _dados: FormData,
+): Promise<EstadoSimples> {
+  const admin = await exigirAdmin();
+  try {
+    const { carregarDemonstracao } = await import("@/services/demonstracao.ts");
+    const r = await carregarDemonstracao({
+      tipo: "USUARIO",
+      usuarioId: admin.id,
+      nome: admin.name,
+    });
+    revalidatePath("/");
+    revalidatePath("/clientes");
+    revalidatePath("/calendario");
+    revalidatePath("/configuracoes");
+    return {
+      sucesso:
+        `Demonstracao carregada: ${r.postsCriados} post(s), ${r.pautasCriadas} pauta(s), ` +
+        `${r.contatosCriados} contato(s) e ${r.diasDeAnuncio} dia(s) de metrica. ` +
+        (r.ignorados > 0 ? `${r.ignorados} post(s) ja existiam e foram mantidos.` : ""),
+    };
+  } catch (erro) {
+    return { erro: erro instanceof Error ? erro.message : String(erro) };
+  }
+}
