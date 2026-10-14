@@ -122,7 +122,11 @@
       "cliques": 430,
       "ctr": 1.42,
       "cpm": 6.87,
-      "resultados": 118
+      "resultados": 118,
+      "criativos": [
+       "demonstracao/santa-rita/capa-1.jpg",
+       "demonstracao/santa-rita/capa-3.jpg"
+      ]
      },
      {
       "id": "120248398076930244",
@@ -133,7 +137,10 @@
       "cliques": 598,
       "ctr": 1.09,
       "cpm": 5.71,
-      "resultados": 164
+      "resultados": 164,
+      "criativos": [
+       "demonstracao/santa-rita/capa-2.jpg"
+      ]
      }
     ]
    }
@@ -221,7 +228,10 @@
       "cliques": 750,
       "ctr": 1.18,
       "cpm": 8.71,
-      "resultados": 203
+      "resultados": 203,
+      "criativos": [
+       "demonstracao/amigovida/capa-1.jpg"
+      ]
      },
      {
       "id": "23854919914410794",
@@ -232,7 +242,10 @@
       "cliques": 260,
       "ctr": 2.91,
       "cpm": 28.69,
-      "resultados": 71
+      "resultados": 71,
+      "criativos": [
+       "demonstracao/amigovida/capa-2.jpg"
+      ]
      }
     ]
    }
@@ -551,7 +564,10 @@
       "cliques": 177,
       "ctr": 2.68,
       "cpm": 8.32,
-      "resultados": 48
+      "resultados": 48,
+      "criativos": [
+       "demonstracao/dr-maykon-ribeiro/cortisol-1.jpg"
+      ]
      },
      {
       "id": "120247385746390499",
@@ -562,7 +578,10 @@
       "cliques": 123,
       "ctr": 2.56,
       "cpm": 12.14,
-      "resultados": 33
+      "resultados": 33,
+      "criativos": [
+       "demonstracao/dr-maykon-ribeiro/cortisol-3.jpg"
+      ]
      }
     ]
    }

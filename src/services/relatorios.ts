@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db.ts";
 import { intervaloDoMes } from "@/lib/datetime.ts";
+import { quinzenaAnterior, type Quinzena } from "@/domain/quinzena.ts";
 
 /**
  * Relatorio mensal por cliente (fase 2).
@@ -10,8 +11,56 @@ import { intervaloDoMes } from "@/lib/datetime.ts";
  */
 export async function relatorioMensal(input: { clientId: string; ano: number; mes: number }) {
   const { inicio, fim } = intervaloDoMes(input.ano, input.mes);
+  return relatorioDoPeriodo({ clientId: input.clientId, inicio, fim });
+}
 
-  const [cliente, insights, posts] = await Promise.all([
+/**
+ * Relatorio da quinzena, que e a janela que a VORA usa com o cliente, junto
+ * com a variacao em relacao a quinzena anterior. Sem a comparacao, o numero
+ * sozinho nao diz se melhorou ou piorou.
+ */
+export async function relatorioDaQuinzena(input: { clientId: string; quinzena: Quinzena }) {
+  const atual = await relatorioDoPeriodo({
+    clientId: input.clientId,
+    inicio: input.quinzena.inicio,
+    fim: input.quinzena.fim,
+  });
+
+  const anterior = quinzenaAnterior(input.quinzena);
+  const passada = await relatorioDoPeriodo({
+    clientId: input.clientId,
+    inicio: anterior.inicio,
+    fim: anterior.fim,
+  });
+
+  const variacao = (agora: number, antes: number): number | null =>
+    antes > 0 ? ((agora - antes) / antes) * 100 : null;
+
+  return {
+    ...atual,
+    quinzena: input.quinzena,
+    comparativo: {
+      temBase: passada.anuncios.temDados,
+      rotuloAnterior: anterior.chave,
+      investimento: variacao(atual.anuncios.totais.investimento, passada.anuncios.totais.investimento),
+      resultados: variacao(atual.anuncios.totais.conversoes, passada.anuncios.totais.conversoes),
+      custoPorResultado:
+        atual.anuncios.totais.custoPorResultado !== null &&
+        passada.anuncios.totais.custoPorResultado !== null
+          ? variacao(
+              atual.anuncios.totais.custoPorResultado,
+              passada.anuncios.totais.custoPorResultado,
+            )
+          : null,
+      publicados: passada.posts.publicados.length,
+    },
+  };
+}
+
+export async function relatorioDoPeriodo(input: { clientId: string; inicio: Date; fim: Date }) {
+  const { inicio, fim } = input;
+
+  const [cliente, insights, posts, criativos] = await Promise.all([
     prisma.client.findUniqueOrThrow({ where: { id: input.clientId } }),
     prisma.adInsightDaily.findMany({
       where: { clientId: input.clientId, date: { gte: inicio, lt: fim } },
@@ -26,6 +75,7 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
       },
       orderBy: { scheduledAt: "asc" },
     }),
+    prisma.adCampaignCreative.findMany({ where: { clientId: input.clientId } }),
   ]);
 
   const porCampanha = new Map<
@@ -62,7 +112,18 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
     porCampanha.set(linha.campaignId, atual);
   }
 
-  const campanhas = [...porCampanha.values()].sort((a, b) => b.spend - a.spend);
+  const { storage: storageCriativos } = await import("@/lib/storage/index.ts");
+  const criativosPorCampanha = new Map<string, Array<{ url: string; nome: string | null }>>();
+  for (const c of criativos) {
+    const lista = criativosPorCampanha.get(c.campaignId) ?? [];
+    if (lista.length >= 3) continue;
+    lista.push({ url: await storageCriativos.urlTemporaria(c.storageKey), nome: c.adName });
+    criativosPorCampanha.set(c.campaignId, lista);
+  }
+
+  const campanhas = [...porCampanha.values()]
+    .sort((a, b) => b.spend - a.spend)
+    .map((c) => ({ ...c, criativos: criativosPorCampanha.get(c.campaignId) ?? [] }));
 
   // Capa e primeira linha da legenda, prontas para a tela e para o PDF.
   const { storage } = await import("@/lib/storage/index.ts");
@@ -99,7 +160,7 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
 
   return {
     cliente,
-    periodo: { inicio, fim, ano: input.ano, mes: input.mes },
+    periodo: { inicio, fim },
     anuncios: {
       temDados: insights.length > 0,
       campanhas,

@@ -30,6 +30,8 @@ type PostDemo = {
 type CampanhaDemo = {
   id: string;
   nome: string;
+  /** Artes que rodaram nessa campanha (chaves no storage). */
+  criativos?: string[];
   gasto: number;
   impressoes: number;
   alcance: number;
@@ -297,6 +299,26 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
     if (anuncios && anuncios.campanhas.length > 0) {
       const DIAS = 30;
       for (const campanha of anuncios.campanhas) {
+        // O criativo que rodou: e ele que faz o cliente entender o numero.
+        for (const chave of campanha.criativos ?? []) {
+          await prisma.adCampaignCreative.upsert({
+            where: {
+              clientId_campaignId_storageKey: {
+                clientId: cliente.id,
+                campaignId: campanha.id,
+                storageKey: chave,
+              },
+            },
+            update: {},
+            create: {
+              clientId: cliente.id,
+              campaignId: campanha.id,
+              storageKey: chave,
+              adName: campanha.nome.slice(0, 120),
+            },
+          });
+        }
+
         const pesos = Array.from({ length: DIAS }, (_, i) => 0.6 + ruido(`${campanha.id}:${i}`) * 0.8);
         const soma = pesos.reduce((a, b) => a + b, 0);
 

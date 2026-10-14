@@ -167,6 +167,7 @@ model Client {
   metaConnections MetaConnection[]
   posts           Post[]
   adInsights      AdInsightDaily[]
+  adCreatives     AdCampaignCreative[]
   planningItems   PlanningItem[]
   assets          ClientAsset[]
 }
@@ -410,6 +411,23 @@ model Notification {
 }
 
 // ---------------------------------------------------------------- fase 2
+
+/// Criativo que rodou numa campanha, guardado para o relatorio mostrar ao
+/// cliente o que funcionou e o que nao. A imagem vai para o storage: a URL da
+/// Meta expira em poucos dias e o relatorio precisa continuar abrindo depois.
+model AdCampaignCreative {
+  id          String   @id @default(cuid())
+  clientId    String
+  campaignId  String
+  adName      String?
+  storageKey  String
+  createdAt   DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, campaignId, storageKey])
+  @@index([clientId, campaignId])
+}
 
 model AdInsightDaily {
   id            String   @id @default(cuid())
