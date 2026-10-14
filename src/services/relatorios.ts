@@ -19,7 +19,11 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
     }),
     prisma.post.findMany({
       where: { clientId: input.clientId, scheduledAt: { gte: inicio, lt: fim } },
-      include: { publications: true, decisions: { orderBy: { decidedAt: "desc" }, take: 1 } },
+      include: {
+        publications: true,
+        decisions: { orderBy: { decidedAt: "desc" }, take: 1 },
+        media: { orderBy: { position: "asc" }, take: 1 },
+      },
       orderBy: { scheduledAt: "asc" },
     }),
   ]);
@@ -60,6 +64,33 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
 
   const campanhas = [...porCampanha.values()].sort((a, b) => b.spend - a.spend);
 
+  // Capa e primeira linha da legenda, prontas para a tela e para o PDF.
+  const { storage } = await import("@/lib/storage/index.ts");
+  const postsComCapa = await Promise.all(
+    posts.map(async (p) => ({
+      ...p,
+      capa: p.media[0] ? await storage.urlTemporaria(p.media[0].storageKey) : null,
+      resumo: p.caption.replace(/\n*\[demo:[^\]]+\]\s*$/, "").split("\n")[0].trim(),
+    })),
+  );
+
+  // Serie diaria: um ponto por dia com dado, somando as campanhas do cliente.
+  const porDia = new Map<string, { data: Date; investimento: number; resultados: number; cliques: number }>();
+  for (const linha of insights) {
+    const chave = linha.date.toISOString().slice(0, 10);
+    const atual = porDia.get(chave) ?? {
+      data: linha.date,
+      investimento: 0,
+      resultados: 0,
+      cliques: 0,
+    };
+    atual.investimento += Number(linha.spend);
+    atual.resultados += linha.conversions;
+    atual.cliques += linha.clicks;
+    porDia.set(chave, atual);
+  }
+  const serie = [...porDia.values()].sort((a, b) => a.data.getTime() - b.data.getTime());
+
   const investimento = campanhas.reduce((t, c) => t + c.spend, 0);
   const impressoes = campanhas.reduce((t, c) => t + c.impressions, 0);
   const cliques = campanhas.reduce((t, c) => t + c.clicks, 0);
@@ -72,6 +103,7 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
     anuncios: {
       temDados: insights.length > 0,
       campanhas,
+      serie,
       totais: {
         investimento,
         alcance,
@@ -86,12 +118,12 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
       },
     },
     posts: {
-      todos: posts,
-      publicados: posts.filter((p) => p.status === "PUBLICADO"),
-      reprovados: posts.filter((p) => p.status === "REPROVADO"),
-      semResposta: posts.filter((p) => p.status === "POST_SEM_RESPOSTA"),
-      aguardando: posts.filter((p) => p.status === "AGUARDANDO_APROVACAO"),
-      falhas: posts.filter((p) => p.status === "FALHOU"),
+      todos: postsComCapa,
+      publicados: postsComCapa.filter((p) => p.status === "PUBLICADO"),
+      reprovados: postsComCapa.filter((p) => p.status === "REPROVADO"),
+      semResposta: postsComCapa.filter((p) => p.status === "POST_SEM_RESPOSTA"),
+      aguardando: postsComCapa.filter((p) => p.status === "AGUARDANDO_APROVACAO"),
+      falhas: postsComCapa.filter((p) => p.status === "FALHOU"),
     },
   };
 }

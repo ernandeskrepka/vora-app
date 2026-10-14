@@ -44,6 +44,15 @@ export function intervaloDoMes(ano: number, mes: number, fuso: string = FUSO_PAD
   return { inicio, fim };
 }
 
+/**
+ * Dia de metrica (coluna @db.Date) vem como meia-noite UTC. Formatar isso no
+ * fuso de Sao Paulo joga a data para o dia anterior, entao esse tipo de data
+ * tem de ser lido em UTC.
+ */
+export function formatarDiaUTC(data: Date): string {
+  return formatInTimeZone(data, "UTC", "dd/MM");
+}
+
 export function chaveDiaLocal(data: Date, fuso: string = FUSO_PADRAO): string {
   return formatInTimeZone(data, fuso, "yyyy-MM-dd");
 }

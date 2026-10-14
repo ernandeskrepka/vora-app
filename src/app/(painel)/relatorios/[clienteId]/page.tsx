@@ -5,6 +5,8 @@ import { formatInTimeZone } from "date-fns-tz";
 import { relatorioMensal } from "@/services/relatorios.ts";
 import { Aviso, Cartao, Etiqueta, Vazio } from "@/components/ui.tsx";
 import { BotaoImprimir } from "@/components/botao-imprimir.tsx";
+import { GraficoDia } from "@/components/grafico-dia.tsx";
+import { ptBR } from "date-fns/locale";
 import type { PostStatus } from "@/domain/post-status.ts";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +46,8 @@ export default async function RelatorioCliente({
         <div>
           <h1 className="text-xl font-semibold text-zinc-900">{r.cliente.name}</h1>
           <p className="text-sm text-zinc-500">
-            Relatorio de {formatInTimeZone(r.periodo.inicio, FUSO_PADRAO, "MMMM yyyy")}
+            Relatorio de{" "}
+            {formatInTimeZone(r.periodo.inicio, FUSO_PADRAO, "MMMM 'de' yyyy", { locale: ptBR })}
           </p>
         </div>
         <div className="flex items-center gap-2 nao-imprimir">
@@ -94,7 +97,20 @@ export default async function RelatorioCliente({
               ))}
             </div>
 
-            <table className="mt-5 w-full text-sm">
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <GraficoDia
+                titulo="Investimento por dia"
+                pontos={r.anuncios.serie.map((d) => ({ data: d.data, valor: d.investimento }))}
+                formatar={(v) => moeda(v, t.moeda)}
+              />
+              <GraficoDia
+                titulo="Resultados por dia"
+                pontos={r.anuncios.serie.map((d) => ({ data: d.data, valor: d.resultados }))}
+                formatar={(v) => numero(v)}
+              />
+            </div>
+
+            <table className="mt-6 w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
                   <th className="py-2">Campanha</th>
@@ -127,11 +143,20 @@ export default async function RelatorioCliente({
           ) : (
             <ul className="divide-y divide-zinc-100">
               {r.posts.publicados.map((p) => (
-                <li key={p.id} className="py-2 text-sm">
+                <li key={p.id} className="flex gap-3 py-2 text-sm">
+                  {p.capa && (
+                    <img
+                      src={p.capa}
+                      alt=""
+                      className="h-14 w-12 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+                  <div className="min-w-0">
                   <p className="font-medium text-zinc-800">
                     {formatarData(p.scheduledAt, r.cliente.timezone)} -{" "}
                     {p.format.replace("_", " ").toLowerCase()}
                   </p>
+                  <p className="truncate text-xs text-zinc-600">{p.resumo}</p>
                   <p className="text-xs text-zinc-500">
                     {p.publications.map((pub) =>
                       pub.permalink ? (
@@ -151,6 +176,7 @@ export default async function RelatorioCliente({
                       ),
                     )}
                   </p>
+                  </div>
                 </li>
               ))}
             </ul>
