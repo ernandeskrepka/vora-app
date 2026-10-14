@@ -9,11 +9,24 @@ const CARTEIRA = [
     nome: "Laboratorio Santa Rita",
     slug: "santa-rita",
     ativos: [
-      { tipo: "FACEBOOK_PAGE" as const, id: "650347181506686", nome: "Santa Rita Laboratorio" },
-      { tipo: "AD_ACCOUNT" as const, id: "act_4152717795011460", nome: "LAB. SANTA RITA CA 01" },
+      {
+        tipo: "FACEBOOK_PAGE" as const,
+        id: "650347181506686",
+        nome: "Santa Rita Laboratorio",
+      },
+      {
+        tipo: "AD_ACCOUNT" as const,
+        id: "act_4152717795011460",
+        nome: "LAB. SANTA RITA CA 01",
+      },
     ],
   },
-  { nome: "Danieli Moveis", slug: "danieli-moveis", ativos: [], pendencia: "sem Pagina localizada" },
+  {
+    nome: "Danieli Moveis",
+    slug: "danieli-moveis",
+    ativos: [],
+    pendencia: "sem Pagina localizada",
+  },
 ];
 
 beforeEach(async () => {
@@ -36,6 +49,46 @@ describe("importacao da carteira", () => {
     }
   });
 
+  it("reaproveita o cliente ja cadastrado a mao com outro slug", async () => {
+    // Foi o que aconteceu com o Fleming: cadastrado na mao como
+    // "laboratorio-fleming" e listado no arquivo como "fleming".
+    const aMao = await prisma.client.create({
+      data: { name: "Laboratorio Fleming", slug: "laboratorio-fleming" },
+    });
+
+    const r = await importarCarteira(
+      [
+        {
+          nome: "Laboratorio Fleming",
+          slug: "fleming",
+          ativos: [
+            {
+              tipo: "AD_ACCOUNT" as const,
+              id: "act_777",
+              nome: "FLEMING CA 01",
+            },
+          ],
+        },
+      ],
+      ATOR_EQUIPE,
+    );
+
+    expect(r.clientesCriados).toBe(0);
+    expect(r.clientesExistentes).toBe(1);
+
+    const clientes = await prisma.client.findMany({
+      where: { name: "Laboratorio Fleming" },
+    });
+    expect(clientes).toHaveLength(1);
+    expect(clientes[0].id).toBe(aMao.id);
+    expect(clientes[0].slug).toBe("laboratorio-fleming");
+
+    const conexao = await prisma.metaConnection.findFirstOrThrow({
+      where: { clientId: aMao.id },
+    });
+    expect(conexao.assetId).toBe("act_777");
+  });
+
   it("rodar de novo nao duplica nada", async () => {
     await importarCarteira(CARTEIRA, ATOR_EQUIPE);
     const r = await importarCarteira(CARTEIRA, ATOR_EQUIPE);
@@ -49,14 +102,22 @@ describe("importacao da carteira", () => {
 
   it("nao troca o ID de um ativo ja conectado", async () => {
     await importarCarteira(CARTEIRA, ATOR_EQUIPE);
-    const cliente = await prisma.client.findUniqueOrThrow({ where: { slug: "santa-rita" } });
+    const cliente = await prisma.client.findUniqueOrThrow({
+      where: { slug: "santa-rita" },
+    });
     await prisma.metaConnection.updateMany({
       where: { clientId: cliente.id, assetType: "FACEBOOK_PAGE" },
       data: { status: "CONECTADO" },
     });
 
     const r = await importarCarteira(
-      [{ nome: "Laboratorio Santa Rita", slug: "santa-rita", ativos: [{ tipo: "FACEBOOK_PAGE", id: "999" }] }],
+      [
+        {
+          nome: "Laboratorio Santa Rita",
+          slug: "santa-rita",
+          ativos: [{ tipo: "FACEBOOK_PAGE", id: "999" }],
+        },
+      ],
       ATOR_EQUIPE,
     );
 
@@ -75,14 +136,22 @@ describe("importacao da carteira", () => {
         {
           nome: "Laboratorio Santa Rita",
           slug: "santa-rita",
-          ativos: [{ tipo: "FACEBOOK_PAGE", id: "650347181506686", nome: "Santa Rita Lab (novo nome)" }],
+          ativos: [
+            {
+              tipo: "FACEBOOK_PAGE",
+              id: "650347181506686",
+              nome: "Santa Rita Lab (novo nome)",
+            },
+          ],
         },
       ],
       ATOR_EQUIPE,
     );
 
     expect(r.ativosAtualizados).toBe(1);
-    const conexao = await prisma.metaConnection.findFirstOrThrow({ where: { assetType: "FACEBOOK_PAGE" } });
+    const conexao = await prisma.metaConnection.findFirstOrThrow({
+      where: { assetType: "FACEBOOK_PAGE" },
+    });
     expect(conexao.assetName).toBe("Santa Rita Lab (novo nome)");
   });
 

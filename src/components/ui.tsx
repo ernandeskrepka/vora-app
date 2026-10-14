@@ -2,7 +2,13 @@ import clsx from "clsx";
 import Link from "next/link";
 import { ROTULO_STATUS, type PostStatus } from "@/domain/post-status.ts";
 
-export function Etiqueta({ status, className }: { status: PostStatus; className?: string }) {
+export function Etiqueta({
+  status,
+  className,
+}: {
+  status: PostStatus;
+  className?: string;
+}) {
   return (
     <span
       className={clsx(
@@ -18,24 +24,37 @@ export function Etiqueta({ status, className }: { status: PostStatus; className?
 
 export function Cartao({
   titulo,
+  descricao,
   acao,
   children,
   className,
 }: {
   titulo?: string;
+  /** Uma linha explicando o cartao, acima do conteudo. */
+  descricao?: string;
   acao?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
-    <section className={clsx("rounded-xl border border-zinc-200 bg-white shadow-sm", className)}>
+    <section
+      className={clsx(
+        "rounded-xl border border-zinc-200 bg-white shadow-sm",
+        className,
+      )}
+    >
       {(titulo || acao) && (
         <header className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3">
-          {titulo && <h2 className="text-sm font-semibold text-zinc-800">{titulo}</h2>}
+          {titulo && (
+            <h2 className="text-sm font-semibold text-zinc-800">{titulo}</h2>
+          )}
           {acao}
         </header>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-5">
+        {descricao && <p className="mb-3 text-sm text-zinc-500">{descricao}</p>}
+        {children}
+      </div>
     </section>
   );
 }
@@ -54,8 +73,10 @@ export function Botao({
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
         variante === "primario" && "bg-vora-preto text-white hover:bg-zinc-800",
-        variante === "secundario" && "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
-        variante === "perigo" && "border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100",
+        variante === "secundario" &&
+          "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
+        variante === "perigo" &&
+          "border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100",
         variante === "fantasma" && "text-zinc-600 hover:bg-zinc-100",
         className,
       )}
@@ -82,7 +103,8 @@ export function BotaoLink({
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition",
         variante === "primario" && "bg-vora-preto text-white hover:bg-zinc-800",
-        variante === "secundario" && "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
+        variante === "secundario" &&
+          "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
         className,
       )}
     >
@@ -104,9 +126,13 @@ export function Campo({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-zinc-700">{rotulo}</span>
+      <span className="mb-1 block text-sm font-medium text-zinc-700">
+        {rotulo}
+      </span>
       {children}
-      {dica && !erro && <span className="mt-1 block text-xs text-zinc-500">{dica}</span>}
+      {dica && !erro && (
+        <span className="mt-1 block text-xs text-zinc-500">{dica}</span>
+      )}
       {erro && <span className="mt-1 block text-xs text-rose-700">{erro}</span>}
     </label>
   );
@@ -130,7 +156,8 @@ export function Aviso({
         "rounded-lg border px-4 py-3 text-sm",
         tom === "info" && "border-sky-200 bg-sky-50 text-sky-900",
         tom === "erro" && "border-rose-200 bg-rose-50 text-rose-900",
-        tom === "sucesso" && "border-emerald-200 bg-emerald-50 text-emerald-900",
+        tom === "sucesso" &&
+          "border-emerald-200 bg-emerald-50 text-emerald-900",
         tom === "atencao" && "border-amber-200 bg-amber-50 text-amber-900",
       )}
     >

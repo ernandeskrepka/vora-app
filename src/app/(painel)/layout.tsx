@@ -9,7 +9,7 @@ const MENU = [
   { href: "/posts/novo", rotulo: "Novo post" },
   { href: "/clientes", rotulo: "Clientes" },
   { href: "/conexoes", rotulo: "Conexoes Meta" },
-  { href: "/relatorios", rotulo: "Relatorios" },
+  { href: "/relatorios", rotulo: "Resultados" },
   { href: "/configuracoes", rotulo: "Configuracoes" },
 ];
 

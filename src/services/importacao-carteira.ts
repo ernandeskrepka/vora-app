@@ -62,7 +62,14 @@ export async function importarCarteira(
     const slug = (entrada.slug?.trim() || gerarSlug(nome)).slice(0, 50);
     if (!slug) continue;
 
-    let cliente = await prisma.client.findUnique({ where: { slug } });
+    // Casa pelo slug e, se nao achar, pelo nome exato: o cliente pode ja ter
+    // sido cadastrado a mao com outro slug ("Laboratorio Fleming" vira
+    // "laboratorio-fleming" no cadastro e "fleming" no arquivo), e importar
+    // de novo nao pode criar um segundo cadastro do mesmo cliente.
+    let cliente =
+      (await prisma.client.findUnique({ where: { slug } })) ??
+      (await prisma.client.findFirst({ where: { name: nome } }));
+
     if (cliente) {
       r.clientesExistentes += 1;
     } else {
@@ -94,7 +101,9 @@ export async function importarCarteira(
       if (!assetId) continue;
 
       const existente = await prisma.metaConnection.findUnique({
-        where: { clientId_assetType: { clientId: cliente.id, assetType: ativo.tipo } },
+        where: {
+          clientId_assetType: { clientId: cliente.id, assetType: ativo.tipo },
+        },
       });
 
       if (!existente) {
@@ -123,7 +132,9 @@ export async function importarCarteira(
       }
 
       if (existente.assetId !== assetId) {
-        partes.push(`${ativo.tipo} ja conectado com outro ID (mantido ${existente.assetId})`);
+        partes.push(
+          `${ativo.tipo} ja conectado com outro ID (mantido ${existente.assetId})`,
+        );
         continue;
       }
 
@@ -139,7 +150,10 @@ export async function importarCarteira(
     }
 
     if (entrada.pendencia) partes.push(`pendencia: ${entrada.pendencia}`);
-    r.linhas.push({ cliente: nome, situacao: partes.length ? partes.join("; ") : "nada a fazer" });
+    r.linhas.push({
+      cliente: nome,
+      situacao: partes.length ? partes.join("; ") : "nada a fazer",
+    });
   }
 
   return r;
