@@ -86,6 +86,8 @@ function LinhaPost({
 
 export default async function Dashboard() {
   const d = await buscarDados();
+  const { clientesComSaldoBaixo } = await import("@/services/saldo.ts");
+  const saldoBaixo = await clientesComSaldoBaixo();
   const quebradas = d.conexoes.filter((c) => c.status !== "NAO_CONFIGURADO");
   const aguardando = d.conexoes.filter((c) => c.status === "NAO_CONFIGURADO");
 
@@ -112,6 +114,31 @@ export default async function Dashboard() {
         existe) e conexao que quebrou (urgente). Separado, porque um painel
         vermelho o tempo todo deixa de ser aviso.
       */}
+      {saldoBaixo.length > 0 && (
+        <Aviso
+          tom="atencao"
+          titulo={`${saldoBaixo.length} cliente(s) com o saldo de anuncios no limite`}
+        >
+          <ul className="mt-1 space-y-0.5">
+            {saldoBaixo.map((s) => (
+              <li key={s.clienteId}>
+                <Link href={`/clientes/${s.clienteId}/saldo`} className="underline">
+                  {s.cliente}
+                </Link>{" "}
+                - restam{" "}
+                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                  s.saldo,
+                )}
+                {s.diasRestantes !== null ? ` (cerca de ${s.diasRestantes} dia(s))` : ""}
+              </li>
+            ))}
+          </ul>
+          <span className="mt-1 block text-xs">
+            O PIX de recarga ja esta pronto na aba Saldo de cada um.
+          </span>
+        </Aviso>
+      )}
+
       {quebradas.length > 0 && (
         <Aviso tom="erro" titulo={`${quebradas.length} conexao(oes) com a Meta pararam de responder`}>
           <ul className="mt-1 space-y-0.5">

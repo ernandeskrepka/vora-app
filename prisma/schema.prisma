@@ -160,6 +160,9 @@ model Client {
   /// Pagina do Notion com o calendario/planejamento do cliente (link ou id).
   notionPageId   String?
   notionSyncedAt DateTime?
+  /// Abaixo disso o painel avisa que o saldo de anuncios esta acabando.
+  /// Vazio usa o limite geral das Configuracoes.
+  saldoLimite    Decimal?  @db.Decimal(14, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -168,6 +171,7 @@ model Client {
   posts           Post[]
   adInsights      AdInsightDaily[]
   adCreatives     AdCampaignCreative[]
+  adTopUps        AdAccountTopUp[]
   planningItems   PlanningItem[]
   assets          ClientAsset[]
 }
@@ -411,6 +415,24 @@ model Notification {
 }
 
 // ---------------------------------------------------------------- fase 2
+
+/// Recarga de saldo da conta de anuncios do cliente.
+///
+/// A API da Meta nao expoe saldo pre-pago, entao o saldo e calculado aqui:
+/// soma das recargas menos o gasto diario ja coletado em AdInsightDaily.
+model AdAccountTopUp {
+  id          String   @id @default(cuid())
+  clientId    String
+  amount      Decimal  @db.Decimal(14, 2)
+  occurredAt  DateTime
+  note        String?
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, occurredAt])
+}
 
 /// Criativo que rodou numa campanha, guardado para o relatorio mostrar ao
 /// cliente o que funcionou e o que nao. A imagem vai para o storage: a URL da

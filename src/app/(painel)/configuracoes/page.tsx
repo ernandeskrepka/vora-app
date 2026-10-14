@@ -11,6 +11,8 @@ import {
   acaoSalvarConfiguracoes,
 } from "@/app/actions/configuracoes.ts";
 import { carregarCarteira } from "@/services/carteira-arquivo.ts";
+import { acaoSalvarPix } from "@/app/actions/saldo.ts";
+import { obterConfiguracoesDeSaldo } from "@/services/saldo.ts";
 import { FormAcao } from "@/components/form-acao.tsx";
 import { Campo, Cartao, classeInput } from "@/components/ui.tsx";
 
@@ -18,11 +20,12 @@ export const dynamic = "force-dynamic";
 
 export default async function Configuracoes() {
   const usuario = await exigirUsuario();
-  const [config, usuarios, carteira, clientesNoBanco] = await Promise.all([
+  const [config, usuarios, carteira, clientesNoBanco, saldoConfig] = await Promise.all([
     obterConfiguracoes(),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
     carregarCarteira().catch(() => []),
     prisma.client.findMany({ select: { slug: true } }),
+    obterConfiguracoesDeSaldo(),
   ]);
   const jaNoBanco = new Set(clientesNoBanco.map((c) => c.slug));
   const faltando = carteira.filter((c) => !jaNoBanco.has(c.slug ?? ""));
@@ -86,6 +89,53 @@ export default async function Configuracoes() {
           </div>
         </Cartao>
       )}
+
+      <Cartao titulo="PIX de recarga e aviso de saldo">
+        <p className="text-sm text-zinc-600">
+          Quando o saldo de anuncios de um cliente chega no limite, o painel avisa e ja monta o PIX
+          de recarga com estes dados. A chave fica guardada so aqui e nao entra na auditoria.
+        </p>
+        <div className="mt-3">
+          <FormAcao acao={acaoSalvarPix} textoBotao="Salvar PIX" variante="primario">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Campo rotulo="Chave PIX" dica="CPF/CNPJ, e-mail, telefone ou chave aleatoria.">
+                <input
+                  name="chave"
+                  defaultValue={saldoConfig.recebedor?.chave ?? ""}
+                  className={classeInput}
+                  placeholder="financeiro@vorabr.com"
+                />
+              </Campo>
+              <Campo rotulo="Nome do recebedor" dica="Ate 25 caracteres, sem acento (padrao do PIX).">
+                <input
+                  name="nome"
+                  defaultValue={saldoConfig.recebedor?.nome ?? ""}
+                  className={classeInput}
+                  placeholder="VORA Marketing"
+                />
+              </Campo>
+              <Campo rotulo="Cidade" dica="Ate 15 caracteres.">
+                <input
+                  name="cidade"
+                  defaultValue={saldoConfig.recebedor?.cidade ?? ""}
+                  className={classeInput}
+                  placeholder="Fraiburgo"
+                />
+              </Campo>
+              <Campo rotulo="Avisar abaixo de (R$)" dica="Vale para todo cliente sem limite proprio.">
+                <input
+                  name="limite"
+                  type="number"
+                  step="1"
+                  min="1"
+                  defaultValue={saldoConfig.limite}
+                  className={classeInput}
+                />
+              </Campo>
+            </div>
+          </FormAcao>
+        </div>
+      </Cartao>
 
       <Cartao titulo="Demonstracao para a equipe">
         <p className="text-sm text-zinc-600">

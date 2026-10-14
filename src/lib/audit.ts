@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma/client.ts";
 export type ActorType = "USUARIO" | "CLIENTE" | "SISTEMA";
 
 export type EntradaAuditoria = {
-  entityType: "post" | "client" | "user" | "meta_connection" | "approval_request";
+  entityType: "post" | "client" | "user" | "meta_connection" | "approval_request" | "setting";
   entityId: string;
   action: string;
   actorType: ActorType;

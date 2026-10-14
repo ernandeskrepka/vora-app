@@ -143,7 +143,14 @@
       ]
      }
     ]
-   }
+   },
+   "recargas": [
+    {
+     "valor": 600,
+     "dias": -30,
+     "observacao": "Recarga de outubro"
+    }
+   ]
   },
   {
    "slug": "amigovida",
@@ -248,7 +255,14 @@
       ]
      }
     ]
-   }
+   },
+   "recargas": [
+    {
+     "valor": 1000,
+     "dias": -30,
+     "observacao": "Recarga de outubro"
+    }
+   ]
   },
   {
    "slug": "camati",
@@ -584,7 +598,14 @@
       ]
      }
     ]
-   }
+   },
+   "recargas": [
+    {
+     "valor": 150,
+     "dias": -28,
+     "observacao": "Teste de verba"
+    }
+   ]
   },
   {
    "slug": "colegio-drummond",
@@ -660,7 +681,14 @@
       "resultados": 96
      }
     ]
-   }
+   },
+   "recargas": [
+    {
+     "valor": 400,
+     "dias": -30,
+     "observacao": "Matriculas 2027"
+    }
+   ]
   }
  ]
 }

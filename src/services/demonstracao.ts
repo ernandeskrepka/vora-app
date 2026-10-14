@@ -41,8 +41,11 @@ type CampanhaDemo = {
   resultados: number;
 };
 
+type RecargaDemo = { valor: number; dias: number; observacao?: string };
+
 type ClienteDemo = {
   slug: string;
+  recargas?: RecargaDemo[];
   contatos: Array<{ nome: string; telefone: string; aprovador: boolean; lembretes: boolean }>;
   pautas: Array<{ titulo: string; status: PlanningStatus; dias: number; notas?: string }>;
   posts: PostDemo[];
@@ -291,6 +294,23 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
         actorUserId: ator.usuarioId ?? null,
         actorName: ator.nome ?? null,
         metadata: { origem: "demonstracao", ref: demo.ref },
+      });
+    }
+
+    // Recarga de saldo: e ela que faz o painel saber quanto sobrou.
+    for (const recarga of entrada.recargas ?? []) {
+      const quando = emDias({ dias: recarga.dias, hora: "10:00" }, agora);
+      const existe = await prisma.adAccountTopUp.findFirst({
+        where: { clientId: cliente.id, occurredAt: quando },
+      });
+      if (existe) continue;
+      await prisma.adAccountTopUp.create({
+        data: {
+          clientId: cliente.id,
+          amount: recarga.valor,
+          occurredAt: quando,
+          note: recarga.observacao ?? null,
+        },
       });
     }
 
