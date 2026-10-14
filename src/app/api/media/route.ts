@@ -16,8 +16,8 @@ export async function GET(request: Request) {
   if (!key || !sig || !Number.isFinite(exp)) {
     return NextResponse.json({ erro: "Parametros invalidos." }, { status: 400 });
   }
-  if (env.STORAGE_DRIVER !== "local") {
-    return NextResponse.json({ erro: "Rota disponivel apenas no driver local." }, { status: 404 });
+  if (env.STORAGE_DRIVER === "s3") {
+    return NextResponse.json({ erro: "Com S3 a midia e servida direto pelo bucket." }, { status: 404 });
   }
   if (!assinaturaValida(key, exp, sig)) {
     return NextResponse.json({ erro: "Link expirado ou invalido." }, { status: 403 });

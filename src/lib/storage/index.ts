@@ -1,11 +1,12 @@
 import { env } from "@/env";
 import { localStorageDriver } from "./local.ts";
+import { netlifyStorageDriver } from "./netlify.ts";
 import { s3StorageDriver } from "./s3.ts";
 
 export { assinarChave, assinaturaValida } from "./assinatura.ts";
 
 export type StorageDriver = {
-  nome: "local" | "s3";
+  nome: "local" | "s3" | "netlify";
   salvar(key: string, conteudo: Buffer, contentType: string): Promise<void>;
   ler(key: string): Promise<Buffer>;
   remover(key: string): Promise<void>;
@@ -17,7 +18,11 @@ export type StorageDriver = {
 };
 
 export const storage: StorageDriver =
-  env.STORAGE_DRIVER === "s3" ? s3StorageDriver() : localStorageDriver();
+  env.STORAGE_DRIVER === "s3"
+    ? s3StorageDriver()
+    : env.STORAGE_DRIVER === "netlify"
+      ? netlifyStorageDriver()
+      : localStorageDriver();
 
 /** Caminho no storage: separado por cliente e post para facilitar limpeza. */
 export function chaveDeMidia(input: {

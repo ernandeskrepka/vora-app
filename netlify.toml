@@ -1,0 +1,24 @@
+# Deploy do painel e do site de aprovacao na Netlify.
+#
+# Atencao ao que muda em relacao ao deploy normal (Render/Railway):
+# - nao existe processo continuo, entao o worker e substituido pela funcao
+#   agendada abaixo, que chama /api/agenda de minuto em minuto;
+# - nao existe disco, entao os criativos vao para o Netlify Blobs;
+# - o banco e Postgres gerenciado (Netlify DB ou externo), via DATABASE_URL.
+
+[build]
+  command = "prisma generate && next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PRISMA_SKIP_POSTINSTALL_GENERATE = "true"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[functions]
+  node_bundler = "esbuild"
+
+[functions.agenda]
+  included_files = []

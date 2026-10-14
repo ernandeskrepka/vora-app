@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { redis } from "./conexao.ts";
+import { env } from "@/env";
 import { logger } from "@/lib/logger.ts";
 import {
   JOB_CONEXOES,
@@ -32,13 +32,36 @@ export type DadosPublicar = { postId: string; postVersion: number };
 export type DadosLembrete = { postId: string; postVersion: number; horasAntes: number };
 export type DadosSemResposta = { postId: string; postVersion: number };
 
-export const filaPosts = new Queue(FILA_POSTS, { connection: redis });
-export const filaManutencao = new Queue(FILA_MANUTENCAO, { connection: redis });
+/**
+ * As filas sao criadas sob demanda: com QUEUE_DRIVER=none (hospedagem sem
+ * processo continuo) nenhuma conexao com o Redis chega a ser aberta, e quem
+ * dispara os jobs no horario e a rotina de agenda.
+ */
+let _filaPosts: Queue | null = null;
+let _filaManutencao: Queue | null = null;
+
+export const semFila = () => env.QUEUE_DRIVER === "none";
+
+async function conexao() {
+  const { redis } = await import("./conexao.ts");
+  return redis;
+}
+
+export async function filaPosts(): Promise<Queue> {
+  if (!_filaPosts) _filaPosts = new Queue(FILA_POSTS, { connection: await conexao() });
+  return _filaPosts;
+}
+
+export async function filaManutencao(): Promise<Queue> {
+  if (!_filaManutencao) _filaManutencao = new Queue(FILA_MANUTENCAO, { connection: await conexao() });
+  return _filaManutencao;
+}
 
 /* --------------------------------------------------------------- helpers */
 
 async function remover(jobId: string) {
-  const job = await filaPosts.getJob(jobId);
+  const fila = await filaPosts();
+  const job = await fila.getJob(jobId);
   if (job) {
     await job.remove().catch((erro: unknown) => {
       // Job em execucao nao pode ser removido; o processador revalida tudo
@@ -57,10 +80,11 @@ export async function agendarPublicacao(input: {
   postVersion: number;
   quando: Date;
 }) {
+  if (semFila()) return;
   const jobId = idPublicar(input.postId);
   await remover(jobId);
   const delay = Math.max(0, input.quando.getTime() - Date.now());
-  await filaPosts.add(
+  await (await filaPosts()).add(
     JOB_PUBLICAR,
     { postId: input.postId, postVersion: input.postVersion } satisfies DadosPublicar,
     {
@@ -83,9 +107,10 @@ export async function agendarCorteSemResposta(input: {
   postVersion: number;
   quando: Date;
 }) {
+  if (semFila()) return;
   const jobId = idSemResposta(input.postId);
   await remover(jobId);
-  await filaPosts.add(
+  await (await filaPosts()).add(
     JOB_SEM_RESPOSTA,
     { postId: input.postId, postVersion: input.postVersion } satisfies DadosSemResposta,
     {
@@ -106,13 +131,14 @@ export async function agendarLembretes(input: {
   horarioDoPost: Date;
   offsetsHoras: number[];
 }) {
+  if (semFila()) return;
   for (const horas of input.offsetsHoras) {
     const jobId = idLembrete(input.postId, horas);
     await remover(jobId);
     const quando = new Date(input.horarioDoPost.getTime() - horas * 3_600_000);
     // Lembrete cujo horario ja passou nao faz sentido.
     if (quando.getTime() <= Date.now()) continue;
-    await filaPosts.add(
+    await (await filaPosts()).add(
       JOB_LEMBRETE,
       { postId: input.postId, postVersion: input.postVersion, horasAntes: horas } satisfies DadosLembrete,
       {
@@ -132,12 +158,13 @@ export async function agendarLembretes(input: {
  * reagendamento, cancelamento e decisao do cliente.
  */
 export async function cancelarJobsDoPost(postId: string, offsetsHoras: number[] = []) {
+  if (semFila()) return;
   await remover(idPublicar(postId));
   await remover(idSemResposta(postId));
   for (const horas of offsetsHoras) await remover(idLembrete(postId, horas));
 
   // Varredura de seguranca: pega lembretes de offsets antigos.
-  const pendentes = await filaPosts.getJobs(["delayed", "waiting", "wait"]);
+  const pendentes = await (await filaPosts()).getJobs(["delayed", "waiting", "wait"]);
   await Promise.all(
     pendentes
       .filter((j) => (j.data as { postId?: string })?.postId === postId)
@@ -147,13 +174,14 @@ export async function cancelarJobsDoPost(postId: string, offsetsHoras: number[] 
 
 /** Jobs diarios de manutencao (idempotente: pode rodar a cada boot). */
 export async function registrarJobsRepetidos() {
+  if (semFila()) return;
   // BullMQ 6: jobs repetidos sao "job schedulers" (upsert e idempotente).
-  await filaManutencao.upsertJobScheduler(
+  await (await filaManutencao()).upsertJobScheduler(
     JOB_CONEXOES,
     { pattern: "0 7 * * *", tz: "America/Sao_Paulo" },
     { name: JOB_CONEXOES, opts: { removeOnComplete: { count: 30 } } },
   );
-  await filaManutencao.upsertJobScheduler(
+  await (await filaManutencao()).upsertJobScheduler(
     JOB_INSIGHTS,
     { pattern: "30 6 * * *", tz: "America/Sao_Paulo" },
     { name: JOB_INSIGHTS, opts: { removeOnComplete: { count: 30 } } },

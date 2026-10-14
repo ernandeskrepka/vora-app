@@ -14,6 +14,10 @@ const schema = z.object({
 
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().default("redis://127.0.0.1:6379"),
+  // "bullmq" usa Redis e um worker dedicado (producao normal).
+  // "none" nao agenda nada: quem dispara e a rotina de agenda, chamada por
+  // um cron externo. E o modo usado em hospedagem sem processo continuo.
+  QUEUE_DRIVER: z.enum(["bullmq", "none"]).default("bullmq"),
 
   // Base publica usada nos links de aprovacao enviados por WhatsApp.
   APP_URL: z.string().default("http://localhost:3000"),
@@ -23,7 +27,7 @@ const schema = z.object({
   ENCRYPTION_KEY: z.string().min(1).optional(),
 
   // Armazenamento dos criativos.
-  STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
+  STORAGE_DRIVER: z.enum(["local", "s3", "netlify"]).default("local"),
   STORAGE_LOCAL_DIR: z.string().default("./.storage"),
   S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().default("auto"),
@@ -65,9 +69,21 @@ const schema = z.object({
   PUBLISH_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
 
   SENTRY_DSN: z.string().optional(),
+
+  // Protege a rota que dispara a agenda quando nao ha worker.
+  AGENDA_TOKEN: z.string().optional(),
 });
 
-const parsed = schema.safeParse(process.env);
+/**
+ * Na Netlify o banco e provisionado pela plataforma e chega em NETLIFY_DB_URL.
+ * Em qualquer outra hospedagem vale o DATABASE_URL normal.
+ */
+const bruto = {
+  ...process.env,
+  DATABASE_URL: process.env.DATABASE_URL || process.env.NETLIFY_DB_URL,
+};
+
+const parsed = schema.safeParse(bruto);
 
 if (!parsed.success) {
   const issues = parsed.error.issues

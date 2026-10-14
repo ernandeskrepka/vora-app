@@ -231,6 +231,8 @@ DATABASE_URL="postgresql://...vora_aprovacao_test" npx prisma db push
 
 ## Deploy
 
+### Caminho completo (Render, Railway, VPS)
+
 Dois processos a partir do mesmo repositorio:
 
 | Processo | Comando |
@@ -240,6 +242,41 @@ Dois processos a partir do mesmo repositorio:
 
 O `render.yaml` ja descreve os dois servicos, o Postgres e o Redis. No Railway,
 crie dois servicos apontando para este repositorio e mude so o comando de start.
+
+### Caminho sem servidor (Netlify)
+
+Hospedagem serverless nao tem processo continuo nem disco, entao o app se
+adapta com tres chaves:
+
+| Variavel | Valor | Por que |
+| --- | --- | --- |
+| `QUEUE_DRIVER` | `none` | sem Redis e sem worker: nada e agendado na fila |
+| `STORAGE_DRIVER` | `netlify` | criativos vao para o Netlify Blobs |
+| `AGENDA_TOKEN` | um segredo | protege `/api/agenda` |
+
+No lugar do worker, a funcao agendada `netlify/functions/agenda.mts` chama
+`/api/agenda` a cada minuto. Essa rota faz o mesmo trabalho: publica o que
+venceu, marca POST SEM RESPOSTA e envia lembretes. Tudo idempotente, entao
+rodar de minuto em minuto nao duplica nada.
+
+O banco e provisionado pela propria Netlify (`NETLIFY_DB_URL`, usado como
+`DATABASE_URL` quando essa nao existe) e o esquema vai como migracao SQL em
+`netlify/database/migrations/`.
+
+Primeira instalacao, depois do deploy:
+
+```bash
+curl -X POST "https://SEU_SITE/api/primeiro-acesso?token=SEU_AGENDA_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"email":"voce@vorabr.com","senha":"uma-senha-de-10-ou-mais"}'
+```
+
+Cria o primeiro usuario e os tres clientes do piloto. A rota recusa assim que
+existir qualquer usuario.
+
+A rotina de agenda tambem serve como rede de seguranca no caminho completo:
+mesmo com worker e Redis, chamar `/api/agenda` de tempos em tempos pega
+qualquer job que tenha se perdido.
 
 Checklist de producao:
 

@@ -17,6 +17,7 @@ async function enviarParaContato(input: {
   parametros: string[];
   postId?: string;
   clientId?: string;
+  extra?: Record<string, unknown>;
 }) {
   const resultado = await enviarTemplate({
     para: input.contato.phoneE164,
@@ -35,6 +36,7 @@ async function enviarParaContato(input: {
         parametros: input.parametros,
         previa: resultado.previa,
         simulado: resultado.simulado,
+        ...(input.extra ?? {}),
       },
       providerMessageId: resultado.providerMessageId,
       errorMessage: resultado.erro ?? null,
@@ -91,6 +93,7 @@ export async function enviarLembreteDeAprovacao(input: {
       parametros: [primeiroNome(contato.name), tempo, quando, input.link],
       postId: input.post.id,
       clientId: input.cliente.id,
+      extra: { horasAntes: input.horasAntes },
     });
   }
 }
