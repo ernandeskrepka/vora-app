@@ -1,0 +1,74 @@
+{
+  "comentario": "Carteira da VORA com os ativos levantados na propria Meta em 14/10/2026. Usado pela tela Configuracoes > Importar carteira. A importacao e idempotente: cria o que falta e atualiza o nome do ativo, nunca apaga. O Instagram fica de fora de proposito - o ID da conta profissional e descoberto a partir da Pagina quando o token do System User entrar.",
+  "clientes": [
+    { "nome": "Danieli Moveis", "slug": "danieli-moveis", "ativos": [],
+      "pendencia": "Nenhuma Pagina dessa marca aparece na conta Meta usada no levantamento. Confirmar o nome ou dar acesso." },
+    { "nome": "JR Arquitetura e Engenharia", "slug": "jr-arquitetura-engenharia", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "475278475847035", "nome": "JR Arquitetura e Engenharia" },
+      { "tipo": "AD_ACCOUNT", "id": "act_1110297747652047", "nome": "JR Engenharia e Arq. CA 01" }
+    ], "pendencia": "Existe tambem a CA 02 (act_251616269937339). Confirmar qual e a principal." },
+    { "nome": "Espaco Moveis", "slug": "espaco-moveis", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "640517689139970", "nome": "Espaco Moveis & Decoracoes" },
+      { "tipo": "AD_ACCOUNT", "id": "act_2094154404744367", "nome": "CA - ESPACO MOVEIS FRAIBURGO" }
+    ] },
+    { "nome": "Darcisio Muller Advogados", "slug": "darcisio-muller", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "111769171744784", "nome": "Darcisio Muller & Advogados Associados" },
+      { "tipo": "AD_ACCOUNT", "id": "act_458606103256775", "nome": "Darcisio Muller Adv [CA01]" }
+    ], "pendencia": "Ha duas Paginas com o mesmo nome (111769171744784 e 1168606959668439) e quatro contas de anuncios. Confirmar a Pagina e a conta certas." },
+    { "nome": "Colegio Drummond", "slug": "colegio-drummond", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "210651029007595", "nome": "Colegio Drummond" },
+      { "tipo": "AD_ACCOUNT", "id": "act_2473932342985083", "nome": "Drummond" }
+    ] },
+    { "nome": "VideTip", "slug": "videtip", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "1696992730593426", "nome": "VideTip" }
+    ], "pendencia": "Nenhuma conta de anuncios com esse nome no levantamento. Informar se existe." },
+    { "nome": "Dr. Juliano Bombassaro", "slug": "dr-juliano-bombassaro", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "1053865551307263", "nome": "Dr. Juliano Bombassaro" },
+      { "tipo": "AD_ACCOUNT", "id": "act_859784836832727", "nome": "Dr Juliano" }
+    ] },
+    { "nome": "Dr. Maykon Ribeiro", "slug": "dr-maykon-ribeiro", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "1005483772651086", "nome": "Dr. Maykon Ribeiro" },
+      { "tipo": "AD_ACCOUNT", "id": "act_953937683981451", "nome": "Dr. Maykon Ribeiro [CA01]" }
+    ] },
+    { "nome": "Endogist", "slug": "endogist", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "1376625378867531", "nome": "Evoniaai" },
+      { "tipo": "AD_ACCOUNT", "id": "act_717743377633753", "nome": "Evonia AI" }
+    ], "pendencia": "Os ativos estao no negocio Endogist 1 mas se chamam Evonia. Confirmar se e a mesma marca." },
+    { "nome": "Dental Care Odontologia", "slug": "dental-care", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "475822605863726", "nome": "Dental Care Odontologia" },
+      { "tipo": "AD_ACCOUNT", "id": "act_954796828846026", "nome": "DENTAL CARE CA 01" }
+    ], "pendencia": "A conta Tarsio (act_600181920358969), do mesmo negocio, esta DESATIVADA pela Meta." },
+    { "nome": "Laboratorio Santa Rita", "slug": "santa-rita", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "650347181506686", "nome": "Santa Rita Laboratorio" },
+      { "tipo": "AD_ACCOUNT", "id": "act_4152717795011460", "nome": "LAB. SANTA RITA CA 01" }
+    ] },
+    { "nome": "Laboratorios Amigovida", "slug": "amigovida", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "142388579199856", "nome": "Laboratorios Amigovida" },
+      { "tipo": "AD_ACCOUNT", "id": "act_1110798207630789", "nome": "AMIGOVIDA CA 01" }
+    ] },
+    { "nome": "CEPAC Joacaba", "slug": "cepac-joacaba", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "350939055038999", "nome": "Cepac Laboratorio Joacaba" },
+      { "tipo": "AD_ACCOUNT", "id": "act_514166179857942", "nome": "Lab. CEPAC Joacaba [CA 01]" }
+    ] },
+    { "nome": "CEPAC Capinzal", "slug": "cepac-capinzal", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "1209327588933477", "nome": "Cepac Capinzal" },
+      { "tipo": "AD_ACCOUNT", "id": "act_747644973745228", "nome": "Lab. CEPAC Capinzal [CA 01]" }
+    ] },
+    { "nome": "Laboratorio Camati", "slug": "camati", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "610409025641588", "nome": "Laboratorio Camati" },
+      { "tipo": "AD_ACCOUNT", "id": "act_1267399364934763", "nome": "LAB. CAMATI CA 01" }
+    ], "pendencia": "Existem tres Paginas Camati (610409025641588, 746404075222647 e Camati Vacinas 866476809892543) e uma conta separada de vacinas (act_1230279758982221). Confirmar se vacinas e cliente a parte." },
+    { "nome": "Laboratorio Laborali", "slug": "laborali", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "546299468780455", "nome": "Laborali" },
+      { "tipo": "AD_ACCOUNT", "id": "act_1252752712730362", "nome": "Lab. Laborali CA 01" }
+    ], "pendencia": "Ha uma segunda Pagina, Laboratorio Laborali (773956529133023). Confirmar a oficial." },
+    { "nome": "Laboratorio Fleming", "slug": "fleming", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "560478604115981", "nome": "Laboratorio Fleming" },
+      { "tipo": "AD_ACCOUNT", "id": "act_1098253225195400", "nome": "FLEMING" }
+    ], "pendencia": "Ha uma segunda conta de anuncios, Laboratorio Fleming (act_250160734571981), em outro negocio." },
+    { "nome": "Innova Assessoria e Gestao Contabil", "slug": "innova", "ativos": [
+      { "tipo": "FACEBOOK_PAGE", "id": "480974145104647", "nome": "Innova - Assessoria e Gestao Contabil" },
+      { "tipo": "AD_ACCOUNT", "id": "act_1657929808619018", "nome": "INNOVA GESTAO [CA 01]" }
+    ] }
+  ]
+}

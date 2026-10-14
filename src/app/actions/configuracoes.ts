@@ -8,6 +8,7 @@ import { registrarAuditoria } from "@/lib/audit.ts";
 import { salvarConfiguracoes, type CanalInterno } from "@/services/configuracoes.ts";
 import { ErroDeRegra } from "@/services/erros.ts";
 import type { Ator } from "@/services/transicoes.ts";
+import type { EstadoSimples } from "./clientes.ts";
 
 export type EstadoConfig = { erro?: string; sucesso?: string } | null;
 
@@ -94,4 +95,36 @@ export async function acaoAlternarUsuario(dados: FormData) {
     await prisma.session.deleteMany({ where: { userId: id } });
   }
   revalidatePath("/configuracoes");
+}
+
+/**
+ * Carrega a carteira de clientes da agencia (dados/clientes-meta.json) para
+ * dentro do banco. Idempotente: pode rodar de novo a cada cliente novo no
+ * arquivo, sem duplicar nem mexer no que ja esta conectado.
+ */
+export async function acaoImportarCarteira(
+  _estado: EstadoSimples,
+  _dados: FormData,
+): Promise<EstadoSimples> {
+  const admin = await exigirAdmin();
+  try {
+    const { carregarCarteira } = await import("@/services/carteira-arquivo.ts");
+    const { importarCarteira } = await import("@/services/importacao-carteira.ts");
+    const carteira = await carregarCarteira();
+    const r = await importarCarteira(carteira, {
+      tipo: "USUARIO",
+      usuarioId: admin.id,
+      nome: admin.name,
+    });
+    revalidatePath("/configuracoes");
+    revalidatePath("/clientes");
+    return {
+      sucesso:
+        `Carteira importada: ${r.clientesCriados} cliente(s) novo(s), ` +
+        `${r.clientesExistentes} ja existiam, ${r.ativosCriados} ativo(s) cadastrado(s) e ` +
+        `${r.ativosAtualizados} atualizado(s).`,
+    };
+  } catch (erro) {
+    return { erro: erro instanceof Error ? erro.message : String(erro) };
+  }
 }

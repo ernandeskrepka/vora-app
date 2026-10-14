@@ -6,8 +6,10 @@ import { obterConfiguracoes } from "@/services/configuracoes.ts";
 import {
   acaoAlternarUsuario,
   acaoCriarUsuario,
+  acaoImportarCarteira,
   acaoSalvarConfiguracoes,
 } from "@/app/actions/configuracoes.ts";
+import { carregarCarteira } from "@/services/carteira-arquivo.ts";
 import { FormAcao } from "@/components/form-acao.tsx";
 import { Campo, Cartao, classeInput } from "@/components/ui.tsx";
 
@@ -15,10 +17,15 @@ export const dynamic = "force-dynamic";
 
 export default async function Configuracoes() {
   const usuario = await exigirUsuario();
-  const [config, usuarios] = await Promise.all([
+  const [config, usuarios, carteira, clientesNoBanco] = await Promise.all([
     obterConfiguracoes(),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
+    carregarCarteira().catch(() => []),
+    prisma.client.findMany({ select: { slug: true } }),
   ]);
+  const jaNoBanco = new Set(clientesNoBanco.map((c) => c.slug));
+  const faltando = carteira.filter((c) => !jaNoBanco.has(c.slug ?? ""));
+  const comPendencia = carteira.filter((c) => c.pendencia);
 
   return (
     <div className="space-y-5">
@@ -26,6 +33,58 @@ export default async function Configuracoes() {
         <h1 className="text-xl font-semibold text-zinc-900">Configuracoes</h1>
         <p className="text-sm text-zinc-500">Lembretes, canal de aviso interno e equipe.</p>
       </header>
+
+      {carteira.length > 0 && (
+        <Cartao titulo="Carteira de clientes (ativos da Meta)">
+          <p className="text-sm text-zinc-600">
+            {carteira.length} cliente(s) no arquivo <code>dados/clientes-meta.json</code>, levantados
+            direto na Meta. Importar cria quem falta e atualiza nome de ativo; nunca apaga nem troca
+            ativo ja conectado. O Instagram entra depois, descoberto pela Pagina.
+          </p>
+
+          <ul className="mt-3 divide-y divide-zinc-100 text-sm">
+            {carteira.map((c) => (
+              <li key={c.slug ?? c.nome} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="text-zinc-800">
+                  {c.nome}
+                  <span className="ml-2 text-xs text-zinc-500">
+                    {c.ativos.length === 0
+                      ? "sem ativo localizado"
+                      : c.ativos.map((a) => (a.tipo === "AD_ACCOUNT" ? "anuncios" : "pagina")).join(" + ")}
+                  </span>
+                </span>
+                <span className="text-xs text-zinc-500">
+                  {jaNoBanco.has(c.slug ?? "") ? "ja cadastrado" : "sera criado"}
+                  {c.pendencia ? " · pendencia" : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {comPendencia.length > 0 && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              <p className="font-medium">{comPendencia.length} cliente(s) precisam da sua confirmacao:</p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {comPendencia.map((c) => (
+                  <li key={`p-${c.slug ?? c.nome}`}>
+                    <strong>{c.nome}</strong>: {c.pendencia}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <FormAcao
+              acao={acaoImportarCarteira}
+              textoBotao={faltando.length > 0 ? `Importar ${faltando.length} cliente(s)` : "Reaplicar carteira"}
+              variante="primario"
+            >
+              <span className="sr-only">Importar a carteira do arquivo</span>
+            </FormAcao>
+          </div>
+        </Cartao>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Cartao titulo="Lembretes e avisos">
