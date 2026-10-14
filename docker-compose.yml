@@ -1,0 +1,37 @@
+# Postgres e Redis para rodar o sistema na sua maquina.
+#   docker compose up -d
+# Os dados ficam em volumes, entao pode parar e subir de novo sem perder nada.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vora-postgres
+    environment:
+      POSTGRES_USER: vora
+      POSTGRES_PASSWORD: vora
+      POSTGRES_DB: vora_aprovacao
+    ports:
+      - "5432:5432"
+    volumes:
+      - vora-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vora -d vora_aprovacao"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: vora-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - vora-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vora-pgdata:
+  vora-redisdata:

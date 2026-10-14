@@ -1,0 +1,400 @@
+// Sistema interno VORA - aprovacao do cliente + publicacao automatizada na Meta.
+// Datas sempre em UTC no banco; a exibicao converte para America/Sao_Paulo.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------- enums
+
+enum UserRole {
+  ADMIN
+  EDITOR
+}
+
+enum PostStatus {
+  RASCUNHO
+  AGUARDANDO_APROVACAO
+  APROVADO
+  PUBLICANDO
+  PUBLICADO
+  REPROVADO
+  POST_SEM_RESPOSTA
+  FALHOU
+  CANCELADO
+}
+
+enum PostFormat {
+  IMAGEM_UNICA
+  CARROSSEL
+  VIDEO
+  REELS
+}
+
+enum Network {
+  INSTAGRAM
+  FACEBOOK
+}
+
+enum MediaKind {
+  IMAGEM
+  VIDEO
+}
+
+enum MetaAssetType {
+  INSTAGRAM
+  FACEBOOK_PAGE
+  AD_ACCOUNT
+}
+
+enum MetaAuthMode {
+  SYSTEM_USER
+  OAUTH
+}
+
+enum MetaConnectionStatus {
+  CONECTADO
+  EXPIRADO
+  SEM_PERMISSAO
+  REVOGADO
+  NAO_CONFIGURADO
+}
+
+enum ApprovalRequestStatus {
+  PENDENTE
+  DECIDIDO
+  EXPIRADO
+  SUBSTITUIDO
+}
+
+enum ApprovalDecisionType {
+  APROVADO
+  REPROVADO
+}
+
+enum PublishAttemptStatus {
+  SUCESSO
+  ERRO
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  SLACK
+  EMAIL
+  LOG
+}
+
+enum NotificationStatus {
+  NA_FILA
+  ENVIADO
+  ENTREGUE
+  LIDO
+  FALHOU
+}
+
+enum ActorType {
+  USUARIO
+  CLIENTE
+  SISTEMA
+}
+
+// ---------------------------------------------------------------- equipe
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(EDITOR)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions Session[]
+  posts    Post[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------- clientes
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  timezone  String   @default("America/Sao_Paulo")
+  notes     String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts        ClientContact[]
+  metaConnections MetaConnection[]
+  posts           Post[]
+  adInsights      AdInsightDaily[]
+}
+
+model ClientContact {
+  id                String   @id @default(cuid())
+  clientId          String
+  name              String
+  phoneE164         String
+  isApprover        Boolean  @default(true)
+  receivesReminders Boolean  @default(true)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, phoneE164])
+  @@index([clientId])
+}
+
+// Token da Meta guardado cifrado (AES-256-GCM). Nunca em texto puro.
+model MetaConnection {
+  id              String               @id @default(cuid())
+  clientId        String
+  assetType       MetaAssetType
+  assetId         String
+  assetName       String?
+  authMode        MetaAuthMode         @default(SYSTEM_USER)
+  tokenCiphertext String?
+  tokenExpiresAt  DateTime?
+  scopes          String[]             @default([])
+  status          MetaConnectionStatus @default(NAO_CONFIGURADO)
+  lastCheckedAt   DateTime?
+  lastError       String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, assetType])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------- posts
+
+model Post {
+  id          String     @id @default(cuid())
+  clientId    String
+  createdById String?
+  caption     String     @default("")
+  format      PostFormat
+  networks    Network[]  @default([])
+  scheduledAt DateTime
+  status      PostStatus @default(RASCUNHO)
+  // Sobe a cada edicao de criativo, legenda, redes ou horario.
+  // A aprovacao vale para uma versao especifica.
+  version     Int        @default(1)
+  approvedAt  DateTime?
+  publishedAt DateTime?
+  canceledAt  DateTime?
+  lastError   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy        User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  media            PostMedia[]
+  approvalRequests ApprovalRequest[]
+  decisions        ApprovalDecision[]
+  publishAttempts  PublishAttempt[]
+  publications     PostPublication[]
+  notifications    Notification[]
+
+  @@index([clientId, scheduledAt])
+  @@index([status, scheduledAt])
+}
+
+model PostMedia {
+  id               String    @id @default(cuid())
+  postId           String
+  position         Int
+  kind             MediaKind
+  storageKey       String
+  mimeType         String
+  width            Int?
+  height           Int?
+  sizeBytes        Int
+  durationSeconds  Float?
+  originalFilename String?
+  createdAt        DateTime  @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, position])
+  @@index([postId])
+}
+
+// Um pedido de aprovacao por versao do post. Guardamos apenas o hash do token.
+model ApprovalRequest {
+  id          String                @id @default(cuid())
+  postId      String
+  postVersion Int
+  tokenHash   String                @unique
+  status      ApprovalRequestStatus @default(PENDENTE)
+  channel     NotificationChannel   @default(WHATSAPP)
+  sentAt      DateTime?
+  expiresAt   DateTime
+  decidedAt   DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  post     Post              @relation(fields: [postId], references: [id], onDelete: Cascade)
+  decision ApprovalDecision?
+
+  @@index([postId, postVersion])
+  @@index([status])
+}
+
+// Trilha de auditoria da decisao do cliente. Nunca e apagada nem editada.
+model ApprovalDecision {
+  id                String               @id @default(cuid())
+  approvalRequestId String               @unique
+  postId            String
+  postVersion       Int
+  decision          ApprovalDecisionType
+  approverName      String
+  comment           String?
+  ipAddress         String?
+  userAgent         String?
+  decidedAt         DateTime             @default(now())
+
+  approvalRequest ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
+  post            Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model PublishAttempt {
+  id             String               @id @default(cuid())
+  postId         String
+  network        Network
+  attempt        Int
+  status         PublishAttemptStatus
+  dryRun         Boolean              @default(false)
+  externalId     String?
+  permalink      String?
+  errorCode      String?
+  errorMessage   String?
+  requestSummary String?
+  responseBody   Json?
+  startedAt      DateTime             @default(now())
+  finishedAt     DateTime?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, network, attempt])
+  @@index([postId])
+}
+
+// Idempotencia: no maximo uma publicacao por post e rede.
+model PostPublication {
+  id          String   @id @default(cuid())
+  postId      String
+  network     Network
+  externalId  String
+  permalink   String?
+  dryRun      Boolean  @default(false)
+  publishedAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, network])
+}
+
+model Notification {
+  id                String              @id @default(cuid())
+  channel           NotificationChannel
+  destination       String
+  type              String
+  status            NotificationStatus  @default(NA_FILA)
+  payload           Json?
+  providerMessageId String?
+  errorMessage      String?
+  postId            String?
+  clientId          String?
+  contactId         String?
+  createdAt         DateTime            @default(now())
+  sentAt            DateTime?
+  updatedAt         DateTime            @updatedAt
+
+  post Post? @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([postId])
+  @@index([providerMessageId])
+}
+
+// ---------------------------------------------------------------- fase 2
+
+model AdInsightDaily {
+  id            String   @id @default(cuid())
+  clientId      String
+  adAccountId   String
+  date          DateTime @db.Date
+  campaignId    String
+  campaignName  String?
+  spend         Decimal  @default(0) @db.Decimal(14, 2)
+  reach         Int      @default(0)
+  impressions   Int      @default(0)
+  clicks        Int      @default(0)
+  ctr           Float    @default(0)
+  cpc           Decimal  @default(0) @db.Decimal(14, 4)
+  cpm           Decimal  @default(0) @db.Decimal(14, 4)
+  conversions   Int      @default(0)
+  costPerResult Decimal? @db.Decimal(14, 4)
+  currency      String   @default("BRL")
+  raw           Json?
+  collectedAt   DateTime @default(now())
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, campaignId, date])
+  @@index([clientId, date])
+}
+
+// ---------------------------------------------------------------- auditoria
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  entityType  String
+  entityId    String
+  action      String
+  actorType   ActorType
+  actorUserId String?
+  actorName   String?
+  fromStatus  String?
+  toStatus    String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

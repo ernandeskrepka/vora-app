@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* Paleta da VORA: verde da marca sobre quase-preto. */
+@theme {
+  --color-vora-verde: #02d89e;
+  --color-vora-verde-escuro: #01a076;
+  --color-vora-preto: #0a0a0a;
+  --color-vora-grafite: #121212;
+  --color-vora-cinza: #858481;
+  --color-vora-claro: #f8f8f7;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-vora-claro);
+  color: #1a1a19;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Status: uma cor por status, usada no calendario, nas listas e nos cartoes. */
+.status-RASCUNHO { @apply bg-zinc-100 text-zinc-700 border-zinc-300; }
+.status-AGUARDANDO_APROVACAO { @apply bg-amber-50 text-amber-800 border-amber-300; }
+.status-APROVADO { @apply bg-emerald-50 text-emerald-800 border-emerald-300; }
+.status-PUBLICANDO { @apply bg-sky-50 text-sky-800 border-sky-300; }
+.status-PUBLICADO { @apply bg-teal-50 text-teal-800 border-teal-300; }
+.status-REPROVADO { @apply bg-rose-50 text-rose-800 border-rose-300; }
+.status-POST_SEM_RESPOSTA { @apply bg-orange-100 text-orange-900 border-orange-400; }
+.status-FALHOU { @apply bg-red-50 text-red-800 border-red-300; }
+.status-CANCELADO { @apply bg-zinc-100 text-zinc-500 border-zinc-300; }
+
+@media print {
+  .nao-imprimir { display: none !important; }
+  body { background: #fff; }
+}

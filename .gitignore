@@ -1,0 +1,21 @@
+node_modules
+.next
+out
+build
+
+# Variaveis de ambiente
+.env
+.env.local
+.env*.local
+
+# Cliente gerado do Prisma
+/src/generated/prisma
+
+# Criativos gravados pelo driver local de storage
+/.storage
+/.storage-test
+
+# Diversos
+*.log
+.DS_Store
+*.tsbuildinfo
