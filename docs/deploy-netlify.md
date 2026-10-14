@@ -38,19 +38,28 @@ As tabelas sao criadas no proprio build, por `scripts/preparar-hospedagem.mjs`
 
 ## 3. Variaveis do site
 
-Em **Project configuration -> Environment variables**, o minimo e:
+**Atencao:** o que esta em `[build.environment]` no `netlify.toml` vale **so no
+build**. A Netlify nao repassa essas variaveis para as funcoes, e no Next o
+servidor roda como funcao - ou seja, tudo que o app le em tempo de execucao
+tem de estar em **Project configuration -> Environment variables**, com escopo
+`all`:
 
-| Variavel | Valor |
-| --- | --- |
-| `APP_URL` | o endereco final do site (entra nos links de aprovacao) |
-| `ENCRYPTION_KEY` | 32 bytes em base64 (`openssl rand -base64 32`) |
-| `AGENDA_TOKEN` | um segredo qualquer; protege `/api/agenda` |
-| `ADMIN_EMAIL` | e-mail do primeiro login |
-| `ADMIN_SENHA` | senha do primeiro login (10+ caracteres) |
+| Variavel | Valor | Para que |
+| --- | --- | --- |
+| `APP_URL` | endereco do site | entra nos links de aprovacao |
+| `APP_TIMEZONE` | `America/Sao_Paulo` | horario dos agendamentos |
+| `QUEUE_DRIVER` | `none` | sem Redis e sem worker |
+| `STORAGE_DRIVER` | `netlify` | criativos no Netlify Blobs |
+| `META_DRY_RUN` | `true` | nada e enviado para a Meta |
+| `WHATSAPP_MODE` | `log` | mensagem so no log e no banco |
+| `INTERNAL_NOTIFY_CHANNEL` | `log` | aviso interno so no log |
+| `ENCRYPTION_KEY` | 32 bytes em base64 (`openssl rand -base64 32`) | cifra os tokens da Meta |
+| `AGENDA_TOKEN` | um segredo qualquer | protege `/api/agenda` |
+| `ADMIN_EMAIL` | e-mail do primeiro login | primeiro acesso |
+| `ADMIN_SENHA` | senha do primeiro login (10+ caracteres) | primeiro acesso |
 
-O resto (`QUEUE_DRIVER=none`, `STORAGE_DRIVER=netlify`, `META_DRY_RUN=true`,
-`WHATSAPP_MODE=log`, `INTERNAL_NOTIFY_CHANNEL=log`, `APP_TIMEZONE`) ja vem do
-`netlify.toml`.
+Sem `QUEUE_DRIVER=none` e `STORAGE_DRIVER=netlify` ali, o app cai nos padroes de
+servidor normal (Redis e disco local) e quebra no primeiro uso.
 
 Depois de mexer nas variaveis, rode **Deploys -> Trigger deploy -> Clear cache
 and deploy site** (ou espere o proximo push).

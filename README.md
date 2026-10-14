@@ -254,6 +254,10 @@ adapta com tres chaves:
 | `STORAGE_DRIVER` | `netlify` | criativos vao para o Netlify Blobs |
 | `AGENDA_TOKEN` | um segredo | protege `/api/agenda` |
 
+Essas tres (e as demais que o app le em tempo de execucao) tem de estar nas
+**variaveis do site**, nao no `netlify.toml`: a Netlify nao repassa o
+`[build.environment]` para as funcoes, e no Next o servidor e uma funcao.
+
 No lugar do worker, a funcao agendada `netlify/functions/agenda.mts` chama
 `/api/agenda` a cada minuto. Essa rota faz o mesmo trabalho: publica o que
 venceu, marca POST SEM RESPOSTA e envia lembretes. Tudo idempotente, entao
