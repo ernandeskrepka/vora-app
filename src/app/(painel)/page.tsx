@@ -86,6 +86,8 @@ function LinhaPost({
 
 export default async function Dashboard() {
   const d = await buscarDados();
+  const quebradas = d.conexoes.filter((c) => c.status !== "NAO_CONFIGURADO");
+  const aguardando = d.conexoes.filter((c) => c.status === "NAO_CONFIGURADO");
 
   return (
     <div className="space-y-6">
@@ -104,10 +106,16 @@ export default async function Dashboard() {
         </div>
       </header>
 
-      {d.conexoes.length > 0 && (
-        <Aviso tom="erro" titulo={`${d.conexoes.length} conexao(oes) com a Meta precisando de atencao`}>
+{/*
+        Duas coisas bem diferentes moravam no mesmo alerta vermelho: ativo que
+        nunca foi configurado (normal enquanto o token do System User nao
+        existe) e conexao que quebrou (urgente). Separado, porque um painel
+        vermelho o tempo todo deixa de ser aviso.
+      */}
+      {quebradas.length > 0 && (
+        <Aviso tom="erro" titulo={`${quebradas.length} conexao(oes) com a Meta pararam de responder`}>
           <ul className="mt-1 space-y-0.5">
-            {d.conexoes.map((c) => (
+            {quebradas.map((c) => (
               <li key={c.id}>
                 {c.client.name} - {c.assetType}: {c.status}
                 {c.lastError ? ` (${c.lastError})` : ""}
@@ -116,6 +124,15 @@ export default async function Dashboard() {
           </ul>
           <Link href="/conexoes" className="mt-2 inline-block font-semibold underline">
             Abrir conexoes
+          </Link>
+        </Aviso>
+      )}
+
+      {aguardando.length > 0 && (
+        <Aviso tom="atencao" titulo={`${aguardando.length} ativo(s) esperando o acesso da Meta`}>
+          Cadastrados e prontos, mas ainda sem token do System User - por isso nenhum deles publica.{" "}
+          <Link href="/conexoes" className="font-semibold underline">
+            Ver a lista
           </Link>
         </Aviso>
       )}

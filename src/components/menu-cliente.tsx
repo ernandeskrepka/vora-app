@@ -7,6 +7,7 @@ import clsx from "clsx";
 const ITENS = [
   { href: "", rotulo: "Visao geral" },
   { href: "/planejamento", rotulo: "Planejamento" },
+  { href: "/perfil", rotulo: "Perfil" },
   { href: "/materiais", rotulo: "Materiais" },
   { href: "/posts", rotulo: "Posts" },
   { href: "/relatorio", rotulo: "Relatorio" },
