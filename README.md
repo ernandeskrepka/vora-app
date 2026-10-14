@@ -1,5 +1,7 @@
 # VORA - Aprovacao e publicacao automatizada de criativos
 
+[![Status do deploy](https://api.netlify.com/api/v1/badges/57a5729e-d433-46b1-af12-b0146401fb58/deploy-status)](https://app.netlify.com/projects/vora-aprovacoes/deploys)
+
 Sistema interno da VORA para publicar criativos de clientes no Instagram e no
 Facebook **com uma etapa obrigatoria de aprovacao do cliente**.
 
