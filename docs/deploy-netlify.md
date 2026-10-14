@@ -24,17 +24,21 @@ repositorio ja traz o comando certo, o plugin do Next e os padroes seguros
 Esse primeiro deploy sobe o site sem banco e sem segredos - e esperado. O build
 foi feito para nao quebrar nesse estado: ele avisa que nao achou banco e segue.
 
-## 2. Criar o banco
+## 2. O banco
 
-No painel do site: **Project configuration -> Database** (ou **Extensions ->
-Netlify DB**) e crie o Postgres. A Netlify injeta a variavel `NETLIFY_DB_URL`,
-que o app usa como `DATABASE_URL` quando essa nao existe.
+Nao precisa criar nada: o pacote `@netlify/database` esta nas dependencias, e a
+Netlify provisiona um Postgres gerenciado sozinha no deploy, entregando a
+conexao em `NETLIFY_DB_URL` - que o app usa como `DATABASE_URL` quando essa nao
+existe. Sem esse pacote no `package.json` a Netlify **nao** provisiona nada.
 
-Se preferir um banco de fora (Neon, Supabase, Railway), e so criar la e colocar
-a string de conexao em `DATABASE_URL` nas variaveis do site.
+As tabelas sao criadas no proprio build por `scripts/preparar-hospedagem.mjs`
+(`prisma db push`, idempotente), com o `prisma/schema.prisma` como unica fonte
+da verdade. Por isso o SQL inicial mora em `docs/sql/schema-inicial.sql` e
+**nao** em `netlify/database/migrations/`: o que esta nessa pasta a Netlify
+aplica sozinha antes de publicar, e as duas coisas juntas se atropelariam.
 
-As tabelas sao criadas no proprio build, por `scripts/preparar-hospedagem.mjs`
-(`prisma db push`, idempotente).
+Quer um banco de fora (Neon, Supabase, Railway)? Crie la e ponha a string de
+conexao em `DATABASE_URL` nas variaveis do site; ela tem prioridade.
 
 ## 3. Variaveis do site
 

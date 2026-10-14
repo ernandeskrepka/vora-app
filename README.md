@@ -263,9 +263,13 @@ No lugar do worker, a funcao agendada `netlify/functions/agenda.mts` chama
 venceu, marca POST SEM RESPOSTA e envia lembretes. Tudo idempotente, entao
 rodar de minuto em minuto nao duplica nada.
 
-O banco e provisionado pela propria Netlify (`NETLIFY_DB_URL`, usado como
-`DATABASE_URL` quando essa nao existe) e as tabelas sao criadas no build por
-`scripts/preparar-hospedagem.mjs`. Sem banco configurado o build nao quebra: ele
+O banco e provisionado pela propria Netlify, sem clique: o pacote
+`@netlify/database` nas dependencias e o que liga esse provisionamento, e a
+conexao chega em `NETLIFY_DB_URL` (usada como `DATABASE_URL` quando essa nao
+existe). As tabelas sao criadas no build por `scripts/preparar-hospedagem.mjs`.
+O SQL inicial fica em `docs/sql/schema-inicial.sql` de proposito: dentro de
+`netlify/database/migrations/` a Netlify aplicaria o mesmo schema por conta
+propria e as duas coisas se atropelariam. Sem banco configurado o build nao quebra: ele
 avisa e segue, para o site existir antes das variaveis.
 
 Passo a passo com cliques em [docs/deploy-netlify.md](docs/deploy-netlify.md).
