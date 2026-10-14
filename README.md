@@ -381,3 +381,10 @@ Em ordem do que faz mais falta:
 4. **Coleta real de insights da fase 2.** O coletor esta implementado, mas so roda
    com `META_DRY_RUN=false`; os dados do relatorio em desenvolvimento vem do seed.
 5. **Sentry**: a variavel existe, a instrumentacao ainda nao foi ligada.
+
+### Primeiro acesso automatico
+
+Numa instalacao nova, com `ADMIN_EMAIL` e `ADMIN_SENHA` definidos, a tela de
+login cria o primeiro usuario e os clientes do piloto na primeira visita. Com
+qualquer usuario no banco, nada acontece. Tambem existe a rota
+`POST /api/primeiro-acesso?token=<AGENDA_TOKEN>` para fazer isso manualmente.

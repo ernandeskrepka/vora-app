@@ -1,4 +1,6 @@
+import { env } from "@/env";
 import { prisma } from "@/lib/db.ts";
+import { logger } from "@/lib/logger.ts";
 import { hashSenha } from "@/lib/crypto.ts";
 import { registrarAuditoria } from "@/lib/audit.ts";
 import { gerarSlug } from "./clientes.ts";
@@ -45,4 +47,31 @@ export async function semearPrimeiroAcesso(input: { email: string; senha: string
   });
 
   return { criado: true, usuario: usuario.email, clientes: pilotos.length };
+}
+
+
+const log = logger("primeiro-acesso");
+
+/**
+ * Chamada ao abrir a tela de login. Numa instalacao nova, com ADMIN_EMAIL e
+ * ADMIN_SENHA definidos, cria o primeiro usuario e os clientes do piloto para
+ * a equipe conseguir entrar sem passo manual. Com qualquer usuario no banco,
+ * nao faz nada.
+ */
+export async function garantirPrimeiroUsuario(): Promise<void> {
+  if (!env.ADMIN_EMAIL || !env.ADMIN_SENHA) return;
+
+  try {
+    const r = await semearPrimeiroAcesso({
+      email: env.ADMIN_EMAIL,
+      senha: env.ADMIN_SENHA,
+      nome: "Equipe VORA",
+    });
+    if (r.criado) log.info("primeiro usuario criado", { email: r.usuario });
+  } catch (erro) {
+    // Banco fora do ar na primeira visita nao pode derrubar a tela de login.
+    log.warn("nao foi possivel checar o primeiro acesso", {
+      erro: erro instanceof Error ? erro.message : String(erro),
+    });
+  }
 }

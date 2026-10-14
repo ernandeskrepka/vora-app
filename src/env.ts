@@ -72,6 +72,11 @@ const schema = z.object({
 
   // Protege a rota que dispara a agenda quando nao ha worker.
   AGENDA_TOKEN: z.string().optional(),
+
+  // Primeiro acesso de uma instalacao nova: se o banco estiver sem usuario,
+  // esses dados criam o primeiro login. Depois disso sao ignorados.
+  ADMIN_EMAIL: z.string().optional(),
+  ADMIN_SENHA: z.string().optional(),
 });
 
 /**

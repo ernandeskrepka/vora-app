@@ -13,6 +13,14 @@
 [build.environment]
   NODE_VERSION = "22"
   PRISMA_SKIP_POSTINSTALL_GENERATE = "true"
+  # Padroes desta hospedagem. Os segredos (ENCRYPTION_KEY, AGENDA_TOKEN,
+  # ADMIN_EMAIL, ADMIN_SENHA) ficam nas variaveis do site, nao aqui.
+  QUEUE_DRIVER = "none"
+  STORAGE_DRIVER = "netlify"
+  META_DRY_RUN = "true"
+  WHATSAPP_MODE = "log"
+  INTERNAL_NOTIFY_CHANNEL = "log"
+  APP_TIMEZONE = "America/Sao_Paulo"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
