@@ -181,3 +181,53 @@ export async function acaoTestarConexao(dados: FormData) {
   await verificarConexao(String(dados.get("conexaoId") ?? ""));
   revalidatePath("/conexoes");
 }
+
+/**
+ * Le o cronograma de todos os clientes com pagina no Notion e traz para o
+ * calendario geral. Um cliente com erro (pagina nao compartilhada, link
+ * errado) nao segura os outros: entra na lista de falhas da resposta.
+ */
+export async function acaoSincronizarTodosNotion(
+  _estado: EstadoSimples,
+  dados: FormData,
+): Promise<EstadoSimples> {
+  const ator = await atorAtual();
+  try {
+    const { sincronizarTodosOsCalendarios } =
+      await import("@/services/notion-planejamento.ts");
+    const criarPostos = dados.get("criarPostos") === "sim";
+    const hora = Number(String(dados.get("hora") ?? "9"));
+    const r = await sincronizarTodosOsCalendarios({
+      ator,
+      criarPostos,
+      hora: Number.isFinite(hora) && hora >= 0 && hora <= 23 ? hora : 9,
+    });
+    revalidatePath("/calendario");
+    revalidatePath("/clientes");
+
+    if (r.comPagina === 0) {
+      return {
+        erro: "Nenhum cliente tem pagina do Notion configurada. Cole o link em Ajustes de cada um.",
+      };
+    }
+
+    const pautas = r.lidos.reduce((t, l) => t + l.criados, 0);
+    const atualizadas = r.lidos.reduce((t, l) => t + l.atualizados, 0);
+    const noCalendario = r.lidos.reduce((t, l) => t + l.postosNoCalendario, 0);
+    const resumo =
+      `${r.lidos.length} de ${r.comPagina} cliente(s) lidos: ${pautas} pauta(s) nova(s), ` +
+      `${atualizadas} atualizada(s)` +
+      (noCalendario > 0 ? `, ${noCalendario} rascunho(s) no calendario` : "") +
+      ".";
+    const falhas =
+      r.falhas.length > 0
+        ? ` Nao deu para ler: ${r.falhas.map((f) => `${f.cliente} (${f.erro.split(".")[0]})`).join("; ")}.`
+        : "";
+
+    return r.falhas.length > 0 && r.lidos.length === 0
+      ? { erro: resumo + falhas }
+      : { sucesso: resumo + falhas };
+  } catch (erro) {
+    return { erro: mensagem(erro) };
+  }
+}

@@ -13,7 +13,7 @@ vi.mock("@/lib/notion/client.ts", async () => {
 const { prisma } = await import("@/lib/db.ts");
 const { ATOR_EQUIPE, criarClienteCompleto, limparBanco } =
   await import("@/testes/ajudantes.ts");
-const { sincronizarCalendarioDoNotion } =
+const { sincronizarCalendarioDoNotion, sincronizarTodosOsCalendarios } =
   await import("./notion-planejamento.ts");
 
 const PAGINA_NOTION =
@@ -180,5 +180,150 @@ describe("cronograma do Notion no calendario", () => {
     await expect(
       sincronizarCalendarioDoNotion({ clienteId: c.id, ator: ATOR_EQUIPE }),
     ).rejects.toThrow();
+  });
+});
+
+describe("calendario geral: todos os clientes de uma vez", () => {
+  /** Dois clientes com pagina e um sem: a carteira de verdade e assim. */
+  async function carteira() {
+    const a = await cliente();
+    await prisma.client.update({
+      where: { id: a.id },
+      data: { name: "Santa Rita" },
+    });
+    const b = await cliente();
+    await prisma.client.update({
+      where: { id: b.id },
+      data: { name: "Espaco Moveis" },
+    });
+    const semPagina = await criarClienteCompleto({ nome: "Sem Notion" });
+    return { a, b, semPagina };
+  }
+
+  it("le cada cliente com pagina e deixa o resto em paz", async () => {
+    const { a, b, semPagina } = await carteira();
+    paginaFalsa.mockResolvedValue([
+      { tipo: "heading_2", texto: `Sexta-feira — ${dia(3)} | Post da semana` },
+    ]);
+
+    const r = await sincronizarTodosOsCalendarios({ ator: ATOR_EQUIPE });
+
+    expect(r.comPagina).toBe(2);
+    expect(r.lidos).toHaveLength(2);
+    expect(r.falhas).toHaveLength(0);
+    expect(await prisma.planningItem.count({ where: { clientId: a.id } })).toBe(
+      1,
+    );
+    expect(await prisma.planningItem.count({ where: { clientId: b.id } })).toBe(
+      1,
+    );
+    expect(
+      await prisma.planningItem.count({ where: { clientId: semPagina.id } }),
+    ).toBe(0);
+  });
+
+  it("a pauta que veio do Notion fica marcada como tal", async () => {
+    const { a } = await carteira();
+    paginaFalsa.mockResolvedValue([
+      { tipo: "heading_2", texto: `Terca-feira — ${dia(2)} | Enquete` },
+    ]);
+
+    await sincronizarTodosOsCalendarios({ ator: ATOR_EQUIPE });
+
+    const pauta = await prisma.planningItem.findFirstOrThrow({
+      where: { clientId: a.id },
+    });
+    expect(pauta.source).toBe("notion");
+  });
+
+  it("um cliente com pagina quebrada nao trava os outros", async () => {
+    const { a, b } = await carteira();
+    // "b" aponta para outra pagina, que o Notion recusa como recusa uma
+    // pagina nao compartilhada com a integracao.
+    const PAGINA_QUEBRADA =
+      "https://app.notion.com/p/3e48b499e743815b9803dba97eafa85e";
+    await prisma.client.update({
+      where: { id: b.id },
+      data: { notionPageId: PAGINA_QUEBRADA },
+    });
+    paginaFalsa.mockImplementation(async (pageId: string) => {
+      if (pageId.startsWith("3e48b499")) {
+        throw new Error(
+          "Notion respondeu 404. Confira se a pagina foi compartilhada.",
+        );
+      }
+      return [{ tipo: "heading_2", texto: `Quarta-feira — ${dia(4)} | Combo` }];
+    });
+
+    const r = await sincronizarTodosOsCalendarios({ ator: ATOR_EQUIPE });
+
+    expect(r.lidos).toHaveLength(1);
+    expect(r.falhas).toHaveLength(1);
+    expect(r.falhas[0].cliente).toBe("Espaco Moveis");
+    expect(r.falhas[0].erro).toContain("404");
+    expect(await prisma.planningItem.count({ where: { clientId: a.id } })).toBe(
+      1,
+    );
+    expect(await prisma.planningItem.count({ where: { clientId: b.id } })).toBe(
+      0,
+    );
+  });
+
+  it("na agenda, nao rele quem foi lido ha pouco e respeita o maximo por rodada", async () => {
+    const { a, b } = await carteira();
+    paginaFalsa.mockResolvedValue([
+      { tipo: "heading_2", texto: `Quinta-feira — ${dia(5)} | Bastidores` },
+    ]);
+    // "a" acabou de ser lido; "b" nunca foi.
+    await prisma.client.update({
+      where: { id: a.id },
+      data: { notionSyncedAt: new Date() },
+    });
+
+    const r = await sincronizarTodosOsCalendarios({
+      ator: ATOR_EQUIPE,
+      lidoHaMenosDeHoras: 6,
+      maximo: 5,
+    });
+
+    expect(r.lidos).toHaveLength(1);
+    expect(r.lidos[0].cliente).toBe("Espaco Moveis");
+    expect(r.pulados).toBe(1);
+    expect(await prisma.planningItem.count({ where: { clientId: b.id } })).toBe(
+      1,
+    );
+
+    // Com maximo 1 e ninguem lido ha pouco, so um entra na rodada.
+    await prisma.client.updateMany({ data: { notionSyncedAt: null } });
+    const segunda = await sincronizarTodosOsCalendarios({
+      ator: ATOR_EQUIPE,
+      maximo: 1,
+    });
+    expect(segunda.lidos).toHaveLength(1);
+    expect(segunda.pulados).toBe(1);
+  });
+
+  it("quem nunca foi lido vai na frente de quem ja foi", async () => {
+    const { a, b } = await carteira();
+    paginaFalsa.mockResolvedValue([]);
+    await prisma.client.update({
+      where: { id: a.id },
+      data: { notionSyncedAt: new Date(Date.now() - 48 * 3_600_000) },
+    });
+
+    const r = await sincronizarTodosOsCalendarios({
+      ator: ATOR_EQUIPE,
+      maximo: 1,
+    });
+
+    expect(r.lidos[0].cliente).toBe("Espaco Moveis");
+    expect(b.id).toBeTruthy();
+  });
+
+  it("sem nenhuma pagina configurada, nao ha o que ler", async () => {
+    await criarClienteCompleto({ nome: "So conteudo" });
+    const r = await sincronizarTodosOsCalendarios({ ator: ATOR_EQUIPE });
+    expect(r.comPagina).toBe(0);
+    expect(r.lidos).toHaveLength(0);
   });
 });

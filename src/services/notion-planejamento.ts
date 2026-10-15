@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db.ts";
 import { registrarAuditoria } from "@/lib/audit.ts";
 import {
+  NotionNaoConfigurado,
   idDaPagina,
   lerPagina,
   type LinhaDaPagina,
@@ -349,6 +350,7 @@ export async function sincronizarCalendarioDoNotion(input: {
           targetDate: item.data,
           // Item marcado no Notion ja teve roteiro escrito; sem marca, e ideia.
           status: item.concluido ? "EM_PRODUCAO" : "IDEIA",
+          source: "notion",
         },
       });
       r.criados += 1;
@@ -440,6 +442,100 @@ export async function sincronizarCalendarioDoNotion(input: {
       atualizados: r.atualizados,
     },
   });
+
+  return r;
+}
+
+export type ResultadoSincronizacaoGeral = {
+  /** Clientes ativos com pagina do Notion configurada. */
+  comPagina: number;
+  /** Quantos foram lidos nesta rodada. */
+  lidos: ResultadoSincronizacao[];
+  /** Quem deu erro, e por que - um cliente com pagina nao compartilhada nao
+   *  pode travar o resto da carteira. */
+  falhas: Array<{ clienteId: string; cliente: string; erro: string }>;
+  /** Pulados por terem sido lidos ha pouco ou por passarem do maximo. */
+  pulados: number;
+};
+
+/**
+ * Le o cronograma de todos os clientes com pagina no Notion, de uma vez.
+ *
+ * E o que alimenta o calendario geral: cada cliente ganha a pauta (e, se
+ * pedido, o rascunho) do seu cronograma, e a equipe ve tudo numa tela so.
+ *
+ * Serve tanto para o botao da tela quanto para a agenda automatica - por
+ * isso aceita um limite de clientes por rodada e um "nao releia quem foi
+ * lido ha pouco": a funcao agendada tem poucos segundos, e ler 18 paginas
+ * do Notion de minuto em minuto seria desperdicio.
+ */
+export async function sincronizarTodosOsCalendarios(input: {
+  ator: Ator;
+  criarPostos?: boolean;
+  hora?: number;
+  referencia?: Date;
+  /** Pula quem foi lido ha menos horas que isso. Sem valor, le todo mundo. */
+  lidoHaMenosDeHoras?: number;
+  /** Maximo de clientes nesta rodada. Sem valor, todos. */
+  maximo?: number;
+}): Promise<ResultadoSincronizacaoGeral> {
+  const agora = input.referencia ?? new Date();
+
+  const clientes = await prisma.client.findMany({
+    where: { active: true, notionPageId: { not: null } },
+    select: { id: true, name: true, notionSyncedAt: true },
+    // Quem nunca foi lido vai primeiro; depois, do mais antigo ao mais recente.
+    orderBy: [
+      { notionSyncedAt: { sort: "asc", nulls: "first" } },
+      { name: "asc" },
+    ],
+  });
+
+  const r: ResultadoSincronizacaoGeral = {
+    comPagina: clientes.length,
+    lidos: [],
+    falhas: [],
+    pulados: 0,
+  };
+
+  const limite =
+    input.lidoHaMenosDeHoras !== undefined
+      ? new Date(agora.getTime() - input.lidoHaMenosDeHoras * 3_600_000)
+      : null;
+
+  const fila = clientes.filter((c) => {
+    if (limite && c.notionSyncedAt && c.notionSyncedAt > limite) {
+      r.pulados += 1;
+      return false;
+    }
+    return true;
+  });
+
+  const nestaRodada =
+    input.maximo !== undefined ? fila.slice(0, input.maximo) : fila;
+  r.pulados += fila.length - nestaRodada.length;
+
+  for (const cliente of nestaRodada) {
+    try {
+      r.lidos.push(
+        await sincronizarCalendarioDoNotion({
+          clienteId: cliente.id,
+          ator: input.ator,
+          referencia: agora,
+          criarPostos: input.criarPostos,
+          hora: input.hora,
+        }),
+      );
+    } catch (erro) {
+      // Sem token nao adianta tentar o proximo: e a mesma falha 18 vezes.
+      if (erro instanceof NotionNaoConfigurado) throw erro;
+      r.falhas.push({
+        clienteId: cliente.id,
+        cliente: cliente.name,
+        erro: erro instanceof Error ? erro.message : String(erro),
+      });
+    }
+  }
 
   return r;
 }

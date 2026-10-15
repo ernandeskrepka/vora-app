@@ -4,6 +4,8 @@ import { publicarPost } from "./publicacao.ts";
 import { marcarPostSemResposta } from "./posts.ts";
 import { enviarLembrete } from "./lembretes.ts";
 import { obterConfiguracoes } from "./configuracoes.ts";
+import { sincronizarTodosOsCalendarios } from "./notion-planejamento.ts";
+import { NotionNaoConfigurado } from "@/lib/notion/client.ts";
 
 const log = logger("agenda");
 
@@ -12,7 +14,14 @@ export type ResultadoAgenda = {
   falhas: number;
   semResposta: number;
   lembretes: number;
+  /** Clientes cujo cronograma do Notion foi relido nesta rodada. */
+  notion: number;
 };
+
+/** De quanto em quanto tempo o cronograma de cada cliente e relido. */
+export const NOTION_RELEITURA_HORAS = 6;
+/** Quantos clientes por rodada: a funcao agendada tem poucos segundos. */
+export const NOTION_POR_RODADA = 3;
 
 /**
  * Varre o que venceu e age.
@@ -25,12 +34,23 @@ export type ResultadoAgenda = {
  * marcar sem resposta so age em AGUARDANDO_APROVACAO, e o lembrete olha se
  * ja foi enviado naquele intervalo.
  */
-export async function processarPendencias(agora = new Date()): Promise<ResultadoAgenda> {
-  const resultado: ResultadoAgenda = { publicados: 0, falhas: 0, semResposta: 0, lembretes: 0 };
+export async function processarPendencias(
+  agora = new Date(),
+): Promise<ResultadoAgenda> {
+  const resultado: ResultadoAgenda = {
+    publicados: 0,
+    falhas: 0,
+    semResposta: 0,
+    lembretes: 0,
+    notion: 0,
+  };
 
   // 1. Posts aprovados cujo horario chegou.
   const aPublicar = await prisma.post.findMany({
-    where: { status: { in: ["APROVADO", "PUBLICANDO"] }, scheduledAt: { lte: agora } },
+    where: {
+      status: { in: ["APROVADO", "PUBLICANDO"] },
+      scheduledAt: { lte: agora },
+    },
     select: { id: true },
     take: 20,
   });
@@ -87,8 +107,44 @@ export async function processarPendencias(agora = new Date()): Promise<Resultado
     }
   }
 
-  if (resultado.publicados || resultado.falhas || resultado.semResposta || resultado.lembretes) {
+  // 4. Calendario geral: rele o cronograma do Notion de quem nao e lido ha
+  //    algumas horas, poucos clientes por vez. So cria pauta - rascunho no
+  //    calendario e decisao da equipe, pelo botao da tela.
+  resultado.notion = await relerNotion(agora);
+
+  if (
+    resultado.publicados ||
+    resultado.falhas ||
+    resultado.semResposta ||
+    resultado.lembretes ||
+    resultado.notion
+  ) {
     log.info("agenda processou pendencias", resultado);
   }
   return resultado;
+}
+
+async function relerNotion(agora: Date): Promise<number> {
+  try {
+    const r = await sincronizarTodosOsCalendarios({
+      ator: { tipo: "SISTEMA", nome: "agenda" },
+      referencia: agora,
+      lidoHaMenosDeHoras: NOTION_RELEITURA_HORAS,
+      maximo: NOTION_POR_RODADA,
+    });
+    for (const falha of r.falhas) {
+      log.warn("notion: cronograma de um cliente nao pode ser lido", {
+        cliente: falha.cliente,
+        erro: falha.erro,
+      });
+    }
+    return r.lidos.length;
+  } catch (erro) {
+    // Sem token nao e erro da agenda: e o Notion que ainda nao foi ligado.
+    if (erro instanceof NotionNaoConfigurado) return 0;
+    log.error("falha ao reler o Notion pela agenda", {
+      erro: erro instanceof Error ? erro.message : String(erro),
+    });
+    return 0;
+  }
 }

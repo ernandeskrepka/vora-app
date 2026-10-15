@@ -228,6 +228,9 @@ model PlanningItem {
   status      PlanningStatus @default(IDEIA)
   /// Preenchido quando a pauta vira um post de verdade.
   postId      String?        @unique
+  /// De onde a pauta veio: "notion" quando a sincronizacao criou; nulo quando
+  /// a equipe escreveu a mao. O calendario usa para marcar o que e do Notion.
+  source      String?
   createdById String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
