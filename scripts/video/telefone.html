@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>No celular do cliente</title>
+    <link rel="stylesheet" href="base.css" />
+    <style>
+      .palco {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4.7vw;
+        height: 100%;
+        padding: 0 5.7vw;
+      }
+
+      /* Moldura de celular: o quadro faz a equipe entender na hora que aquilo
+         nao e o painel, e sim o que chega para o cliente. */
+      .celular {
+        position: relative;
+        height: 78vh;
+        width: 37.3vh;
+        border-radius: 4.8vh;
+        padding: 1.2vh;
+        background: linear-gradient(160deg, #2b2f2d, #0d0f0e);
+        box-shadow:
+          0 4.6vh 8.3vh rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(255, 255, 255, 0.07) inset;
+        flex: none;
+      }
+      .celular::after {
+        content: "";
+        position: absolute;
+        top: 2.4vh;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 10vh;
+        height: 2.4vh;
+        border-radius: 999px;
+        background: #0a0a0a;
+        z-index: 2;
+      }
+      /* O iframe desenha num viewport de celular de verdade (430px) e e
+         reduzido para caber na moldura. Sem isso a pagina do cliente
+         renderiza num viewport estreito demais e aparece ampliada. */
+      .tela-interna {
+        width: 100%;
+        height: 100%;
+        border-radius: 3.7vh;
+        overflow: hidden;
+        background: #fff;
+      }
+      /* O iframe e alto o bastante para conter a pagina inteira, sem barra de
+         rolagem propria. "Rolar" e deslizar o iframe para cima por fora - a
+         pagina do cliente e de outra origem, entao nao da para mexer no
+         scroll dela de dentro daqui. */
+      .celular iframe {
+        width: 430px;
+        height: 4200px;
+        border: 0;
+        transform-origin: top left;
+        background: #fff;
+        will-change: transform;
+      }
+
+      .texto { max-width: 38vw; text-align: left; }
+      .texto .selo { display: inline-block; margin-bottom: 1.35vw; }
+      .texto h2 {
+        font-weight: 900;
+        font-size: 3.02vw;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        margin-bottom: 1.15vw;
+      }
+      .texto p { font-size: 1.41vw; line-height: 1.5; color: var(--cinza); }
+      .texto ul { margin-top: 1.35vw; display: grid; gap: 0.68vw; list-style: none; }
+      .texto li { font-size: 1.25vw; display: flex; gap: 0.73vw; align-items: flex-start; }
+      .texto li span { color: var(--verde); font-weight: 900; }
+    </style>
+  </head>
+  <body>
+    <div class="palco">
+      <div class="celular entra"><div class="tela-interna"><iframe id="tela" title="Tela do cliente"></iframe></div></div>
+      <div class="texto entra-2">
+        <span class="selo">O que o cliente recebe</span>
+        <h2 id="titulo">Chega o link no WhatsApp</h2>
+        <p id="sub">Ele abre no celular, sem login e sem instalar nada.</p>
+        <ul id="pontos"></ul>
+      </div>
+    </div>
+
+    <script>
+      // A moldura muda de tamanho com a altura da janela: a reducao do iframe
+      // e calculada aqui, nao chutada no CSS.
+      let escala = 1;
+      let deslocamento = 0;
+
+      function aplicar() {
+        document.getElementById("tela").style.transform =
+          `scale(${escala}) translateY(${-deslocamento}px)`;
+      }
+
+      function ajustarEscala() {
+        escala = document.querySelector(".tela-interna").clientWidth / 430;
+        aplicar();
+      }
+      window.addEventListener("resize", ajustarEscala);
+      ajustarEscala();
+
+      /** Chamada pelo gravador: desliza a tela do cliente ate `ate` px. */
+      window.deslizar = (ate, passo) =>
+        new Promise((pronto) => {
+          const anda = () => {
+            deslocamento = Math.min(ate, deslocamento + passo);
+            aplicar();
+            deslocamento < ate ? requestAnimationFrame(anda) : pronto();
+          };
+          requestAnimationFrame(anda);
+        });
+
+      const p = new URLSearchParams(location.search);
+      document.getElementById("tela").src = p.get("u") ?? "about:blank";
+      if (p.get("titulo")) document.getElementById("titulo").innerHTML = p.get("titulo");
+      if (p.get("sub")) document.getElementById("sub").innerHTML = p.get("sub");
+      const pontos = (p.get("pontos") ?? "").split("|").filter(Boolean);
+      document.getElementById("pontos").innerHTML = pontos
+        .map((t) => `<li><span>&rsaquo;</span>${t}</li>`)
+        .join("");
+    </script>
+  </body>
+</html>
