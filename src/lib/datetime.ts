@@ -8,7 +8,10 @@ import { env } from "@/env";
 export const FUSO_PADRAO = env.APP_TIMEZONE;
 
 /** Converte o valor de um <input type="datetime-local"> para UTC. */
-export function doFusoParaUtc(valorLocal: string, fuso: string = FUSO_PADRAO): Date {
+export function doFusoParaUtc(
+  valorLocal: string,
+  fuso: string = FUSO_PADRAO,
+): Date {
   return fromZonedTime(valorLocal, fuso);
 }
 
@@ -17,7 +20,10 @@ export function paraInputLocal(data: Date, fuso: string = FUSO_PADRAO): string {
   return formatInTimeZone(data, fuso, "yyyy-MM-dd'T'HH:mm");
 }
 
-export function formatarDataHora(data: Date, fuso: string = FUSO_PADRAO): string {
+export function formatarDataHora(
+  data: Date,
+  fuso: string = FUSO_PADRAO,
+): string {
   return formatInTimeZone(data, fuso, "dd/MM/yyyy 'as' HH:mm");
 }
 
@@ -29,18 +35,61 @@ export function formatarHora(data: Date, fuso: string = FUSO_PADRAO): string {
   return formatInTimeZone(data, fuso, "HH:mm");
 }
 
-export function formatarDiaExtenso(data: Date, fuso: string = FUSO_PADRAO): string {
-  const dias = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+/** Meses em portugues, sem acento (convencao do projeto para log e codigo). */
+export const MESES = [
+  "janeiro",
+  "fevereiro",
+  "marco",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
+/** "outubro de 2026" - date-fns sem locale carregado sairia em ingles. */
+export function formatarMesAno(data: Date, fuso: string = FUSO_PADRAO): string {
+  const local = toZonedTime(data, fuso);
+  return `${MESES[local.getMonth()]} de ${local.getFullYear()}`;
+}
+
+export function formatarDiaExtenso(
+  data: Date,
+  fuso: string = FUSO_PADRAO,
+): string {
+  const dias = [
+    "domingo",
+    "segunda",
+    "terca",
+    "quarta",
+    "quinta",
+    "sexta",
+    "sabado",
+  ];
   const local = toZonedTime(data, fuso);
   return `${dias[local.getDay()]}, ${formatarData(data, fuso)}`;
 }
 
 /** Inicio e fim de um mes (1-12) no fuso informado, em UTC. */
-export function intervaloDoMes(ano: number, mes: number, fuso: string = FUSO_PADRAO) {
-  const inicio = fromZonedTime(`${ano}-${String(mes).padStart(2, "0")}-01T00:00:00`, fuso);
+export function intervaloDoMes(
+  ano: number,
+  mes: number,
+  fuso: string = FUSO_PADRAO,
+) {
+  const inicio = fromZonedTime(
+    `${ano}-${String(mes).padStart(2, "0")}-01T00:00:00`,
+    fuso,
+  );
   const proximoMes = mes === 12 ? 1 : mes + 1;
   const proximoAno = mes === 12 ? ano + 1 : ano;
-  const fim = fromZonedTime(`${proximoAno}-${String(proximoMes).padStart(2, "0")}-01T00:00:00`, fuso);
+  const fim = fromZonedTime(
+    `${proximoAno}-${String(proximoMes).padStart(2, "0")}-01T00:00:00`,
+    fuso,
+  );
   return { inicio, fim };
 }
 

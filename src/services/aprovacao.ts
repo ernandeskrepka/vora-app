@@ -10,6 +10,7 @@ import { notificarEquipe } from "./notificacoes.ts";
 import { obterConfiguracoes } from "./configuracoes.ts";
 import type { PostStatus } from "@/domain/post-status.ts";
 import type { Network, PostFormat } from "@/lib/tipos.ts";
+import { legendaVisivel } from "@/domain/legenda.ts";
 
 const log = logger("aprovacao");
 
@@ -65,7 +66,9 @@ export type VisaoAprovacao = {
  * Carrega a pagina publica de aprovacao a partir do token do link.
  * Devolve null so quando o token nao existe (link errado ou apagado).
  */
-export async function carregarPorToken(token: string): Promise<VisaoAprovacao | null> {
+export async function carregarPorToken(
+  token: string,
+): Promise<VisaoAprovacao | null> {
   const pedido = await prisma.approvalRequest.findUnique({
     where: { tokenHash: hashToken(token) },
     include: {
@@ -94,14 +97,20 @@ export async function carregarPorToken(token: string): Promise<VisaoAprovacao | 
     })),
   );
 
-  const perfil = await montarPerfil(post.clientId, post.client.name, post.client.metaConnections);
+  const perfil = await montarPerfil(
+    post.clientId,
+    post.client.name,
+    post.client.metaConnections,
+  );
 
   const expirado = pedido.expiresAt.getTime() < Date.now();
   const estado: VisaoAprovacao["estado"] = pedido.decision
     ? "JA_DECIDIDO"
     : pedido.status === "SUBSTITUIDO"
       ? "SUBSTITUIDO"
-      : pedido.status === "EXPIRADO" || expirado || post.status !== "AGUARDANDO_APROVACAO"
+      : pedido.status === "EXPIRADO" ||
+          expirado ||
+          post.status !== "AGUARDANDO_APROVACAO"
         ? post.status === "POST_SEM_RESPOSTA" || post.status === "CANCELADO"
           ? "EXPIRADO"
           : "ENCERRADO"
@@ -111,7 +120,7 @@ export async function carregarPorToken(token: string): Promise<VisaoAprovacao | 
     estado,
     postId: post.id,
     clienteNome: post.client.name,
-    caption: post.caption,
+    caption: legendaVisivel(post.caption),
     formato: post.format,
     networks: post.networks,
     scheduledAt: post.scheduledAt,
@@ -127,7 +136,10 @@ export async function carregarPorToken(token: string): Promise<VisaoAprovacao | 
         }
       : null,
     publicadoEm: post.publishedAt,
-    links: post.publications.map((p) => ({ network: p.network, permalink: p.permalink })),
+    links: post.publications.map((p) => ({
+      network: p.network,
+      permalink: p.permalink,
+    })),
     perfil,
   };
 }
@@ -174,7 +186,12 @@ async function montarPerfil(
       })),
   );
 
-  return { handle, nome: nomeCliente, totalPublicados: total, publicados: itens };
+  return {
+    handle,
+    nome: nomeCliente,
+    totalPublicados: total,
+    publicados: itens,
+  };
 }
 
 export type EntradaDecisao = {
@@ -197,16 +214,21 @@ export async function registrarDecisao(entrada: EntradaDecisao): Promise<{
   const nome = entrada.nome.trim();
   const comentario = entrada.comentario?.trim() || null;
 
-  if (nome.length < 2) throw new ErroDeRegra("Digite seu nome para registrar quem aprovou.");
+  if (nome.length < 2)
+    throw new ErroDeRegra("Digite seu nome para registrar quem aprovou.");
   if (nome.length > 120) throw new ErroDeRegra("Nome muito longo.");
   if (entrada.decisao === "REPROVADO" && !comentario) {
     throw new ErroDeRegra("Para reprovar, escreva o que precisa ser ajustado.");
   }
-  if (comentario && comentario.length > 2000) throw new ErroDeRegra("Comentario muito longo.");
+  if (comentario && comentario.length > 2000)
+    throw new ErroDeRegra("Comentario muito longo.");
 
   const pedido = await prisma.approvalRequest.findUnique({
     where: { tokenHash: hashToken(entrada.token) },
-    include: { decision: true, post: { include: { client: { include: { contacts: true } } } } },
+    include: {
+      decision: true,
+      post: { include: { client: { include: { contacts: true } } } },
+    },
   });
 
   if (!pedido) throw new ErroDeRegra("Link invalido.");
@@ -214,10 +236,14 @@ export async function registrarDecisao(entrada: EntradaDecisao): Promise<{
     throw new ErroDeRegra("Esse post ja foi respondido.");
   }
   if (pedido.status === "SUBSTITUIDO") {
-    throw new ErroDeRegra("Esse link foi substituido por uma versao mais nova do post.");
+    throw new ErroDeRegra(
+      "Esse link foi substituido por uma versao mais nova do post.",
+    );
   }
   if (pedido.status === "EXPIRADO" || pedido.expiresAt.getTime() < Date.now()) {
-    throw new ErroDeRegra("O prazo desse post terminou. Fale com a equipe da VORA.");
+    throw new ErroDeRegra(
+      "O prazo desse post terminou. Fale com a equipe da VORA.",
+    );
   }
 
   const post = pedido.post;
@@ -228,7 +254,8 @@ export async function registrarDecisao(entrada: EntradaDecisao): Promise<{
     throw new ErroDeRegra("Esse link e de uma versao anterior do post.");
   }
 
-  const evento = entrada.decisao === "APROVADO" ? "CLIENTE_APROVOU" : "CLIENTE_REPROVOU";
+  const evento =
+    entrada.decisao === "APROVADO" ? "CLIENTE_APROVOU" : "CLIENTE_REPROVOU";
 
   await prisma.$transaction(async (tx) => {
     await tx.approvalDecision.create({
@@ -250,7 +277,11 @@ export async function registrarDecisao(entrada: EntradaDecisao): Promise<{
     });
 
     await aplicarTransicao(tx, {
-      post: { id: post.id, status: post.status as PostStatus, version: post.version },
+      post: {
+        id: post.id,
+        status: post.status as PostStatus,
+        version: post.version,
+      },
       evento,
       ator: {
         tipo: "CLIENTE",
@@ -258,18 +289,24 @@ export async function registrarDecisao(entrada: EntradaDecisao): Promise<{
         ipAddress: entrada.ipAddress,
         userAgent: entrada.userAgent,
       },
-      acao: entrada.decisao === "APROVADO" ? "cliente_aprovou" : "cliente_reprovou",
+      acao:
+        entrada.decisao === "APROVADO" ? "cliente_aprovou" : "cliente_reprovou",
       metadata: {
         versao: post.version,
         comentario,
         pedidoId: pedido.id,
       },
       dadosExtra:
-        entrada.decisao === "APROVADO" ? { approvedAt: new Date() } : { approvedAt: null },
+        entrada.decisao === "APROVADO"
+          ? { approvedAt: new Date() }
+          : { approvedAt: null },
     });
   });
 
-  await cancelarJobsDoPost(post.id, (await obterConfiguracoes()).lembretesHoras);
+  await cancelarJobsDoPost(
+    post.id,
+    (await obterConfiguracoes()).lembretesHoras,
+  );
 
   if (entrada.decisao === "APROVADO") {
     await agendarPublicacao({

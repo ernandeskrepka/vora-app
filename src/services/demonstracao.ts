@@ -8,7 +8,13 @@ import { normalizarTelefone } from "@/lib/whatsapp/client.ts";
 import { gerarSlug } from "./clientes.ts";
 import { ErroDeRegra } from "./erros.ts";
 import type { Ator } from "./transicoes.ts";
-import type { MediaKind, Network, PlanningStatus, PostFormat, PostStatus } from "@/lib/tipos.ts";
+import type {
+  MediaKind,
+  Network,
+  PlanningStatus,
+  PostFormat,
+  PostStatus,
+} from "@/lib/tipos.ts";
 
 /* ------------------------------------------------------------------ tipos */
 
@@ -46,8 +52,18 @@ type RecargaDemo = { valor: number; dias: number; observacao?: string };
 type ClienteDemo = {
   slug: string;
   recargas?: RecargaDemo[];
-  contatos: Array<{ nome: string; telefone: string; aprovador: boolean; lembretes: boolean }>;
-  pautas: Array<{ titulo: string; status: PlanningStatus; dias: number; notas?: string }>;
+  contatos: Array<{
+    nome: string;
+    telefone: string;
+    aprovador: boolean;
+    lembretes: boolean;
+  }>;
+  pautas: Array<{
+    titulo: string;
+    status: PlanningStatus;
+    dias: number;
+    notas?: string;
+  }>;
   posts: PostDemo[];
   anuncios?: { conta: string; campanhas: CampanhaDemo[] };
 };
@@ -93,11 +109,43 @@ async function tamanhoDaMidia(chave: string): Promise<number> {
 }
 
 export async function carregarArquivoDeDemonstracao(): Promise<ClienteDemo[]> {
-  const bruto = await readFile(path.join(process.cwd(), "dados", "demonstracao.json"), "utf8");
+  const bruto = await readFile(
+    path.join(process.cwd(), "dados", "demonstracao.json"),
+    "utf8",
+  );
   return (JSON.parse(bruto) as { clientes?: ClienteDemo[] }).clientes ?? [];
 }
 
 /* ---------------------------------------------------------------- carga */
+
+/** Marca `[demo:ref]` no fim da legenda, como era antes. */
+const MARCA_ANTIGA = /\n*\[demo:([^\]]+)\]\s*$/;
+
+/**
+ * Tira a marca de dentro da legenda dos posts de demonstracao antigos.
+ *
+ * A marca ficava no fim do texto, e legenda e o que o cliente le no link de
+ * aprovacao - com o DRY-RUN desligado, iria junto para o Instagram. Agora ela
+ * vive em `demoRef`, fora do texto; isso aqui conserta o que ja foi criado.
+ */
+async function tirarAMarcaDaLegenda() {
+  const antigos = await prisma.post.findMany({
+    where: { caption: { contains: "[demo:" } },
+    select: { id: true, caption: true },
+  });
+
+  for (const post of antigos) {
+    const achado = post.caption.match(MARCA_ANTIGA);
+    if (!achado) continue;
+    await prisma.post.update({
+      where: { id: post.id },
+      data: {
+        caption: post.caption.replace(MARCA_ANTIGA, "").trim(),
+        demoRef: achado[1],
+      },
+    });
+  }
+}
 
 /**
  * Enche o sistema com uma semana tipica da agencia, usando material real:
@@ -112,9 +160,14 @@ export async function carregarArquivoDeDemonstracao(): Promise<ClienteDemo[]> {
  * aprovacao registrada antes, post sem resposta nao tem publicacao, e tudo
  * passa por auditoria.
  */
-export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonstracao> {
+export async function carregarDemonstracao(
+  ator: Ator,
+): Promise<ResultadoDemonstracao> {
   const clientes = await carregarArquivoDeDemonstracao();
-  if (clientes.length === 0) throw new ErroDeRegra("Arquivo de demonstracao vazio.");
+  if (clientes.length === 0)
+    throw new ErroDeRegra("Arquivo de demonstracao vazio.");
+
+  await tirarAMarcaDaLegenda();
 
   const agora = new Date();
   const r: ResultadoDemonstracao = {
@@ -129,14 +182,19 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
     const cliente =
       (await prisma.client.findUnique({ where: { slug: entrada.slug } })) ??
       (await prisma.client.create({
-        data: { name: entrada.slug.replace(/-/g, " "), slug: gerarSlug(entrada.slug) },
+        data: {
+          name: entrada.slug.replace(/-/g, " "),
+          slug: gerarSlug(entrada.slug),
+        },
       }));
 
     // Contatos: quem aprova e quem recebe lembrete.
     for (const contato of entrada.contatos ?? []) {
       const telefone = normalizarTelefone(contato.telefone);
       const existe = await prisma.clientContact.findUnique({
-        where: { clientId_phoneE164: { clientId: cliente.id, phoneE164: telefone } },
+        where: {
+          clientId_phoneE164: { clientId: cliente.id, phoneE164: telefone },
+        },
       });
       if (existe) continue;
       await prisma.clientContact.create({
@@ -170,9 +228,8 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
     }
 
     for (const demo of entrada.posts ?? []) {
-      const marca = `[demo:${demo.ref}]`;
       const jaExiste = await prisma.post.findFirst({
-        where: { clientId: cliente.id, caption: { contains: marca } },
+        where: { clientId: cliente.id, demoRef: demo.ref },
         select: { id: true },
       });
       if (jaExiste) {
@@ -181,20 +238,24 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
       }
 
       const quando = emDias(demo.quando, agora);
-      const aprovadoEm = demo.aprovacao ? emDias({ dias: demo.aprovacao.dias, hora: "14:20" }, agora) : null;
+      const aprovadoEm = demo.aprovacao
+        ? emDias({ dias: demo.aprovacao.dias, hora: "14:20" }, agora)
+        : null;
 
       const post = await prisma.post.create({
         data: {
           clientId: cliente.id,
           createdById: ator.usuarioId ?? null,
-          // A marca fica no fim da legenda para a tela mostrar o texto real
-          // e a recarga saber o que ja existe.
-          caption: `${demo.legenda}\n\n${marca}`,
+          caption: demo.legenda,
+          demoRef: demo.ref,
           format: demo.formato,
           networks: demo.redes,
           scheduledAt: quando,
           status: demo.status,
-          approvedAt: demo.status === "PUBLICADO" || demo.status === "APROVADO" ? aprovadoEm : null,
+          approvedAt:
+            demo.status === "PUBLICADO" || demo.status === "APROVADO"
+              ? aprovadoEm
+              : null,
           publishedAt: demo.status === "PUBLICADO" ? quando : null,
         },
       });
@@ -215,7 +276,8 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
       }
 
       // Pedido de aprovacao: existe sempre que o post saiu do rascunho.
-      const precisaPedido = demo.status !== "RASCUNHO" && demo.status !== "CANCELADO";
+      const precisaPedido =
+        demo.status !== "RASCUNHO" && demo.status !== "CANCELADO";
       if (precisaPedido) {
         const pedidoId = randomUUID();
         const decidido = Boolean(demo.aprovacao);
@@ -225,10 +287,20 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
             postId: post.id,
             postVersion: 1,
             tokenHash: hashToken(tokenDoPedido(pedidoId)),
-            status: decidido ? "DECIDIDO" : demo.status === "POST_SEM_RESPOSTA" ? "EXPIRADO" : "PENDENTE",
+            status: decidido
+              ? "DECIDIDO"
+              : demo.status === "POST_SEM_RESPOSTA"
+                ? "EXPIRADO"
+                : "PENDENTE",
             channel: "WHATSAPP",
-            sentAt: emDias({ dias: demo.quando.dias - 2, hora: "10:00" }, agora),
-            expiresAt: emDias({ dias: demo.quando.dias + 12, hora: "10:00" }, agora),
+            sentAt: emDias(
+              { dias: demo.quando.dias - 2, hora: "10:00" },
+              agora,
+            ),
+            expiresAt: emDias(
+              { dias: demo.quando.dias + 12, hora: "10:00" },
+              agora,
+            ),
             decidedAt: decidido ? aprovadoEm : null,
           },
         });
@@ -266,7 +338,10 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
             postId: post.id,
             network: rede as Network,
             externalId,
-            permalink: rede === "INSTAGRAM" ? `https://www.instagram.com/p/${externalId.slice(-11)}/` : null,
+            permalink:
+              rede === "INSTAGRAM"
+                ? `https://www.instagram.com/p/${externalId.slice(-11)}/`
+                : null,
             dryRun: true,
             publishedAt: quando,
           },
@@ -339,7 +414,10 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
           });
         }
 
-        const pesos = Array.from({ length: DIAS }, (_, i) => 0.6 + ruido(`${campanha.id}:${i}`) * 0.8);
+        const pesos = Array.from(
+          { length: DIAS },
+          (_, i) => 0.6 + ruido(`${campanha.id}:${i}`) * 0.8,
+        );
         const soma = pesos.reduce((a, b) => a + b, 0);
 
         for (let i = 0; i < DIAS; i++) {
@@ -355,7 +433,11 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
 
           await prisma.adInsightDaily.upsert({
             where: {
-              clientId_campaignId_date: { clientId: cliente.id, campaignId: campanha.id, date: data },
+              clientId_campaignId_date: {
+                clientId: cliente.id,
+                campaignId: campanha.id,
+                date: data,
+              },
             },
             update: {},
             create: {
@@ -368,11 +450,18 @@ export async function carregarDemonstracao(ator: Ator): Promise<ResultadoDemonst
               reach: Math.round(campanha.alcance * fatia),
               impressions: impressoes,
               clicks: cliques,
-              ctr: impressoes > 0 ? Number(((cliques / impressoes) * 100).toFixed(2)) : 0,
+              ctr:
+                impressoes > 0
+                  ? Number(((cliques / impressoes) * 100).toFixed(2))
+                  : 0,
               cpc: cliques > 0 ? Number((gasto / cliques).toFixed(4)) : 0,
-              cpm: impressoes > 0 ? Number(((gasto / impressoes) * 1000).toFixed(4)) : 0,
+              cpm:
+                impressoes > 0
+                  ? Number(((gasto / impressoes) * 1000).toFixed(4))
+                  : 0,
               conversions: resultados,
-              costPerResult: resultados > 0 ? Number((gasto / resultados).toFixed(4)) : null,
+              costPerResult:
+                resultados > 0 ? Number((gasto / resultados).toFixed(4)) : null,
               currency: "BRL",
             },
           });

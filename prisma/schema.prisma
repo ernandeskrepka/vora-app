@@ -278,6 +278,10 @@ model Post {
   publishedAt DateTime?
   canceledAt  DateTime?
   lastError   String?
+  // Referencia do post de demonstracao que gerou esta linha. Fica fora da
+  // legenda de proposito: o que esta em `caption` chega ao cliente no link de
+  // aprovacao e, com o DRY-RUN desligado, vai para o Instagram.
+  demoRef     String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -291,6 +295,7 @@ model Post {
   notifications    Notification[]
   planningItem     PlanningItem?
 
+  @@index([clientId, demoRef])
   @@index([clientId, scheduledAt])
   @@index([status, scheduledAt])
 }

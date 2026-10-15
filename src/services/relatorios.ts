@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db.ts";
 import { intervaloDoMes } from "@/lib/datetime.ts";
 import { quinzenaAnterior, type Quinzena } from "@/domain/quinzena.ts";
+import { resumoDaLegenda } from "@/domain/legenda.ts";
 
 /**
  * Relatorio mensal por cliente (fase 2).
@@ -9,7 +10,11 @@ import { quinzenaAnterior, type Quinzena } from "@/domain/quinzena.ts";
  * posts vem do proprio fluxo de aprovacao, inclusive os que ficaram como
  * POST SEM RESPOSTA.
  */
-export async function relatorioMensal(input: { clientId: string; ano: number; mes: number }) {
+export async function relatorioMensal(input: {
+  clientId: string;
+  ano: number;
+  mes: number;
+}) {
   const { inicio, fim } = intervaloDoMes(input.ano, input.mes);
   return relatorioDoPeriodo({ clientId: input.clientId, inicio, fim });
 }
@@ -19,7 +24,10 @@ export async function relatorioMensal(input: { clientId: string; ano: number; me
  * com a variacao em relacao a quinzena anterior. Sem a comparacao, o numero
  * sozinho nao diz se melhorou ou piorou.
  */
-export async function relatorioDaQuinzena(input: { clientId: string; quinzena: Quinzena }) {
+export async function relatorioDaQuinzena(input: {
+  clientId: string;
+  quinzena: Quinzena;
+}) {
   const atual = await relatorioDoPeriodo({
     clientId: input.clientId,
     inicio: input.quinzena.inicio,
@@ -42,8 +50,14 @@ export async function relatorioDaQuinzena(input: { clientId: string; quinzena: Q
     comparativo: {
       temBase: passada.anuncios.temDados,
       rotuloAnterior: anterior.chave,
-      investimento: variacao(atual.anuncios.totais.investimento, passada.anuncios.totais.investimento),
-      resultados: variacao(atual.anuncios.totais.conversoes, passada.anuncios.totais.conversoes),
+      investimento: variacao(
+        atual.anuncios.totais.investimento,
+        passada.anuncios.totais.investimento,
+      ),
+      resultados: variacao(
+        atual.anuncios.totais.conversoes,
+        passada.anuncios.totais.conversoes,
+      ),
       custoPorResultado:
         atual.anuncios.totais.custoPorResultado !== null &&
         passada.anuncios.totais.custoPorResultado !== null
@@ -57,7 +71,11 @@ export async function relatorioDaQuinzena(input: { clientId: string; quinzena: Q
   };
 }
 
-export async function relatorioDoPeriodo(input: { clientId: string; inicio: Date; fim: Date }) {
+export async function relatorioDoPeriodo(input: {
+  clientId: string;
+  inicio: Date;
+  fim: Date;
+}) {
   const { inicio, fim } = input;
 
   const [cliente, insights, posts, criativos] = await Promise.all([
@@ -67,7 +85,10 @@ export async function relatorioDoPeriodo(input: { clientId: string; inicio: Date
       orderBy: [{ date: "asc" }],
     }),
     prisma.post.findMany({
-      where: { clientId: input.clientId, scheduledAt: { gte: inicio, lt: fim } },
+      where: {
+        clientId: input.clientId,
+        scheduledAt: { gte: inicio, lt: fim },
+      },
       include: {
         publications: true,
         decisions: { orderBy: { decidedAt: "desc" }, take: 1 },
@@ -113,30 +134,44 @@ export async function relatorioDoPeriodo(input: { clientId: string; inicio: Date
   }
 
   const { storage: storageCriativos } = await import("@/lib/storage/index.ts");
-  const criativosPorCampanha = new Map<string, Array<{ url: string; nome: string | null }>>();
+  const criativosPorCampanha = new Map<
+    string,
+    Array<{ url: string; nome: string | null }>
+  >();
   for (const c of criativos) {
     const lista = criativosPorCampanha.get(c.campaignId) ?? [];
     if (lista.length >= 3) continue;
-    lista.push({ url: await storageCriativos.urlTemporaria(c.storageKey), nome: c.adName });
+    lista.push({
+      url: await storageCriativos.urlTemporaria(c.storageKey),
+      nome: c.adName,
+    });
     criativosPorCampanha.set(c.campaignId, lista);
   }
 
   const campanhas = [...porCampanha.values()]
     .sort((a, b) => b.spend - a.spend)
-    .map((c) => ({ ...c, criativos: criativosPorCampanha.get(c.campaignId) ?? [] }));
+    .map((c) => ({
+      ...c,
+      criativos: criativosPorCampanha.get(c.campaignId) ?? [],
+    }));
 
   // Capa e primeira linha da legenda, prontas para a tela e para o PDF.
   const { storage } = await import("@/lib/storage/index.ts");
   const postsComCapa = await Promise.all(
     posts.map(async (p) => ({
       ...p,
-      capa: p.media[0] ? await storage.urlTemporaria(p.media[0].storageKey) : null,
-      resumo: p.caption.replace(/\n*\[demo:[^\]]+\]\s*$/, "").split("\n")[0].trim(),
+      capa: p.media[0]
+        ? await storage.urlTemporaria(p.media[0].storageKey)
+        : null,
+      resumo: resumoDaLegenda(p.caption),
     })),
   );
 
   // Serie diaria: um ponto por dia com dado, somando as campanhas do cliente.
-  const porDia = new Map<string, { data: Date; investimento: number; resultados: number; cliques: number }>();
+  const porDia = new Map<
+    string,
+    { data: Date; investimento: number; resultados: number; cliques: number }
+  >();
   for (const linha of insights) {
     const chave = linha.date.toISOString().slice(0, 10);
     const atual = porDia.get(chave) ?? {
@@ -150,7 +185,9 @@ export async function relatorioDoPeriodo(input: { clientId: string; inicio: Date
     atual.cliques += linha.clicks;
     porDia.set(chave, atual);
   }
-  const serie = [...porDia.values()].sort((a, b) => a.data.getTime() - b.data.getTime());
+  const serie = [...porDia.values()].sort(
+    (a, b) => a.data.getTime() - b.data.getTime(),
+  );
 
   const investimento = campanhas.reduce((t, c) => t + c.spend, 0);
   const impressoes = campanhas.reduce((t, c) => t + c.impressions, 0);
@@ -183,7 +220,9 @@ export async function relatorioDoPeriodo(input: { clientId: string; inicio: Date
       publicados: postsComCapa.filter((p) => p.status === "PUBLICADO"),
       reprovados: postsComCapa.filter((p) => p.status === "REPROVADO"),
       semResposta: postsComCapa.filter((p) => p.status === "POST_SEM_RESPOSTA"),
-      aguardando: postsComCapa.filter((p) => p.status === "AGUARDANDO_APROVACAO"),
+      aguardando: postsComCapa.filter(
+        (p) => p.status === "AGUARDANDO_APROVACAO",
+      ),
       falhas: postsComCapa.filter((p) => p.status === "FALHOU"),
     },
   };

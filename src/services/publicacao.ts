@@ -4,13 +4,19 @@ import { logger } from "@/lib/logger.ts";
 import { storage } from "@/lib/storage/index.ts";
 import { registrarAuditoria } from "@/lib/audit.ts";
 import { cancelarJobsDoPost } from "@/lib/queue/filas.ts";
-import { MetaApiError, modoDryRun, publicar, type ItemMidia } from "@/lib/meta/index.ts";
+import {
+  MetaApiError,
+  modoDryRun,
+  publicar,
+  type ItemMidia,
+} from "@/lib/meta/index.ts";
 import { aplicarTransicao } from "./transicoes.ts";
 import { avisarClientePostPublicado, notificarEquipe } from "./notificacoes.ts";
 import { carregarPost } from "./posts.ts";
 import { obterConfiguracoes } from "./configuracoes.ts";
 import type { PostStatus } from "@/domain/post-status.ts";
 import type { Network } from "@/lib/tipos.ts";
+import { legendaVisivel } from "@/domain/legenda.ts";
 
 const log = logger("publicacao");
 
@@ -32,9 +38,14 @@ type PostCompleto = Awaited<ReturnType<typeof carregarPost>>;
  * na fila, nada e publicado se o post nao estiver aprovado na versao atual
  * e com a conexao da Meta valida.
  */
-function revalidar(post: PostCompleto): { ok: true } | { ok: false; motivo: string } {
+function revalidar(
+  post: PostCompleto,
+): { ok: true } | { ok: false; motivo: string } {
   if (post.status !== "APROVADO" && post.status !== "PUBLICANDO") {
-    return { ok: false, motivo: `o post esta em "${post.status}", e nao aprovado` };
+    return {
+      ok: false,
+      motivo: `o post esta em "${post.status}", e nao aprovado`,
+    };
   }
 
   const decisao = post.decisions.find(
@@ -47,14 +58,21 @@ function revalidar(post: PostCompleto): { ok: true } | { ok: false; motivo: stri
     };
   }
 
-  if (post.media.length === 0) return { ok: false, motivo: "o post nao tem criativo" };
-  if (post.networks.length === 0) return { ok: false, motivo: "o post nao tem rede de destino" };
+  if (post.media.length === 0)
+    return { ok: false, motivo: "o post nao tem criativo" };
+  if (post.networks.length === 0)
+    return { ok: false, motivo: "o post nao tem rede de destino" };
 
   for (const network of post.networks) {
     const tipo = network === "INSTAGRAM" ? "INSTAGRAM" : "FACEBOOK_PAGE";
-    const conexao = post.client.metaConnections.find((c) => c.assetType === tipo);
+    const conexao = post.client.metaConnections.find(
+      (c) => c.assetType === tipo,
+    );
     if (!conexao) {
-      return { ok: false, motivo: `o cliente nao tem conexao ${network} cadastrada` };
+      return {
+        ok: false,
+        motivo: `o cliente nao tem conexao ${network} cadastrada`,
+      };
     }
     if (conexao.status !== "CONECTADO") {
       if (modoDryRun()) {
@@ -64,7 +82,10 @@ function revalidar(post: PostCompleto): { ok: true } | { ok: false; motivo: stri
           status: conexao.status,
         });
       } else {
-        return { ok: false, motivo: `a conexao ${network} do cliente esta "${conexao.status}"` };
+        return {
+          ok: false,
+          motivo: `a conexao ${network} do cliente esta "${conexao.status}"`,
+        };
       }
     }
   }
@@ -104,12 +125,18 @@ export async function publicarPost(input: {
   const jaPublicadasAgora = new Set(post.publications.map((p) => p.network));
   if (post.networks.every((n) => jaPublicadasAgora.has(n))) {
     log.info("todas as redes ja publicadas; nada a fazer", { postId: post.id });
-    return { resultado: "ignorado", motivo: "post ja publicado em todas as redes" };
+    return {
+      resultado: "ignorado",
+      motivo: "post ja publicado em todas as redes",
+    };
   }
 
   const checagem = revalidar(post);
   if (!checagem.ok) {
-    log.warn("publicacao abortada na revalidacao", { postId: post.id, motivo: checagem.motivo });
+    log.warn("publicacao abortada na revalidacao", {
+      postId: post.id,
+      motivo: checagem.motivo,
+    });
 
     await registrarAuditoria({
       entityType: "post",
@@ -143,7 +170,11 @@ export async function publicarPost(input: {
   if (post.status === "APROVADO") {
     await prisma.$transaction(async (tx) => {
       await aplicarTransicao(tx, {
-        post: { id: post.id, status: post.status as PostStatus, version: post.version },
+        post: {
+          id: post.id,
+          status: post.status as PostStatus,
+          version: post.version,
+        },
         evento: "INICIAR_PUBLICACAO",
         ator: { tipo: "SISTEMA", nome: "worker" },
         acao: "publicacao_iniciada",
@@ -158,7 +189,9 @@ export async function publicarPost(input: {
 
   for (const network of pendentes) {
     const tipo = network === "INSTAGRAM" ? "INSTAGRAM" : "FACEBOOK_PAGE";
-    const conexao = post.client.metaConnections.find((c) => c.assetType === tipo)!;
+    const conexao = post.client.metaConnections.find(
+      (c) => c.assetType === tipo,
+    )!;
 
     let ultimoErro: unknown = null;
     // As tentativas sao numeradas de forma continua por post e rede, para a
@@ -174,7 +207,7 @@ export async function publicarPost(input: {
         const r = await publicar({
           network,
           formato: post.format,
-          caption: post.caption,
+          caption: legendaVisivel(post.caption),
           itens,
           conexao,
         });
@@ -206,7 +239,12 @@ export async function publicarPost(input: {
         });
 
         publicadas.push(network);
-        log.info("publicado", { postId: post.id, network, externalId: r.externalId, dryRun: r.dryRun });
+        log.info("publicado", {
+          postId: post.id,
+          network,
+          externalId: r.externalId,
+          dryRun: r.dryRun,
+        });
         ultimoErro = null;
         break;
       } catch (erro) {
@@ -220,7 +258,9 @@ export async function publicarPost(input: {
             attempt: tentativa,
             status: "ERRO",
             dryRun: modoDryRun(),
-            errorCode: metaErro ? String(metaErro.codigo ?? metaErro.httpStatus) : null,
+            errorCode: metaErro
+              ? String(metaErro.codigo ?? metaErro.httpStatus)
+              : null,
             errorMessage: erro instanceof Error ? erro.message : String(erro),
             requestSummary: `${network} ${post.format} (${itens.length} arquivo(s))`,
             responseBody: metaErro
@@ -237,7 +277,8 @@ export async function publicarPost(input: {
         });
 
         const vaiTentarDeNovo =
-          rodada < env.PUBLISH_MAX_ATTEMPTS && (metaErro ? metaErro.retentavel : true);
+          rodada < env.PUBLISH_MAX_ATTEMPTS &&
+          (metaErro ? metaErro.retentavel : true);
 
         log.error("falha ao publicar", {
           postId: post.id,
@@ -284,25 +325,37 @@ export async function publicarPost(input: {
       });
     });
 
-    await cancelarJobsDoPost(post.id, (await obterConfiguracoes()).lembretesHoras);
+    await cancelarJobsDoPost(
+      post.id,
+      (await obterConfiguracoes()).lembretesHoras,
+    );
 
-    const aprovadores = post.client.contacts.filter((c) => c.isApprover && c.active);
+    const aprovadores = post.client.contacts.filter(
+      (c) => c.isApprover && c.active,
+    );
     const primeiroLink =
-      postAtual.publications.find((p) => p.permalink)?.permalink ?? `${env.APP_URL}/posts/${post.id}`;
+      postAtual.publications.find((p) => p.permalink)?.permalink ??
+      `${env.APP_URL}/posts/${post.id}`;
     if (aprovadores.length > 0) {
       await avisarClientePostPublicado({
         post,
         cliente: post.client,
         contatos: aprovadores,
-        redes: postAtual.publications.map((p) => (p.network === "INSTAGRAM" ? "Instagram" : "Facebook")).join(" e "),
+        redes: postAtual.publications
+          .map((p) => (p.network === "INSTAGRAM" ? "Instagram" : "Facebook"))
+          .join(" e "),
         link: primeiroLink,
       });
     }
 
-    return { resultado: "publicado", redes: postAtual.publications.map((p) => p.network) };
+    return {
+      resultado: "publicado",
+      redes: postAtual.publications.map((p) => p.network),
+    };
   }
 
-  const motivo = erros.join(" | ") || `nao foi possivel publicar em ${faltando.join(", ")}`;
+  const motivo =
+    erros.join(" | ") || `nao foi possivel publicar em ${faltando.join(", ")}`;
 
   await prisma.$transaction(async (tx) => {
     await aplicarTransicao(tx, {
@@ -322,7 +375,9 @@ export async function publicarPost(input: {
       `Cliente: ${post.client.name}`,
       `Redes com falha: ${faltando.join(", ")}`,
       `Erro: ${motivo}`,
-      publicadas.length > 0 ? `Publicado com sucesso em: ${publicadas.join(", ")}` : "",
+      publicadas.length > 0
+        ? `Publicado com sucesso em: ${publicadas.join(", ")}`
+        : "",
       `Painel: ${env.APP_URL}/posts/${post.id}`,
     ].filter(Boolean),
     postId: post.id,

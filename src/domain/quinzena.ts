@@ -1,5 +1,5 @@
 import { fromZonedTime } from "date-fns-tz";
-import { FUSO_PADRAO } from "@/lib/datetime.ts";
+import { FUSO_PADRAO, MESES } from "@/lib/datetime.ts";
 
 /**
  * Quinzena: a janela de relatorio da VORA.
@@ -40,7 +40,10 @@ export function montarQuinzena(
   const diaFimExclusivo = metade === 1 ? 16 : ultimo + 1;
 
   const mm = String(mes).padStart(2, "0");
-  const inicio = fromZonedTime(`${ano}-${mm}-${String(diaInicio).padStart(2, "0")}T00:00:00`, fuso);
+  const inicio = fromZonedTime(
+    `${ano}-${mm}-${String(diaInicio).padStart(2, "0")}T00:00:00`,
+    fuso,
+  );
 
   const fim =
     metade === 1
@@ -76,7 +79,10 @@ export function quinzenaDe(data: Date, fuso: string = FUSO_PADRAO): Quinzena {
   );
 }
 
-export function quinzenaPorChave(chave: string, fuso: string = FUSO_PADRAO): Quinzena | null {
+export function quinzenaPorChave(
+  chave: string,
+  fuso: string = FUSO_PADRAO,
+): Quinzena | null {
   const achado = chave.match(FORMATO);
   if (!achado) return null;
   const ano = Number(achado[1]);
@@ -85,34 +91,25 @@ export function quinzenaPorChave(chave: string, fuso: string = FUSO_PADRAO): Qui
   return montarQuinzena(ano, mes, Number(achado[3]) as 1 | 2, fuso);
 }
 
-export function quinzenaAnterior(q: Quinzena, fuso: string = FUSO_PADRAO): Quinzena {
+export function quinzenaAnterior(
+  q: Quinzena,
+  fuso: string = FUSO_PADRAO,
+): Quinzena {
   if (q.metade === 2) return montarQuinzena(q.ano, q.mes, 1, fuso);
   return q.mes === 1
     ? montarQuinzena(q.ano - 1, 12, 2, fuso)
     : montarQuinzena(q.ano, q.mes - 1, 2, fuso);
 }
 
-export function quinzenaSeguinte(q: Quinzena, fuso: string = FUSO_PADRAO): Quinzena {
+export function quinzenaSeguinte(
+  q: Quinzena,
+  fuso: string = FUSO_PADRAO,
+): Quinzena {
   if (q.metade === 1) return montarQuinzena(q.ano, q.mes, 2, fuso);
   return q.mes === 12
     ? montarQuinzena(q.ano + 1, 1, 1, fuso)
     : montarQuinzena(q.ano, q.mes + 1, 1, fuso);
 }
-
-const MESES = [
-  "janeiro",
-  "fevereiro",
-  "marco",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
-];
 
 /** "1 a 15 de outubro de 2026" - o jeito que o cliente le. */
 export function rotuloDaQuinzena(q: Quinzena): string {

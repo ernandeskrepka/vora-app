@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 const { prisma } = await import("@/lib/db.ts");
 const { ATOR_EQUIPE, limparBanco } = await import("@/testes/ajudantes.ts");
-const { carregarDemonstracao, carregarArquivoDeDemonstracao } = await import("./demonstracao.ts");
+const { carregarDemonstracao, carregarArquivoDeDemonstracao } =
+  await import("./demonstracao.ts");
 
 beforeEach(async () => {
   await limparBanco();
@@ -19,6 +20,43 @@ describe("demonstracao", () => {
 
     const clientes = await prisma.client.count();
     expect(clientes).toBeGreaterThanOrEqual(6);
+  });
+
+  it("a legenda nao carrega a marca de demonstracao", async () => {
+    await carregarDemonstracao(ATOR_EQUIPE);
+
+    const posts = await prisma.post.findMany({
+      select: { caption: true, demoRef: true },
+    });
+    expect(posts.length).toBeGreaterThan(0);
+    for (const post of posts) {
+      // Legenda e o que o cliente le no link e o que iria para o Instagram.
+      expect(post.caption).not.toContain("[demo:");
+      expect(post.demoRef).toBeTruthy();
+    }
+  });
+
+  it("limpa a marca dos posts criados pela versao antiga", async () => {
+    const cliente = await prisma.client.create({
+      data: { name: "Antigo", slug: "antigo-demo" },
+    });
+    const post = await prisma.post.create({
+      data: {
+        clientId: cliente.id,
+        caption: "Legenda de verdade.\n\n[demo:lb-reels]",
+        format: "IMAGEM_UNICA",
+        networks: ["INSTAGRAM"],
+        scheduledAt: new Date(),
+      },
+    });
+
+    await carregarDemonstracao(ATOR_EQUIPE);
+
+    const depois = await prisma.post.findUniqueOrThrow({
+      where: { id: post.id },
+    });
+    expect(depois.caption).toBe("Legenda de verdade.");
+    expect(depois.demoRef).toBe("lb-reels");
   });
 
   it("nao duplica quando roda de novo", async () => {
@@ -61,10 +99,14 @@ describe("demonstracao", () => {
     const path = await import("node:path");
     const clientes = await carregarArquivoDeDemonstracao();
 
-    const chaves = clientes.flatMap((c) => c.posts.flatMap((p) => p.midias ?? []));
+    const chaves = clientes.flatMap((c) =>
+      c.posts.flatMap((p) => p.midias ?? []),
+    );
     expect(chaves.length).toBeGreaterThan(10);
     for (const chave of chaves) {
-      await expect(access(path.join(process.cwd(), "public", chave))).resolves.toBeUndefined();
+      await expect(
+        access(path.join(process.cwd(), "public", chave)),
+      ).resolves.toBeUndefined();
     }
   });
 
