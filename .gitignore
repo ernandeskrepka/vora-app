@@ -20,3 +20,6 @@ build
 .DS_Store
 *.tsbuildinfo
 demo-midia/
+
+# Arquivos entregues no chat (video de apresentacao, PDFs) - nao vao para o repo
+/.entrega
