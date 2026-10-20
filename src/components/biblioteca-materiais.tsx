@@ -39,7 +39,7 @@ export function BibliotecaMateriais({
         <div className="sticky top-2 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-vora-preto bg-vora-preto px-4 py-3 text-white shadow-lg">
           <p className="text-sm">
             {selecao.length} arquivo(s) selecionado(s)
-            <span className="ml-2 text-xs text-zinc-400">
+            <span className="ml-2 text-xs text-tinta-4">
               a ordem da selecao e a ordem do carrossel
             </span>
           </p>
@@ -72,7 +72,7 @@ export function BibliotecaMateriais({
                   type="button"
                   onClick={() => alternar(item.id)}
                   className={`block w-full overflow-hidden rounded-xl border-2 transition ${
-                    escolhido ? "border-vora-verde" : "border-zinc-200 hover:border-zinc-400"
+                    escolhido ? "border-vora-verde" : "border-linha hover:border-tinta-4"
                   }`}
                 >
                   {item.kind === "VIDEO" ? (
@@ -94,7 +94,7 @@ export function BibliotecaMateriais({
                 )}
 
                 <figcaption className="mt-1.5 flex items-start justify-between gap-2">
-                  <span className="min-w-0 flex-1 truncate text-xs text-zinc-600" title={item.nome}>
+                  <span className="min-w-0 flex-1 truncate text-xs text-tinta-2" title={item.nome}>
                     {item.rotulo ?? item.nome}
                   </span>
                   <form action={acaoRemoverMaterial}>
@@ -108,7 +108,7 @@ export function BibliotecaMateriais({
                     </button>
                   </form>
                 </figcaption>
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-[11px] text-tinta-4">
                   {item.tamanho} · {item.quando}
                 </p>
               </figure>
@@ -119,13 +119,13 @@ export function BibliotecaMateriais({
 
       {documentos.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-700">Documentos</h3>
-          <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
+          <h3 className="mb-2 text-sm font-semibold text-tinta-2">Documentos</h3>
+          <ul className="divide-y divide-linha-suave rounded-xl border border-linha bg-superficie">
             {documentos.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-zinc-800">{item.rotulo ?? item.nome}</p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="truncate text-sm text-tinta">{item.rotulo ?? item.nome}</p>
+                  <p className="text-xs text-tinta-3">
                     {item.tamanho} · {item.quando}
                   </p>
                 </div>

@@ -70,9 +70,9 @@ export default async function VisaoGeralCliente({ params }: { params: Promise<{ 
           ["Publicados no mes", String(contagem("PUBLICADO"))],
           ["Sem resposta no mes", String(contagem("POST_SEM_RESPOSTA"))],
         ].map(([rotulo, valor]) => (
-          <div key={rotulo} className="rounded-xl border border-zinc-200 bg-white p-4">
-            <p className="text-xs text-zinc-500">{rotulo}</p>
-            <p className="titulo mt-1 text-2xl text-zinc-900">{valor}</p>
+          <div key={rotulo} className="rounded-xl border border-linha bg-superficie p-4">
+            <p className="text-xs text-tinta-3">{rotulo}</p>
+            <p className="titulo mt-1 text-2xl text-tinta">{valor}</p>
           </div>
         ))}
       </div>
@@ -89,7 +89,7 @@ export default async function VisaoGeralCliente({ params }: { params: Promise<{ 
           {pendentes.length === 0 ? (
             <Vazio>Nada pendente por aqui.</Vazio>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-linha-suave">
               {pendentes.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 py-2">
                   <Link href={`/posts/${p.id}`} className="text-sm hover:underline">
@@ -106,7 +106,7 @@ export default async function VisaoGeralCliente({ params }: { params: Promise<{ 
           {proximos.length === 0 ? (
             <Vazio>Nenhum post agendado.</Vazio>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-linha-suave">
               {proximos.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 py-2">
                   <Link href={`/posts/${p.id}`} className="text-sm hover:underline">
@@ -130,18 +130,18 @@ export default async function VisaoGeralCliente({ params }: { params: Promise<{ 
           {pautas.length === 0 ? (
             <Vazio>Nenhuma pauta em producao. Comece pelo planejamento.</Vazio>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-linha-suave">
               {pautas.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-2 py-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm text-zinc-800">{p.title}</p>
+                    <p className="truncate text-sm text-tinta">{p.title}</p>
                     {p.targetDate && (
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-tinta-3">
                         {formatInTimeZone(p.targetDate, FUSO_PADRAO, "dd/MM")}
                       </p>
                     )}
                   </div>
-                  <span className="shrink-0 rounded-full border border-zinc-300 px-2 py-0.5 text-[11px] text-zinc-600">
+                  <span className="shrink-0 rounded-full border border-linha-forte px-2 py-0.5 text-[11px] text-tinta-2">
                     {ROTULO_PAUTA[p.status as StatusPauta]}
                   </span>
                 </li>
@@ -167,7 +167,7 @@ export default async function VisaoGeralCliente({ params }: { params: Promise<{ 
                   key={m.id}
                   src={m.url}
                   alt=""
-                  className="aspect-square w-full rounded-lg border border-zinc-200 object-cover"
+                  className="aspect-square w-full rounded-lg border border-linha object-cover"
                 />
               ))}
             </div>
@@ -183,7 +183,7 @@ export default async function VisaoGeralCliente({ params }: { params: Promise<{ 
         ) : (
           <ul className="flex flex-wrap gap-2">
             {cliente.contacts.map((c) => (
-              <li key={c.id} className="rounded-full border border-zinc-200 px-3 py-1 text-sm">
+              <li key={c.id} className="rounded-full border border-linha px-3 py-1 text-sm">
                 {c.name} · {c.phoneE164}
               </li>
             ))}

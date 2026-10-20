@@ -48,34 +48,34 @@ export default async function SaldoDoCliente({ params }: { params: Promise<{ id:
           <>
             <div className="grid gap-3 sm:grid-cols-4">
               <div
-                className={`rounded-lg border p-3 ${saldo.abaixoDoLimite ? "border-rose-300 bg-rose-50" : "border-zinc-200"}`}
+                className={`rounded-lg border p-3 ${saldo.abaixoDoLimite ? "border-rose-300 bg-rose-50" : "border-linha"}`}
               >
-                <p className="text-xs text-zinc-500">Saldo estimado</p>
+                <p className="text-xs text-tinta-3">Saldo estimado</p>
                 <p
-                  className={`text-2xl font-semibold ${saldo.abaixoDoLimite ? "text-rose-800" : "text-zinc-900"}`}
+                  className={`text-2xl font-semibold ${saldo.abaixoDoLimite ? "text-rose-800" : "text-tinta"}`}
                 >
                   {moeda(saldo.saldo)}
                 </p>
-                <p className="text-xs text-zinc-500">avisa abaixo de {moeda(saldo.limite)}</p>
+                <p className="text-xs text-tinta-3">avisa abaixo de {moeda(saldo.limite)}</p>
               </div>
-              <div className="rounded-lg border border-zinc-200 p-3">
-                <p className="text-xs text-zinc-500">Recarregado</p>
-                <p className="text-lg font-semibold text-zinc-900">{moeda(saldo.recarregado)}</p>
-                <p className="text-xs text-zinc-500">
+              <div className="rounded-lg border border-linha p-3">
+                <p className="text-xs text-tinta-3">Recarregado</p>
+                <p className="text-lg font-semibold text-tinta">{moeda(saldo.recarregado)}</p>
+                <p className="text-xs text-tinta-3">
                   desde {saldo.desde ? formatarData(saldo.desde) : "-"}
                 </p>
               </div>
-              <div className="rounded-lg border border-zinc-200 p-3">
-                <p className="text-xs text-zinc-500">Gasto no periodo</p>
-                <p className="text-lg font-semibold text-zinc-900">{moeda(saldo.gasto)}</p>
-                <p className="text-xs text-zinc-500">{moeda(saldo.gastoPorDia)} por dia</p>
+              <div className="rounded-lg border border-linha p-3">
+                <p className="text-xs text-tinta-3">Gasto no periodo</p>
+                <p className="text-lg font-semibold text-tinta">{moeda(saldo.gasto)}</p>
+                <p className="text-xs text-tinta-3">{moeda(saldo.gastoPorDia)} por dia</p>
               </div>
-              <div className="rounded-lg border border-zinc-200 p-3">
-                <p className="text-xs text-zinc-500">Dura mais</p>
-                <p className="text-lg font-semibold text-zinc-900">
+              <div className="rounded-lg border border-linha p-3">
+                <p className="text-xs text-tinta-3">Dura mais</p>
+                <p className="text-lg font-semibold text-tinta">
                   {saldo.diasRestantes === null ? "-" : `${saldo.diasRestantes} dia(s)`}
                 </p>
-                <p className="text-xs text-zinc-500">no ritmo dos ultimos 7 dias</p>
+                <p className="text-xs text-tinta-3">no ritmo dos ultimos 7 dias</p>
               </div>
             </div>
 
@@ -97,18 +97,18 @@ export default async function SaldoDoCliente({ params }: { params: Promise<{ id:
         <Cartao titulo={`PIX de recarga - ${moeda(cobranca.valor ?? 0)}`}>
           <div className="grid gap-5 sm:grid-cols-[180px_1fr]">
             <div
-              className="rounded-xl border border-zinc-200 bg-white p-2 [&_svg]:h-full [&_svg]:w-full"
+              className="rounded-xl border border-linha bg-superficie p-2 [&_svg]:h-full [&_svg]:w-full"
               dangerouslySetInnerHTML={{ __html: cobranca.qrSvg }}
             />
             <div className="min-w-0">
-              <p className="text-sm text-zinc-600">
+              <p className="text-sm text-tinta-2">
                 Recebedor: <strong>{cobranca.recebedor.nome}</strong> · {cobranca.recebedor.cidade}
               </p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-tinta-3">
                 Valor sugerido para recompor o patamar da ultima recarga ({moeda(ultimoValor)}).
                 O cliente pode pagar outro valor: e so pedir que ele digite no app.
               </p>
-              <p className="mt-3 mb-1 text-xs font-medium text-zinc-700">PIX copia e cola</p>
+              <p className="mt-3 mb-1 text-xs font-medium text-tinta-2">PIX copia e cola</p>
               <CopiarLink url={cobranca.payload} rotulo="Copiar codigo PIX" abrir={false} />
             </div>
           </div>
@@ -145,14 +145,14 @@ export default async function SaldoDoCliente({ params }: { params: Promise<{ id:
           {recargas.length === 0 ? (
             <Vazio>Nenhuma recarga ainda.</Vazio>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-linha-suave">
               {recargas.map((r) => (
                 <li key={r.id} className="flex items-center justify-between py-2 text-sm">
                   <div>
-                    <p className="font-medium text-zinc-800">{moeda(Number(r.amount))}</p>
-                    {r.note && <p className="text-xs text-zinc-500">{r.note}</p>}
+                    <p className="font-medium text-tinta">{moeda(Number(r.amount))}</p>
+                    {r.note && <p className="text-xs text-tinta-3">{r.note}</p>}
                   </div>
-                  <span className="text-xs text-zinc-500">{formatarData(r.occurredAt)}</span>
+                  <span className="text-xs text-tinta-3">{formatarData(r.occurredAt)}</span>
                 </li>
               ))}
             </ul>

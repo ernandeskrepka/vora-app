@@ -34,30 +34,30 @@ export default async function Configuracoes() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-xl font-semibold text-zinc-900">Configuracoes</h1>
-        <p className="text-sm text-zinc-500">Lembretes, canal de aviso interno e equipe.</p>
+        <h1 className="text-xl font-semibold text-tinta">Configuracoes</h1>
+        <p className="text-sm text-tinta-3">Lembretes, canal de aviso interno e equipe.</p>
       </header>
 
       {carteira.length > 0 && (
         <Cartao titulo="Carteira de clientes (ativos da Meta)">
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-tinta-2">
             {carteira.length} cliente(s) no arquivo <code>dados/clientes-meta.json</code>, levantados
             direto na Meta. Importar cria quem falta e atualiza nome de ativo; nunca apaga nem troca
             ativo ja conectado. O Instagram entra depois, descoberto pela Pagina.
           </p>
 
-          <ul className="mt-3 divide-y divide-zinc-100 text-sm">
+          <ul className="mt-3 divide-y divide-linha-suave text-sm">
             {carteira.map((c) => (
               <li key={c.slug ?? c.nome} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                <span className="text-zinc-800">
+                <span className="text-tinta">
                   {c.nome}
-                  <span className="ml-2 text-xs text-zinc-500">
+                  <span className="ml-2 text-xs text-tinta-3">
                     {c.ativos.length === 0
                       ? "sem ativo localizado"
                       : c.ativos.map((a) => (a.tipo === "AD_ACCOUNT" ? "anuncios" : "pagina")).join(" + ")}
                   </span>
                 </span>
-                <span className="text-xs text-zinc-500">
+                <span className="text-xs text-tinta-3">
                   {jaNoBanco.has(c.slug ?? "") ? "ja cadastrado" : "sera criado"}
                   {c.pendencia ? " · pendencia" : ""}
                 </span>
@@ -91,7 +91,7 @@ export default async function Configuracoes() {
       )}
 
       <Cartao titulo="PIX de recarga e aviso de saldo">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-tinta-2">
           Quando o saldo de anuncios de um cliente chega no limite, o painel avisa e ja monta o PIX
           de recarga com estes dados. A chave fica guardada so aqui e nao entra na auditoria.
         </p>
@@ -138,12 +138,12 @@ export default async function Configuracoes() {
       </Cartao>
 
       <Cartao titulo="Demonstracao para a equipe">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-tinta-2">
           Enche o sistema com uma semana tipica da agencia usando material de verdade: artes do
           Drive, legendas das campanhas e numeros dos anuncios. Serve para mostrar o fluxo inteiro
           funcionando antes de ligar a Meta. Pode rodar quantas vezes quiser - nao duplica nada.
         </p>
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-xs text-tinta-3">
           Nenhuma regra e burlada: post publicado aqui tem decisao de aprovacao registrada antes,
           post sem resposta nao tem publicacao, e tudo entra na auditoria. As publicacoes ficam
           marcadas como dry-run, entao nada foi para a Meta.
@@ -182,7 +182,7 @@ export default async function Configuracoes() {
                 </select>
               </Campo>
 
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-tinta-3">
                 O destino do WhatsApp interno vem de INTERNAL_NOTIFY_WHATSAPP_TO e o do Slack de
                 SLACK_WEBHOOK_URL.
               </p>
@@ -201,23 +201,23 @@ export default async function Configuracoes() {
               ["Validade do link de aprovacao", `${env.APPROVAL_TOKEN_TTL_HOURS} h`],
               ["Tentativas de publicacao", String(env.PUBLISH_MAX_ATTEMPTS)],
             ].map(([rotulo, valor]) => (
-              <div key={rotulo} className="flex justify-between gap-3 border-b border-zinc-100 pb-1.5">
-                <dt className="text-zinc-600">{rotulo}</dt>
-                <dd className="font-medium text-zinc-900">{valor}</dd>
+              <div key={rotulo} className="flex justify-between gap-3 border-b border-linha-suave pb-1.5">
+                <dt className="text-tinta-2">{rotulo}</dt>
+                <dd className="font-medium text-tinta">{valor}</dd>
               </div>
             ))}
           </dl>
         </Cartao>
 
         <Cartao titulo="Equipe" className="lg:col-span-2">
-          <ul className="mb-4 divide-y divide-zinc-100">
+          <ul className="mb-4 divide-y divide-linha-suave">
             {usuarios.map((u) => (
               <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                 <div>
-                  <p className="text-sm font-medium text-zinc-800">
-                    {u.name} {u.id === usuario.id && <span className="text-xs text-zinc-400">(voce)</span>}
+                  <p className="text-sm font-medium text-tinta">
+                    {u.name} {u.id === usuario.id && <span className="text-xs text-tinta-4">(voce)</span>}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-tinta-3">
                     {u.email} - {u.role === "ADMIN" ? "administrador" : "editor"}
                     {u.lastLoginAt ? ` - ultimo acesso ${formatarDataHora(u.lastLoginAt)}` : ""}
                     {!u.active ? " - inativo" : ""}
@@ -236,7 +236,7 @@ export default async function Configuracoes() {
           </ul>
 
           {usuario.role === "ADMIN" ? (
-            <FormAcao acao={acaoCriarUsuario} textoBotao="Criar usuario" className="border-t border-zinc-100 pt-4">
+            <FormAcao acao={acaoCriarUsuario} textoBotao="Criar usuario" className="border-t border-linha-suave pt-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Campo rotulo="Nome">
                   <input name="nome" required className={classeInput} />
@@ -256,7 +256,7 @@ export default async function Configuracoes() {
               </div>
             </FormAcao>
           ) : (
-            <p className="text-xs text-zinc-500">Somente administradores criam usuarios.</p>
+            <p className="text-xs text-tinta-3">Somente administradores criam usuarios.</p>
           )}
         </Cartao>
       </div>

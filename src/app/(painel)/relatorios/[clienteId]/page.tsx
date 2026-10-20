@@ -38,21 +38,21 @@ export default async function RelatorioCliente({
     <div className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">{r.cliente.name}</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="text-xl font-semibold text-tinta">{r.cliente.name}</h1>
+          <p className="text-sm text-tinta-3">
             Relatorio da quinzena · {rotuloDaQuinzena(quinzena)}
           </p>
         </div>
         <div className="nao-imprimir flex items-center gap-2">
           <Link
             href={`/relatorios/${clienteId}?periodo=${anterior.chave}`}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
           >
             Quinzena anterior
           </Link>
           <Link
             href={`/relatorios/${clienteId}?periodo=${seguinte.chave}`}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
           >
             Proxima
           </Link>
@@ -61,7 +61,7 @@ export default async function RelatorioCliente({
       </header>
 
       <Cartao titulo="Enviar para o cliente">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-tinta-2">
           Mesmo relatorio, sem login e sem o painel: o cliente abre no celular. O link vale so para
           essa quinzena e para esse cliente - e assinado, entao trocar a data na barra de enderecos
           nao abre outro periodo.
@@ -82,7 +82,7 @@ export default async function RelatorioCliente({
         semResposta={r.posts.semResposta.length}
       />
 
-      <p className="nao-imprimir text-xs text-zinc-500">
+      <p className="nao-imprimir text-xs text-tinta-3">
         Para PDF, use Imprimir e salve como PDF. O layout de impressao esconde a navegacao.
       </p>
     </div>

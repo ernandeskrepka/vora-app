@@ -114,7 +114,7 @@ export default async function PerfilDoCliente({
   return (
     <div className="space-y-5">
       <Cartao titulo="Como o perfil vai ficar">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-tinta-2">
           A grade abaixo junta o que ja foi publicado com o que esta agendado,
           na ordem em que o feed vai mostrar. O que ainda nao saiu aparece
           destacado, com a data prevista - serve para conferir ritmo, cor e
@@ -125,19 +125,19 @@ export default async function PerfilDoCliente({
           {/* Celular */}
           <div className="mx-auto w-full max-w-[320px]">
             <div className="overflow-hidden rounded-[28px] border-8 border-zinc-900 bg-zinc-900 shadow-xl">
-              <div className="bg-white">
+              <div className="bg-superficie">
                 <div className="flex items-center gap-4 px-4 pt-5 pb-4">
                   <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-gradient-to-br from-zinc-800 to-zinc-600 text-lg font-black text-white">
                     {iniciais}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold text-zinc-900">
+                    <p className="truncate text-[15px] font-semibold text-tinta">
                       {handle}
                     </p>
-                    <p className="truncate text-sm text-zinc-500">
+                    <p className="truncate text-sm text-tinta-3">
                       {cliente.name}
                     </p>
-                    <p className="mt-1 text-xs text-zinc-400">
+                    <p className="mt-1 text-xs text-tinta-4">
                       {gradePublicados.length} publicados ·{" "}
                       {gradePlanejados.length} na fila
                     </p>
@@ -149,14 +149,14 @@ export default async function PerfilDoCliente({
                     <Vazio>Sem post nenhum ainda para esse cliente.</Vazio>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-0.5 bg-zinc-100 p-0.5">
+                  <div className="grid grid-cols-3 gap-0.5 bg-superficie-3 p-0.5">
                     {[...grade.slice(0, 18), ...vazias(grade.length)].map(
                       (item) => {
                         if ("vazia" in item) {
                           return (
                             <div
                               key={item.id}
-                              className="aspect-4/5 bg-white"
+                              className="aspect-4/5 bg-superficie"
                             />
                           );
                         }
@@ -165,7 +165,7 @@ export default async function PerfilDoCliente({
                           <Link
                             key={item.id}
                             href={`/posts/${item.id}`}
-                            className="relative aspect-4/5 overflow-hidden bg-zinc-200"
+                            className="relative aspect-4/5 overflow-hidden bg-linha-forte"
                             title={`${ROTULO_STATUS[item.status as keyof typeof ROTULO_STATUS] ?? item.status} · ${formatarData(item.quando)}`}
                           >
                             {item.url ? (
@@ -183,7 +183,7 @@ export default async function PerfilDoCliente({
                                 />
                               )
                             ) : (
-                              <div className="grid h-full w-full place-items-center bg-zinc-100 text-[10px] text-zinc-400">
+                              <div className="grid h-full w-full place-items-center bg-superficie-3 text-[10px] text-tinta-4">
                                 sem arte
                               </div>
                             )}
@@ -212,7 +212,7 @@ export default async function PerfilDoCliente({
 
           {/* Fila */}
           <div>
-            <h3 className="text-sm font-semibold text-zinc-800">
+            <h3 className="text-sm font-semibold text-tinta">
               Proximos a entrar
             </h3>
             {gradePlanejados.length === 0 ? (
@@ -220,10 +220,10 @@ export default async function PerfilDoCliente({
                 <Vazio>Nada agendado. O feed desse cliente vai parar.</Vazio>
               </div>
             ) : (
-              <ul className="mt-2 divide-y divide-zinc-100">
+              <ul className="mt-2 divide-y divide-linha-suave">
                 {gradePlanejados.map((item) => (
                   <li key={item.id} className="flex gap-3 py-3">
-                    <div className="h-16 w-14 shrink-0 overflow-hidden rounded-md bg-zinc-100">
+                    <div className="h-16 w-14 shrink-0 overflow-hidden rounded-md bg-superficie-3">
                       {item.url && !item.video && (
                         <img
                           src={item.url}
@@ -233,10 +233,10 @@ export default async function PerfilDoCliente({
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-zinc-800">
+                      <p className="truncate text-sm text-tinta">
                         {item.legenda.split("\n")[0] || "(sem legenda)"}
                       </p>
-                      <p className="mt-0.5 text-xs text-zinc-500">
+                      <p className="mt-0.5 text-xs text-tinta-3">
                         {formatarDataHora(item.quando)} ·{" "}
                         {ROTULO_STATUS[
                           item.status as keyof typeof ROTULO_STATUS
@@ -245,7 +245,7 @@ export default async function PerfilDoCliente({
                     </div>
                     <Link
                       href={`/posts/${item.id}`}
-                      className="self-center text-xs font-medium text-zinc-600 underline-offset-2 hover:underline"
+                      className="self-center text-xs font-medium text-tinta-2 underline-offset-2 hover:underline"
                     >
                       abrir
                     </Link>

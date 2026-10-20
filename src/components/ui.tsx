@@ -39,20 +39,20 @@ export function Cartao({
   return (
     <section
       className={clsx(
-        "rounded-xl border border-zinc-200 bg-white shadow-sm",
+        "vidro rounded-xl border border-linha bg-superficie shadow-sm",
         className,
       )}
     >
       {(titulo || acao) && (
-        <header className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3">
+        <header className="flex items-center justify-between gap-3 border-b border-linha-suave px-5 py-3">
           {titulo && (
-            <h2 className="text-sm font-semibold text-zinc-800">{titulo}</h2>
+            <h2 className="text-sm font-semibold text-tinta">{titulo}</h2>
           )}
           {acao}
         </header>
       )}
       <div className="p-5">
-        {descricao && <p className="mb-3 text-sm text-zinc-500">{descricao}</p>}
+        {descricao && <p className="mb-3 text-sm text-tinta-3">{descricao}</p>}
         {children}
       </div>
     </section>
@@ -72,12 +72,12 @@ export function Botao({
       {...props}
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50",
-        variante === "primario" && "bg-vora-preto text-white hover:bg-zinc-800",
+        variante === "primario" && "bg-acao text-acao-texto hover:bg-acao-hover",
         variante === "secundario" &&
-          "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
+          "border border-linha-forte bg-superficie text-tinta hover:bg-superficie-2",
         variante === "perigo" &&
           "border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100",
-        variante === "fantasma" && "text-zinc-600 hover:bg-zinc-100",
+        variante === "fantasma" && "text-tinta-2 hover:bg-superficie-3",
         className,
       )}
     >
@@ -102,9 +102,9 @@ export function BotaoLink({
       href={href}
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition",
-        variante === "primario" && "bg-vora-preto text-white hover:bg-zinc-800",
+        variante === "primario" && "bg-acao text-acao-texto hover:bg-acao-hover",
         variante === "secundario" &&
-          "border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50",
+          "border border-linha-forte bg-superficie text-tinta hover:bg-superficie-2",
         className,
       )}
     >
@@ -126,12 +126,12 @@ export function Campo({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-zinc-700">
+      <span className="mb-1 block text-sm font-medium text-tinta-2">
         {rotulo}
       </span>
       {children}
       {dica && !erro && (
-        <span className="mt-1 block text-xs text-zinc-500">{dica}</span>
+        <span className="mt-1 block text-xs text-tinta-3">{dica}</span>
       )}
       {erro && <span className="mt-1 block text-xs text-rose-700">{erro}</span>}
     </label>
@@ -139,7 +139,7 @@ export function Campo({
 }
 
 export const classeInput =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-vora-verde focus:ring-2 focus:ring-vora-verde/30";
+  "w-full rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm text-tinta outline-none focus:border-vora-verde focus:ring-2 focus:ring-vora-verde/30";
 
 export function Aviso({
   tom = "info",
@@ -154,11 +154,11 @@ export function Aviso({
     <div
       className={clsx(
         "rounded-lg border px-4 py-3 text-sm",
-        tom === "info" && "border-sky-200 bg-sky-50 text-sky-900",
-        tom === "erro" && "border-rose-200 bg-rose-50 text-rose-900",
+        tom === "info" && "aviso-info border-sky-200 bg-sky-50 text-sky-900",
+        tom === "erro" && "aviso-erro border-rose-200 bg-rose-50 text-rose-900",
         tom === "sucesso" &&
-          "border-emerald-200 bg-emerald-50 text-emerald-900",
-        tom === "atencao" && "border-amber-200 bg-amber-50 text-amber-900",
+          "aviso-sucesso border-emerald-200 bg-emerald-50 text-emerald-900",
+        tom === "atencao" && "aviso-atencao border-amber-200 bg-amber-50 text-amber-900",
       )}
     >
       {titulo && <p className="font-semibold">{titulo}</p>}
@@ -168,14 +168,14 @@ export function Aviso({
 }
 
 export function Vazio({ children }: { children: React.ReactNode }) {
-  return <p className="py-6 text-center text-sm text-zinc-500">{children}</p>;
+  return <p className="py-6 text-center text-sm text-tinta-3">{children}</p>;
 }
 
 export function IconeRede({ network }: { network: "INSTAGRAM" | "FACEBOOK" }) {
   return (
     <span
       title={network === "INSTAGRAM" ? "Instagram" : "Facebook"}
-      className="inline-flex h-5 w-5 items-center justify-center rounded border border-zinc-300 bg-white text-[10px] font-bold text-zinc-700"
+      className="inline-flex h-5 w-5 items-center justify-center rounded border border-linha-forte bg-superficie text-[10px] font-bold text-tinta-2"
     >
       {network === "INSTAGRAM" ? "IG" : "FB"}
     </span>

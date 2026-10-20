@@ -23,7 +23,7 @@ import { formatarDataHora } from "@/lib/datetime.ts";
 export const dynamic = "force-dynamic";
 
 const COR_COLUNA: Record<string, string> = {
-  IDEIA: "border-zinc-300",
+  IDEIA: "border-linha-forte",
   EM_PRODUCAO: "border-sky-300",
   PRONTO: "border-emerald-300",
 };
@@ -39,7 +39,7 @@ export default async function Planejamento({
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-tinta-3">
         O que a equipe vai produzir para a {cliente.name}. A pauta anda da ideia
         ate ficar pronta e, quando o criativo existe, vira post com um clique.
         {arquivadas > 0 && ` ${arquivadas} arquivada(s).`}
@@ -48,7 +48,7 @@ export default async function Planejamento({
       <Cartao titulo="Calendario no Notion">
         {cliente.notionPageId ? (
           <>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-tinta-2">
               Le o cronograma do cliente no Notion e cria a pauta aqui. Entende
               os dois jeitos que a equipe escreve: agenda por dia ("Sexta-feira
               - 09/10 | Tour pela loja") e lista de posts com caixa de marcar
@@ -58,7 +58,7 @@ export default async function Planejamento({
               fica como esta - mudar a data de um post agendado passa pelo
               reagendamento, que invalida a aprovacao do cliente.
             </p>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-tinta-3">
               <a
                 href={cliente.notionPageId}
                 target="_blank"
@@ -77,8 +77,8 @@ export default async function Planejamento({
                 textoBotao="Sincronizar com o Notion"
               >
                 <input type="hidden" name="clienteId" value={id} />
-                <div className="flex flex-wrap items-end gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                  <label className="flex items-center gap-2 text-sm text-zinc-700">
+                <div className="flex flex-wrap items-end gap-4 rounded-lg border border-linha bg-superficie-2 p-3">
+                  <label className="flex items-center gap-2 text-sm text-tinta-2">
                     <input
                       type="checkbox"
                       name="criarPostos"
@@ -87,12 +87,12 @@ export default async function Planejamento({
                     />
                     Ja montar o calendario
                   </label>
-                  <label className="flex items-center gap-2 text-sm text-zinc-700">
+                  <label className="flex items-center gap-2 text-sm text-tinta-2">
                     Horario
                     <select
                       name="hora"
                       defaultValue="9"
-                      className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm"
+                      className="rounded-lg border border-linha-forte bg-superficie px-2 py-1 text-sm"
                     >
                       {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                         <option key={h} value={h}>
@@ -101,7 +101,7 @@ export default async function Planejamento({
                       ))}
                     </select>
                   </label>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-tinta-3">
                     Item com data vira um rascunho no calendario, nessa hora.
                     Cronograma em lista de posts (sem data) e dia que ja passou
                     entram so como pauta. O rascunho nasce sem arte - subir o
@@ -132,18 +132,18 @@ export default async function Planejamento({
           return (
             <section
               key={coluna}
-              className={`rounded-xl border-t-4 ${COR_COLUNA[coluna]} border border-zinc-200 bg-white`}
+              className={`rounded-xl border-t-4 ${COR_COLUNA[coluna]} border border-linha bg-superficie`}
             >
-              <header className="flex items-center justify-between border-b border-zinc-100 px-4 py-2.5">
-                <h2 className="text-sm font-semibold text-zinc-800">
+              <header className="flex items-center justify-between border-b border-linha-suave px-4 py-2.5">
+                <h2 className="text-sm font-semibold text-tinta">
                   {ROTULO_PAUTA[coluna]}
                 </h2>
-                <span className="text-xs text-zinc-400">{daColuna.length}</span>
+                <span className="text-xs text-tinta-4">{daColuna.length}</span>
               </header>
 
               <ul className="space-y-3 p-3">
                 {daColuna.length === 0 && (
-                  <li className="py-4 text-center text-xs text-zinc-400">
+                  <li className="py-4 text-center text-xs text-tinta-4">
                     Nada aqui.
                   </li>
                 )}
@@ -151,13 +151,13 @@ export default async function Planejamento({
                 {daColuna.map((pauta) => (
                   <li
                     key={pauta.id}
-                    className="rounded-lg border border-zinc-200 bg-zinc-50 p-3"
+                    className="rounded-lg border border-linha bg-superficie-2 p-3"
                   >
-                    <p className="text-sm font-medium text-zinc-900">
+                    <p className="text-sm font-medium text-tinta">
                       {pauta.title}
                     </p>
                     {pauta.targetDate && (
-                      <p className="mt-0.5 text-xs text-zinc-500">
+                      <p className="mt-0.5 text-xs text-tinta-3">
                         para{" "}
                         {formatInTimeZone(
                           pauta.targetDate,
@@ -167,7 +167,7 @@ export default async function Planejamento({
                       </p>
                     )}
                     {pauta.notes && (
-                      <p className="mt-1.5 text-xs whitespace-pre-wrap text-zinc-600">
+                      <p className="mt-1.5 text-xs whitespace-pre-wrap text-tinta-2">
                         {pauta.notes}
                       </p>
                     )}
@@ -186,7 +186,7 @@ export default async function Planejamento({
                             <input type="hidden" name="para" value={destino} />
                             <button
                               type="submit"
-                              className="rounded border border-zinc-300 bg-white px-2 py-1 text-[11px] text-zinc-700 hover:bg-zinc-100"
+                              className="rounded border border-linha-forte bg-superficie px-2 py-1 text-[11px] text-tinta-2 hover:bg-superficie-3"
                             >
                               {destino === "ARQUIVADO"
                                 ? "Arquivar"
@@ -198,7 +198,7 @@ export default async function Planejamento({
                       {podeVirarPost(pauta.status as StatusPauta) && (
                         <Link
                           href={`/posts/novo?cliente=${id}&pauta=${pauta.id}`}
-                          className="rounded border border-vora-preto bg-vora-preto px-2 py-1 text-[11px] font-semibold text-white hover:bg-zinc-800"
+                          className="rounded border border-acao bg-acao px-2 py-1 text-[11px] font-semibold text-acao-texto hover:bg-acao-hover"
                         >
                           Virar post
                         </Link>
@@ -256,7 +256,7 @@ export default async function Planejamento({
 
       {pautas.some((p) => p.status === "VIROU_POST") && (
         <Cartao titulo="Pautas que viraram post">
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-linha-suave">
             {pautas
               .filter((p) => p.status === "VIROU_POST")
               .map((p) => (

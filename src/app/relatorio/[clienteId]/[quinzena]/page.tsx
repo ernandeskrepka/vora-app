@@ -37,11 +37,11 @@ export default async function RelatorioDoCliente({
   return (
     <main className="min-h-screen bg-vora-claro px-4 py-8 print:bg-white print:py-0">
       <div className="mx-auto w-full max-w-4xl">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-zinc-200 pb-5">
+        <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-linha pb-5">
           <div>
             <img src="/marca/vora-logo.svg" alt="VORA" className="h-6 w-auto" />
-            <h1 className="mt-3 text-2xl font-semibold text-zinc-900">{r.cliente.name}</h1>
-            <p className="text-sm text-zinc-600">
+            <h1 className="mt-3 text-2xl font-semibold text-tinta">{r.cliente.name}</h1>
+            <p className="text-sm text-tinta-2">
               Resultados de {rotuloDaQuinzena(quinzena)}
             </p>
           </div>
@@ -50,7 +50,7 @@ export default async function RelatorioDoCliente({
           </div>
         </header>
 
-        <p className="mb-6 rounded-xl border border-zinc-200 bg-white p-4 text-sm leading-relaxed text-zinc-600">
+        <p className="mb-6 rounded-xl border border-linha bg-superficie p-4 text-sm leading-relaxed text-tinta-2">
           Este e o resumo dos ultimos quinze dias. Cada numero vem com a explicacao do que ele
           significa, e a comparacao e sempre com a quinzena anterior - olhar um dia isolado nao diz
           muita coisa, o que conta e o movimento do periodo.
@@ -68,7 +68,7 @@ export default async function RelatorioDoCliente({
           paraCliente
         />
 
-        <footer className="mt-10 border-t border-zinc-200 pt-5 text-center text-xs text-zinc-500">
+        <footer className="mt-10 border-t border-linha pt-5 text-center text-xs text-tinta-3">
           <img src="/marca/vora-simbolo.svg" alt="" className="mx-auto h-5 w-auto opacity-50" />
           <p className="mt-2">Relatorio gerado pela VORA · vorabr.com</p>
         </footer>

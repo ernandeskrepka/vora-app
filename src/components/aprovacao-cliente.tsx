@@ -80,7 +80,7 @@ function Carrossel({ midias }: { midias: MidiaCliente[] }) {
               onClick={() => setIndice(i)}
               aria-label={`Item ${i + 1}`}
               className={`h-1.5 rounded-full transition-all ${
-                i === indice ? "w-7 bg-vora-verde" : "w-2.5 bg-white/25"
+                i === indice ? "w-7 bg-vora-verde" : "w-2.5 bg-superficie/25"
               }`}
             />
           ))}
@@ -102,21 +102,21 @@ function PreviaPerfil({ dados }: { dados: DadosAprovacao }) {
     .toUpperCase();
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-superficie/[0.03]">
       <div className="flex items-center gap-4 px-4 pt-5 pb-4">
         <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-gradient-to-br from-vora-verde to-vora-verde-escuro text-lg font-black text-black">
           {iniciais}
         </div>
         <div className="min-w-0">
           <p className="truncate text-[15px] font-medium text-white">{dados.perfil.handle}</p>
-          <p className="truncate text-sm text-zinc-400">{dados.perfil.nome}</p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="truncate text-sm text-tinta-4">{dados.perfil.nome}</p>
+          <p className="mt-1 text-xs text-tinta-3">
             {dados.perfil.totalPublicados + 1} publicações com esta
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-0.5 bg-white/5 p-0.5">
+      <div className="grid grid-cols-3 gap-0.5 bg-superficie/5 p-0.5">
         <div className="relative aspect-4/5 overflow-hidden bg-black ring-2 ring-vora-verde ring-inset">
           {capa?.kind === "VIDEO" ? (
             <video src={capa.url} muted className="h-full w-full object-cover" />
@@ -146,11 +146,11 @@ function PreviaPerfil({ dados }: { dados: DadosAprovacao }) {
 
         {dados.perfil.publicados.length < 5 &&
           Array.from({ length: 5 - dados.perfil.publicados.length }).map((_, i) => (
-            <div key={`vazio-${i}`} className="aspect-4/5 bg-white/[0.02]" />
+            <div key={`vazio-${i}`} className="aspect-4/5 bg-superficie/[0.02]" />
           ))}
       </div>
 
-      <p className="px-4 py-3 text-xs text-zinc-500">
+      <p className="px-4 py-3 text-xs text-tinta-3">
         Prévia da grade com os posts que já publicamos para você. O Instagram recorta a grade
         em 4:5.
       </p>
@@ -204,9 +204,9 @@ function FormularioDecisao({ token }: { token: string }) {
           required
           minLength={2}
           placeholder="Quem está aprovando?"
-          className="w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3.5 text-base text-white placeholder:text-zinc-500 outline-none transition focus:border-vora-verde focus:bg-white/[0.07]"
+          className="w-full rounded-xl border border-white/15 bg-superficie/[0.04] px-4 py-3.5 text-base text-white placeholder:text-tinta-3 outline-none transition focus:border-vora-verde focus:bg-white/[0.07]"
         />
-        <span className="mt-1.5 block text-xs text-zinc-500">
+        <span className="mt-1.5 block text-xs text-tinta-3">
           Fica registrado junto da sua decisão, com data e hora.
         </span>
       </label>
@@ -221,7 +221,7 @@ function FormularioDecisao({ token }: { token: string }) {
             required
             rows={4}
             placeholder="Ex.: trocar a foto do segundo card, corrigir o telefone na legenda..."
-            className="w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-base text-white placeholder:text-zinc-500 outline-none transition focus:border-vora-verde focus:bg-white/[0.07]"
+            className="w-full rounded-xl border border-white/15 bg-superficie/[0.04] px-4 py-3 text-base text-white placeholder:text-tinta-3 outline-none transition focus:border-vora-verde focus:bg-white/[0.07]"
           />
         </label>
       )}
@@ -281,12 +281,12 @@ export function PaginaAprovacaoCliente({ dados }: { dados: DadosAprovacao }) {
           <h1 className="titulo mt-6 text-3xl leading-[1.1] text-white text-balance">
             {pendente ? "Um post novo para você aprovar" : "Post"}
           </h1>
-          <p className="mt-2 text-[15px] text-zinc-400">
+          <p className="mt-2 text-[15px] text-tinta-4">
             {dados.cliente} · {dados.redes}
           </p>
         </header>
 
-        <div className="mb-5 flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+        <div className="mb-5 flex gap-1 rounded-full border border-white/10 bg-superficie/[0.04] p-1">
           {([
             ["post", "O post"],
             ["perfil", "No perfil"],
@@ -296,7 +296,7 @@ export function PaginaAprovacaoCliente({ dados }: { dados: DadosAprovacao }) {
               type="button"
               onClick={() => setAba(valor)}
               className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition ${
-                aba === valor ? "bg-white text-black" : "text-zinc-400 hover:text-white"
+                aba === valor ? "bg-superficie text-black" : "text-tinta-4 hover:text-white"
               }`}
             >
               {rotulo}
@@ -308,12 +308,12 @@ export function PaginaAprovacaoCliente({ dados }: { dados: DadosAprovacao }) {
           <div className="space-y-5">
             <Carrossel midias={dados.midias} />
 
-            <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <h2 className="mb-2 text-[11px] font-semibold tracking-[0.14em] text-zinc-500 uppercase">
+            <section className="rounded-2xl border border-white/10 bg-superficie/[0.03] p-4">
+              <h2 className="mb-2 text-[11px] font-semibold tracking-[0.14em] text-tinta-3 uppercase">
                 Legenda
               </h2>
               <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-zinc-200">
-                {dados.legenda || <span className="text-zinc-500">Sem legenda.</span>}
+                {dados.legenda || <span className="text-tinta-3">Sem legenda.</span>}
               </p>
             </section>
 
@@ -342,7 +342,7 @@ export function PaginaAprovacaoCliente({ dados }: { dados: DadosAprovacao }) {
 
         <footer className="mt-12 flex flex-col items-center gap-3 text-center">
           <img src="/marca/vora-simbolo.svg" alt="" className="h-5 w-auto opacity-40" />
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-tinta-2">
             Produção de conteúdo VORA. Qualquer dúvida, fale com a nossa equipe.
           </p>
         </footer>
@@ -354,9 +354,9 @@ export function PaginaAprovacaoCliente({ dados }: { dados: DadosAprovacao }) {
 function Dado({ rotulo, valor, largo }: { rotulo: string; valor: string; largo?: boolean }) {
   return (
     <div
-      className={`rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 ${largo ? "col-span-2" : ""}`}
+      className={`rounded-xl border border-white/10 bg-superficie/[0.03] px-3.5 py-3 ${largo ? "col-span-2" : ""}`}
     >
-      <p className="text-[10px] tracking-[0.12em] text-zinc-500 uppercase">{rotulo}</p>
+      <p className="text-[10px] tracking-[0.12em] text-tinta-3 uppercase">{rotulo}</p>
       <p className="mt-0.5 text-[15px] font-medium text-white">{valor}</p>
     </div>
   );
@@ -367,15 +367,15 @@ function StatusFinal({ dados }: { dados: DadosAprovacao }) {
   const semResposta = dados.statusTexto === "POST SEM RESPOSTA";
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+    <div className="space-y-3 rounded-2xl border border-white/10 bg-superficie/[0.03] p-6 text-center">
       {decisao ? (
         <>
           <p className="titulo text-xl text-white">
             {decisao.tipo === "APROVADO" ? "Aprovado" : "Reprovado"} por {decisao.nome}
           </p>
-          <p className="text-sm text-zinc-400">em {decisao.quando}</p>
+          <p className="text-sm text-tinta-4">em {decisao.quando}</p>
           {decisao.comentario && (
-            <p className="rounded-xl bg-white/5 px-4 py-3 text-sm text-zinc-300">
+            <p className="rounded-xl bg-superficie/5 px-4 py-3 text-sm text-zinc-300">
               “{decisao.comentario}”
             </p>
           )}
@@ -383,14 +383,14 @@ function StatusFinal({ dados }: { dados: DadosAprovacao }) {
       ) : semResposta ? (
         <>
           <p className="titulo text-xl text-orange-300">POST SEM RESPOSTA</p>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-tinta-4">
             O horário previsto passou sem aprovação, por isso esse post não foi publicado.
           </p>
         </>
       ) : (
         <>
           <p className="titulo text-xl text-white">{dados.statusTexto}</p>
-          <p className="text-sm text-zinc-400">Esse link não está mais aberto para resposta.</p>
+          <p className="text-sm text-tinta-4">Esse link não está mais aberto para resposta.</p>
         </>
       )}
 

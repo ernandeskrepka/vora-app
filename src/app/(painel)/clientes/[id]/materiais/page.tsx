@@ -28,7 +28,7 @@ export default async function Materiais({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-tinta-3">
         Tudo que a equipe for juntando para esse cliente: fotos da sessao, artes prontas, briefing.
         Na hora de montar o post, e so escolher daqui.
       </p>
@@ -46,7 +46,7 @@ export default async function Materiais({ params }: { params: Promise<{ id: stri
                 name="arquivos"
                 multiple
                 accept="image/*,video/mp4,video/quicktime,application/pdf,text/plain,text/markdown"
-                className="w-full rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-3 py-6 text-sm"
+                className="w-full rounded-lg border border-dashed border-linha-forte bg-superficie-2 px-3 py-6 text-sm"
               />
             </Campo>
             <Campo rotulo="Rotulo (opcional)" dica="Ex.: Sessao de outubro">

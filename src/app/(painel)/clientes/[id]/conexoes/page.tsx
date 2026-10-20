@@ -30,15 +30,15 @@ export default async function ConexoesDoCliente({ params }: { params: Promise<{ 
         {conexoes.length === 0 ? (
           <Vazio>Nenhum ativo conectado. Esse cliente ainda nao pode publicar.</Vazio>
         ) : (
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-linha-suave">
             {conexoes.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div>
-                  <p className="text-sm font-medium text-zinc-800">
+                  <p className="text-sm font-medium text-tinta">
                     {ATIVOS.find((a) => a.valor === c.assetType)?.rotulo ?? c.assetType}
                     {c.assetName ? ` · ${c.assetName}` : ""}
                   </p>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-tinta-3">
                     id {c.assetId} · {c.authMode === "SYSTEM_USER" ? "System User" : "OAuth"}
                     {c.lastCheckedAt ? ` · testado em ${formatarDataHora(c.lastCheckedAt)}` : ""}
                   </p>

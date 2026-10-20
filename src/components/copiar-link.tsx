@@ -38,7 +38,7 @@ export function CopiarLink({
         readOnly
         value={url}
         onFocus={(e) => e.currentTarget.select()}
-        className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-xs text-zinc-700"
+        className="min-w-0 flex-1 rounded-lg border border-linha-forte bg-superficie-2 px-3 py-2 font-mono text-xs text-tinta-2"
       />
       <Botao type="button" variante="primario" onClick={copiar}>
         {copiado ? "Copiado!" : rotulo}
@@ -48,7 +48,7 @@ export function CopiarLink({
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700"
+          className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm text-tinta-2"
         >
           Abrir
         </a>

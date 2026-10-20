@@ -20,8 +20,8 @@ export default async function Clientes() {
     <div className="space-y-5">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Clientes</h1>
-          <p className="text-sm text-zinc-500">{clientes.length} cadastrado(s)</p>
+          <h1 className="text-xl font-semibold text-tinta">Clientes</h1>
+          <p className="text-sm text-tinta-3">{clientes.length} cadastrado(s)</p>
         </div>
         <BotaoLink href="/clientes/novo" variante="primario">
           Novo cliente
@@ -32,22 +32,22 @@ export default async function Clientes() {
         {clientes.length === 0 ? (
           <Vazio>Nenhum cliente cadastrado ainda.</Vazio>
         ) : (
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-linha-suave">
             {clientes.map((c) => {
               const conexoesOk = c.metaConnections.filter((x) => x.status === "CONECTADO").length;
               return (
                 <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                   <div>
-                    <Link href={`/clientes/${c.id}`} className="font-medium text-zinc-900 hover:underline">
+                    <Link href={`/clientes/${c.id}`} className="font-medium text-tinta hover:underline">
                       {c.name}
                     </Link>
-                    {!c.active && <span className="ml-2 text-xs text-zinc-400">(inativo)</span>}
-                    <p className="text-xs text-zinc-500">
+                    {!c.active && <span className="ml-2 text-xs text-tinta-4">(inativo)</span>}
+                    <p className="text-xs text-tinta-3">
                       {c.contacts.filter((x) => x.isApprover).length} aprovador(es) -{" "}
                       {c._count.posts} post(s)
                     </p>
                   </div>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-tinta-3">
                     {conexoesOk}/{c.metaConnections.length} conexao(oes) ok
                   </p>
                 </li>

@@ -40,8 +40,8 @@ export default async function EditarPost({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-xl font-semibold text-zinc-900">Editar post - {post.client.name}</h1>
-        <p className="text-sm text-zinc-500">Versao atual: {post.version}</p>
+        <h1 className="text-xl font-semibold text-tinta">Editar post - {post.client.name}</h1>
+        <p className="text-sm text-tinta-3">Versao atual: {post.version}</p>
       </header>
 
       <FormularioPost

@@ -10,8 +10,8 @@ export default function NovoCliente() {
   return (
     <div className="max-w-xl space-y-5">
       <header>
-        <h1 className="text-xl font-semibold text-zinc-900">Novo cliente</h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-xl font-semibold text-tinta">Novo cliente</h1>
+        <p className="text-sm text-tinta-3">
           Depois de criar, cadastre as conexoes da Meta na tela do cliente.
         </p>
       </header>

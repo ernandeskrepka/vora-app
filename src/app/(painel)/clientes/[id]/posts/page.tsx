@@ -54,7 +54,7 @@ export default async function PostsDoCliente({
         </select>
         <button
           type="submit"
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
         >
           Filtrar
         </button>
@@ -64,7 +64,7 @@ export default async function PostsDoCliente({
         {posts.length === 0 ? (
           <Vazio>Nenhum post com esse filtro.</Vazio>
         ) : (
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-linha-suave">
             {posts.map((p) => (
               <li
                 key={p.id}
@@ -77,7 +77,7 @@ export default async function PostsDoCliente({
                   >
                     {formatarDataHora(p.scheduledAt, cliente.timezone)}
                   </Link>
-                  <p className="truncate text-xs text-zinc-500">
+                  <p className="truncate text-xs text-tinta-3">
                     {p.format.replace("_", " ").toLowerCase()}
                     {p.decisions[0] ? ` · ${p.decisions[0].approverName}` : ""}
                     {p.caption

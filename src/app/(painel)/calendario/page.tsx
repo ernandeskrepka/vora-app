@@ -41,11 +41,11 @@ function ItemDoDia({ item }: { item: ItemDoCalendarioGeral }) {
   return (
     <Link
       href={`/clientes/${item.clienteId}/planejamento`}
-      className="block truncate rounded border border-dashed border-zinc-300 bg-zinc-50/70 px-1.5 py-1 text-[11px] text-zinc-500"
+      className="block truncate rounded border border-dashed border-linha-forte bg-superficie-2/70 px-1.5 py-1 text-[11px] text-tinta-3"
       title={`${item.cliente} - pauta (${ROTULO_PAUTA[item.status]}): ${item.titulo}${item.doNotion ? " - do Notion" : ""}`}
     >
       {item.doNotion && (
-        <span className="mr-1 rounded bg-zinc-800 px-1 text-[9px] font-bold text-white">
+        <span className="mr-1 rounded bg-tinta px-1 text-[9px] font-bold text-fundo">
           N
         </span>
       )}
@@ -112,8 +112,8 @@ export default async function Calendario({
     <div className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Calendario</h1>
-          <p className="text-sm text-zinc-500">
+          <h1 className="text-xl font-semibold text-tinta">Calendario</h1>
+          <p className="text-sm text-tinta-3">
             {formatarMesAno(inicio)} · {calendario.posts.length} post(s) ·{" "}
             {calendario.pautas.length} pauta(s) com data
             {doNotion > 0 ? ` (${doNotion} do Notion)` : ""}
@@ -122,13 +122,13 @@ export default async function Calendario({
         <div className="flex items-center gap-2">
           <Link
             href={qs(mesAnterior)}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
           >
             Anterior
           </Link>
           <Link
             href={qs(mesSeguinte)}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
           >
             Proximo
           </Link>
@@ -152,7 +152,7 @@ export default async function Calendario({
             </select>
             <button
               type="submit"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+              className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
             >
               Filtrar
             </button>
@@ -163,7 +163,7 @@ export default async function Calendario({
       <Cartao
         titulo="Sincronizado com o Notion"
         acao={
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-tinta-3">
             {notion.comPagina} cliente(s) com pagina
             {notion.semPagina > 0 ? ` · ${notion.semPagina} sem` : ""}
             {notion.maisRecente
@@ -172,7 +172,7 @@ export default async function Calendario({
           </span>
         }
       >
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-tinta-2">
           O cronograma de cada cliente no Notion entra aqui como pauta, no dia
           marcado - e o sistema rele sozinho, algumas vezes por dia. O botao
           forca a leitura agora, de todos de uma vez. Pauta e planejamento: vira
@@ -190,17 +190,17 @@ export default async function Calendario({
             acao={acaoSincronizarTodosNotion}
             textoBotao="Sincronizar todos agora"
           >
-            <div className="flex flex-wrap items-center gap-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-              <label className="flex items-center gap-2 text-sm text-zinc-700">
+            <div className="flex flex-wrap items-center gap-4 rounded-lg border border-linha bg-superficie-2 p-3">
+              <label className="flex items-center gap-2 text-sm text-tinta-2">
                 <input type="checkbox" name="criarPostos" value="sim" />
                 Ja criar o rascunho do post nos dias com data
               </label>
-              <label className="flex items-center gap-2 text-sm text-zinc-700">
+              <label className="flex items-center gap-2 text-sm text-tinta-2">
                 Horario
                 <select
                   name="hora"
                   defaultValue="9"
-                  className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm"
+                  className="rounded-lg border border-linha-forte bg-superficie px-2 py-1 text-sm"
                 >
                   {Array.from({ length: 15 }, (_, i) => i + 7).map((h) => (
                     <option key={h} value={h}>
@@ -215,19 +215,19 @@ export default async function Calendario({
       </Cartao>
 
       <Cartao>
-        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-zinc-200 text-xs">
+        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-linha-forte text-xs">
           {DIAS.map((d) => (
             <div
               key={d}
-              className="bg-zinc-50 px-2 py-1.5 text-center font-semibold text-zinc-600"
+              className="bg-superficie-2 px-2 py-1.5 text-center font-semibold text-tinta-2"
             >
               {d}
             </div>
           ))}
           {celulas.map((celula, i) => (
-            <div key={i} className="min-h-[92px] bg-white p-1.5">
+            <div key={i} className="min-h-[92px] bg-superficie p-1.5">
               {celula.dia && (
-                <p className="mb-1 text-[11px] font-semibold text-zinc-400">
+                <p className="mb-1 text-[11px] font-semibold text-tinta-4">
                   {celula.dia}
                 </p>
               )}
@@ -242,13 +242,13 @@ export default async function Calendario({
           ))}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-zinc-500">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-tinta-3">
           <span>
-            <span className="mr-1 inline-block h-2.5 w-2.5 rounded border border-dashed border-zinc-400 bg-zinc-50 align-middle" />
+            <span className="mr-1 inline-block h-2.5 w-2.5 rounded border border-dashed border-tinta-4 bg-superficie-2 align-middle" />
             pauta com data (ainda nao e post)
           </span>
           <span>
-            <span className="mr-1 rounded bg-zinc-800 px-1 text-[9px] font-bold text-white">
+            <span className="mr-1 rounded bg-tinta px-1 text-[9px] font-bold text-fundo">
               N
             </span>
             veio do Notion
@@ -275,7 +275,7 @@ export default async function Calendario({
         {calendario.itens.length === 0 ? (
           <Vazio>Nada planejado nesse mes.</Vazio>
         ) : (
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-linha-suave">
             {calendario.itens.map((item) => (
               <li
                 key={`${item.tipo}-${item.id}`}
@@ -294,7 +294,7 @@ export default async function Calendario({
                       )}{" "}
                       - {item.cliente}
                       {item.resumo && (
-                        <span className="text-zinc-500">
+                        <span className="text-tinta-3">
                           {" "}
                           · {item.resumo.slice(0, 60)}
                         </span>
@@ -306,16 +306,16 @@ export default async function Calendario({
                   <>
                     <Link
                       href={`/clientes/${item.clienteId}/planejamento`}
-                      className="text-sm text-zinc-600 hover:underline"
+                      className="text-sm text-tinta-2 hover:underline"
                     >
                       {formatInTimeZone(item.quando, item.fuso, "dd/MM")} -{" "}
                       {item.cliente}
-                      <span className="text-zinc-500">
+                      <span className="text-tinta-3">
                         {" "}
                         · {item.titulo.slice(0, 60)}
                       </span>
                     </Link>
-                    <span className="rounded-full border border-dashed border-zinc-300 px-2 py-0.5 text-[11px] text-zinc-500">
+                    <span className="rounded-full border border-dashed border-linha-forte px-2 py-0.5 text-[11px] text-tinta-3">
                       pauta · {ROTULO_PAUTA[item.status]}
                       {item.doNotion ? " · Notion" : ""}
                     </span>

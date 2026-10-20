@@ -39,8 +39,8 @@ export function GraficoDia({
   return (
     <figure className="min-w-0">
       <figcaption className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-medium text-zinc-800">{titulo}</span>
-        <span className="text-xs text-zinc-500">total {formatar(total)}</span>
+        <span className="text-sm font-medium text-tinta">{titulo}</span>
+        <span className="text-xs text-tinta-3">total {formatar(total)}</span>
       </figcaption>
 
       <svg

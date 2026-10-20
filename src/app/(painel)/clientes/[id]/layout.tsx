@@ -39,14 +39,14 @@ export default async function LayoutCliente({
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Link href="/clientes" className="text-sm text-zinc-500 hover:underline">
+            <Link href="/clientes" className="text-sm text-tinta-3 hover:underline">
               Clientes
             </Link>
             <span className="text-zinc-300">/</span>
-            <h1 className="titulo text-xl text-zinc-900">{cliente.name}</h1>
-            {!cliente.active && <span className="text-xs text-zinc-400">(inativo)</span>}
+            <h1 className="titulo text-xl text-tinta">{cliente.name}</h1>
+            {!cliente.active && <span className="text-xs text-tinta-4">(inativo)</span>}
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-tinta-3">
             {instagram?.assetName ?? cliente.slug} · {cliente._count.posts} post(s) no total
           </p>
         </div>

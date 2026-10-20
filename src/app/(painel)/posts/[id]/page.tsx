@@ -86,15 +86,15 @@ export default async function DetalhePost({
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-zinc-900">
+            <h1 className="text-xl font-semibold text-tinta">
               {completo.client.name}
             </h1>
             <Etiqueta status={status} />
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-tinta-4">
               versao {completo.version}
             </span>
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-tinta-3">
             {formatarDataHora(completo.scheduledAt, completo.client.timezone)} -{" "}
             {completo.format.replace("_", " ").toLowerCase()}
             {completo.createdBy
@@ -156,23 +156,23 @@ export default async function DetalhePost({
                       key={m.id}
                       src={m.url}
                       controls
-                      className="w-full rounded-lg border border-zinc-200"
+                      className="w-full rounded-lg border border-linha"
                     />
                   ) : (
                     <img
                       key={m.id}
                       src={m.url}
                       alt=""
-                      className="w-full rounded-lg border border-zinc-200"
+                      className="w-full rounded-lg border border-linha"
                     />
                   ),
                 )}
                 {midias.length === 0 && <Vazio>Sem criativo.</Vazio>}
               </div>
               <div>
-                <p className="whitespace-pre-wrap text-sm text-zinc-800">
+                <p className="whitespace-pre-wrap text-sm text-tinta">
                   {legendaVisivel(completo.caption) || (
-                    <span className="text-zinc-400">Sem legenda.</span>
+                    <span className="text-tinta-4">Sem legenda.</span>
                   )}
                 </p>
                 <div className="mt-3 flex items-center gap-2">
@@ -190,11 +190,11 @@ export default async function DetalhePost({
             ) : (
               <ol className="space-y-3">
                 {auditoria.map((a) => (
-                  <li key={a.id} className="border-l-2 border-zinc-200 pl-3">
-                    <p className="text-sm font-medium text-zinc-800">
+                  <li key={a.id} className="border-l-2 border-linha pl-3">
+                    <p className="text-sm font-medium text-tinta">
                       {ROTULO_ACAO[a.action] ?? a.action}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-tinta-3">
                       {formatarDataHora(a.createdAt)} -{" "}
                       {a.actorType === "CLIENTE"
                         ? `cliente: ${a.actorName ?? "sem nome"}`
@@ -210,7 +210,7 @@ export default async function DetalhePost({
                       {a.ipAddress ? ` - IP ${a.ipAddress}` : ""}
                     </p>
                     {a.metadata ? (
-                      <pre className="mt-1 overflow-x-auto rounded bg-zinc-50 p-2 text-[11px] text-zinc-600">
+                      <pre className="mt-1 overflow-x-auto rounded bg-superficie-2 p-2 text-[11px] text-tinta-2">
                         {JSON.stringify(a.metadata, null, 2)}
                       </pre>
                     ) : null}
@@ -226,7 +226,7 @@ export default async function DetalhePost({
                 {completo.publishAttempts.map((t) => (
                   <li
                     key={t.id}
-                    className="flex flex-wrap justify-between gap-2 border-b border-zinc-100 pb-2"
+                    className="flex flex-wrap justify-between gap-2 border-b border-linha-suave pb-2"
                   >
                     <span>
                       {t.network} - tentativa {t.attempt} -{" "}
@@ -241,7 +241,7 @@ export default async function DetalhePost({
                       </span>
                       {t.dryRun ? " (dry-run)" : ""}
                     </span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-tinta-3">
                       {formatarDataHora(t.startedAt)}
                       {t.errorMessage ? ` - ${t.errorMessage}` : ""}
                       {t.permalink ? (
@@ -268,10 +268,10 @@ export default async function DetalhePost({
         <aside className="space-y-5">
           {link && (
             <Cartao titulo="Link de aprovacao ativo">
-              <p className="break-all rounded bg-zinc-50 p-2 text-xs text-zinc-700">
+              <p className="break-all rounded bg-superficie-2 p-2 text-xs text-tinta-2">
                 {link}
               </p>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-tinta-3">
                 Expira em{" "}
                 {formatarDataHora(
                   pendente!.expiresAt,
@@ -287,16 +287,16 @@ export default async function DetalhePost({
               <ul className="space-y-2 text-sm">
                 {completo.decisions.map((d) => (
                   <li key={d.id}>
-                    <p className="font-medium text-zinc-800">
+                    <p className="font-medium text-tinta">
                       {d.decision === "APROVADO" ? "Aprovado" : "Reprovado"} por{" "}
                       {d.approverName}
                     </p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-tinta-3">
                       {formatarDataHora(d.decidedAt)} - versao {d.postVersion}
                       {d.ipAddress ? ` - IP ${d.ipAddress}` : ""}
                     </p>
                     {d.comment && (
-                      <p className="mt-1 text-xs text-zinc-700">
+                      <p className="mt-1 text-xs text-tinta-2">
                         "{d.comment}"
                       </p>
                     )}
@@ -348,7 +348,7 @@ export default async function DetalhePost({
                 />
                 <Botao type="submit">Reagendar</Botao>
                 {status !== "FALHOU" && (
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-tinta-3">
                     Mudar o horario derruba a aprovacao e pede uma nova.
                   </p>
                 )}
@@ -379,7 +379,7 @@ export default async function DetalhePost({
             >
               {completo.client.name}
             </Link>
-            <ul className="mt-2 space-y-1 text-xs text-zinc-600">
+            <ul className="mt-2 space-y-1 text-xs text-tinta-2">
               {completo.client.contacts
                 .filter((c) => c.isApprover)
                 .map((c) => (

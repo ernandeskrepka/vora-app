@@ -151,7 +151,7 @@ export function FormularioPost({
                 multiple={formato === "CARROSSEL"}
                 accept="image/jpeg,image/png,image/webp,image/bmp,video/mp4,video/quicktime"
                 onChange={(e) => setArquivos(Array.from(e.target.files ?? []))}
-                className="w-full rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-3 py-6 text-sm"
+                className="w-full rounded-lg border border-dashed border-linha-forte bg-superficie-2 px-3 py-6 text-sm"
               />
             </Campo>
 
@@ -167,10 +167,10 @@ export function FormularioPost({
             </Campo>
 
             <fieldset>
-              <legend className="mb-1 text-sm font-medium text-zinc-700">Redes</legend>
+              <legend className="mb-1 text-sm font-medium text-tinta-2">Redes</legend>
               <div className="flex gap-4">
                 {(["INSTAGRAM", "FACEBOOK"] as const).map((rede) => (
-                  <label key={rede} className="flex items-center gap-2 text-sm text-zinc-800">
+                  <label key={rede} className="flex items-center gap-2 text-sm text-tinta">
                     <input
                       type="checkbox"
                       name="networks"
@@ -195,11 +195,11 @@ export function FormularioPost({
             </Campo>
 
             {modo === "criar" && (
-              <label className="flex items-start gap-2 rounded-lg bg-zinc-50 p-3 text-sm text-zinc-700">
+              <label className="flex items-start gap-2 rounded-lg bg-superficie-2 p-3 text-sm text-tinta-2">
                 <input type="checkbox" name="enviarAprovacao" value="sim" defaultChecked className="mt-0.5 h-4 w-4" />
                 <span>
                   Enviar agora o pedido de aprovacao pelo WhatsApp do cliente.
-                  <span className="block text-xs text-zinc-500">
+                  <span className="block text-xs text-tinta-3">
                     Sem aprovacao, o post nao e publicado.
                   </span>
                 </span>
@@ -222,15 +222,15 @@ export function FormularioPost({
 
       <aside className="space-y-4">
         <Cartao titulo="Pre-visualizacao">
-          <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-xl border border-zinc-200">
-            <div className="flex items-center gap-2 border-b border-zinc-100 px-3 py-2">
-              <span className="h-7 w-7 rounded-full bg-zinc-200" />
-              <span className="text-xs font-semibold text-zinc-700">
+          <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-xl border border-linha">
+            <div className="flex items-center gap-2 border-b border-linha-suave px-3 py-2">
+              <span className="h-7 w-7 rounded-full bg-linha-forte" />
+              <span className="text-xs font-semibold text-tinta-2">
                 {clientes.find((c) => c.id === inicial?.clientId)?.name ?? "cliente"}
               </span>
             </div>
 
-            <div className="flex aspect-square items-center justify-center bg-zinc-100">
+            <div className="flex aspect-square items-center justify-center bg-superficie-3">
               {previas.length > 0 ? (
                 previas[0].tipo.startsWith("video") ? (
                   <video src={previas[0].url} controls className="h-full w-full object-cover" />
@@ -244,19 +244,19 @@ export function FormularioPost({
                   <img src={midiaExistente[0].url} alt="" className="h-full w-full object-cover" />
                 )
               ) : (
-                <span className="px-4 text-center text-xs text-zinc-400">
+                <span className="px-4 text-center text-xs text-tinta-4">
                   Suba o criativo para ver a previa
                 </span>
               )}
             </div>
 
-            <p className="whitespace-pre-wrap px-3 py-2 text-xs text-zinc-700">
+            <p className="whitespace-pre-wrap px-3 py-2 text-xs text-tinta-2">
               {legenda || "A legenda aparece aqui."}
             </p>
           </div>
 
           {(previas.length > 1 || midiaExistente.length > 1) && (
-            <p className="mt-3 text-center text-xs text-zinc-500">
+            <p className="mt-3 text-center text-xs text-tinta-3">
               {previas.length > 1 ? previas.length : midiaExistente.length} itens no carrossel
             </p>
           )}
@@ -264,7 +264,7 @@ export function FormularioPost({
 
         {previas.length > 0 && (
           <Cartao titulo="Arquivos selecionados">
-            <ul className="space-y-1 text-xs text-zinc-600">
+            <ul className="space-y-1 text-xs text-tinta-2">
               {previas.map((p, i) => (
                 <li key={p.url} className="truncate">
                   {i + 1}. {p.nome}

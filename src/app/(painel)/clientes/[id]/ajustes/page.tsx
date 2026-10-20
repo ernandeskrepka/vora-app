@@ -47,13 +47,13 @@ export default async function AjustesDoCliente({ params }: { params: Promise<{ i
       </Cartao>
 
       <Cartao titulo="Contatos aprovadores (WhatsApp)">
-        <ul className="mb-4 divide-y divide-zinc-100">
+        <ul className="mb-4 divide-y divide-linha-suave">
           {cliente.contacts.length === 0 && <Vazio>Nenhum contato.</Vazio>}
           {cliente.contacts.map((c) => (
             <li key={c.id} className="flex items-center justify-between gap-2 py-2">
               <div>
-                <p className="text-sm font-medium text-zinc-800">{c.name}</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm font-medium text-tinta">{c.name}</p>
+                <p className="text-xs text-tinta-3">
                   {c.phoneE164}
                   {c.isApprover ? " · aprovador" : ""}
                   {c.receivesReminders ? " · recebe lembrete" : ""}
@@ -73,7 +73,7 @@ export default async function AjustesDoCliente({ params }: { params: Promise<{ i
         <FormAcao
           acao={acaoAdicionarContato}
           textoBotao="Adicionar contato"
-          className="border-t border-zinc-100 pt-4"
+          className="border-t border-linha-suave pt-4"
         >
           <input type="hidden" name="clienteId" value={cliente.id} />
           <div className="grid gap-3 sm:grid-cols-2">

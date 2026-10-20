@@ -12,10 +12,10 @@ export function FormularioLogin() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <img src="/marca/vora-logo.svg" alt="VORA" className="h-8 w-auto" />
-          <p className="mt-3 text-sm text-zinc-400">Aprovacao e publicacao de criativos</p>
+          <p className="mt-3 text-sm text-tinta-4">Aprovacao e publicacao de criativos</p>
         </div>
 
-        <form action={acao} className="space-y-4 rounded-xl bg-white p-6 shadow-xl">
+        <form action={acao} className="space-y-4 rounded-xl bg-superficie p-6 shadow-xl">
           {estado?.erro && <Aviso tom="erro">{estado.erro}</Aviso>}
 
           <Campo rotulo="E-mail">
@@ -43,7 +43,7 @@ export function FormularioLogin() {
             {enviando ? "Entrando..." : "Entrar"}
           </Botao>
 
-          <p className="text-center text-xs text-zinc-500">
+          <p className="text-center text-xs text-tinta-3">
             Uso interno da equipe. Nao ha cadastro aberto.
           </p>
         </form>

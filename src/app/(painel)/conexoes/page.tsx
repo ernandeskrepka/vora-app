@@ -26,8 +26,8 @@ export default async function Conexoes() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="text-xl font-semibold text-zinc-900">Conexoes Meta</h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-xl font-semibold text-tinta">Conexoes Meta</h1>
+        <p className="text-sm text-tinta-3">
           Graph API fixada na versao {env.META_GRAPH_VERSION}.
           {env.META_DRY_RUN ? " Dry-run ligado: nenhuma chamada real e feita." : ""}
         </p>
@@ -54,15 +54,15 @@ export default async function Conexoes() {
             {cliente.metaConnections.length === 0 ? (
               <Vazio>Nenhum ativo conectado. Esse cliente ainda nao pode publicar.</Vazio>
             ) : (
-              <ul className="divide-y divide-zinc-100">
+              <ul className="divide-y divide-linha-suave">
                 {cliente.metaConnections.map((c) => (
                   <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
                     <div>
-                      <p className="text-sm font-medium text-zinc-800">
+                      <p className="text-sm font-medium text-tinta">
                         {ROTULO_ATIVO[c.assetType] ?? c.assetType}
                         {c.assetName ? ` - ${c.assetName}` : ""}
                       </p>
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-tinta-3">
                         id {c.assetId} -{" "}
                         {c.authMode === "SYSTEM_USER" ? "System User da agencia" : "OAuth do cliente"}
                         {c.tokenExpiresAt ? ` - token expira em ${formatarDataHora(c.tokenExpiresAt)}` : ""}

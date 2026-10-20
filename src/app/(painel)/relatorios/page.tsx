@@ -30,7 +30,7 @@ function Delta({ chave, valor }: { chave: string; valor: number | null }) {
       ? "text-emerald-700"
       : tom === "ruim"
         ? "text-rose-700"
-        : "text-zinc-500";
+        : "text-tinta-3";
   const seta = valor > 0 ? "▲" : valor < 0 ? "▼" : "•";
   return (
     <span className={`text-xs font-medium whitespace-nowrap ${cor}`}>
@@ -42,7 +42,7 @@ function Delta({ chave, valor }: { chave: string; valor: number | null }) {
 const COR_DO_TOM: Record<string, string> = {
   grave: "border-rose-200 bg-rose-50 text-rose-800",
   atencao: "border-amber-200 bg-amber-50 text-amber-800",
-  info: "border-zinc-200 bg-zinc-50 text-zinc-600",
+  info: "border-linha bg-superficie-2 text-tinta-2",
 };
 
 function Etiquetas({ linha }: { linha: LinhaDaCarteira }) {
@@ -78,7 +78,7 @@ function Situacao({ linha }: { linha: LinhaDaCarteira }) {
       </span>
       {resto.length > 0 && (
         <span
-          className="text-[11px] text-zinc-500"
+          className="text-[11px] text-tinta-3"
           title={resto.map((a) => a.texto).join(" · ")}
         >
           +{resto.length}
@@ -99,12 +99,12 @@ function CartaoDeTotal({
 }) {
   const m = METRICAS[chave];
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-3">
-      <p className="text-xs text-zinc-500">
+    <div className="rounded-lg border border-linha bg-superficie p-3">
+      <p className="text-xs text-tinta-3">
         {m.rotulo}
-        {m.sigla && <span className="ml-1 text-zinc-400">({m.sigla})</span>}
+        {m.sigla && <span className="ml-1 text-tinta-4">({m.sigla})</span>}
       </p>
-      <p className="text-xl font-semibold text-zinc-900">{valor}</p>
+      <p className="text-xl font-semibold text-tinta">{valor}</p>
       {variacao !== undefined && (
         <div className="mt-0.5">
           <Delta chave={chave} valor={variacao} />
@@ -138,10 +138,10 @@ export default async function Resultados({
     <div className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">
+          <h1 className="text-xl font-semibold text-tinta">
             Resultados da carteira
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-tinta-3">
             {rotuloDaQuinzena(quinzena)} · {r.totais.comDados} de{" "}
             {r.totais.clientes} cliente(s) com dado coletado. A lista comeca por
             quem precisa de atencao.
@@ -150,13 +150,13 @@ export default async function Resultados({
         <div className="flex items-center gap-2">
           <Link
             href={`/relatorios?periodo=${anterior.chave}`}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
           >
             ← {rotuloCurto(anterior)}
           </Link>
           <Link
             href={`/relatorios?periodo=${seguinte.chave}`}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm"
+            className="rounded-lg border border-linha-forte bg-superficie px-3 py-2 text-sm"
           >
             {rotuloCurto(seguinte)} →
           </Link>
@@ -194,13 +194,13 @@ export default async function Resultados({
           titulo={`Precisa de atencao agora (${precisamDeAtencao.length})`}
           descricao="Ordenado pelo que custa mais caro deixar parado. Clique no cliente para abrir o relatorio da quinzena."
         >
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-linha-suave">
             {precisamDeAtencao.map((l) => (
               <li key={l.clienteId} className="py-2.5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
                     href={`/relatorios/${l.clienteId}?periodo=${quinzena.chave}`}
-                    className="font-medium text-zinc-900 hover:underline"
+                    className="font-medium text-tinta hover:underline"
                   >
                     {l.cliente}
                   </Link>
@@ -256,7 +256,7 @@ export default async function Resultados({
           <div className="-mx-4 overflow-x-auto px-4">
             <table className="w-full min-w-[1040px] text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+                <tr className="border-b border-linha text-left text-xs text-tinta-3">
                   <th className="w-56 py-2 pr-3 font-medium">Cliente</th>
                   <th className="py-2 text-right font-medium">Investimento</th>
                   <th className="py-2 text-right font-medium">Resultados</th>
@@ -277,7 +277,7 @@ export default async function Resultados({
                   <th className="w-64 py-2 pl-4 font-medium">Situacao</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-linha-suave">
                 {r.linhas.map((l) => (
                   <tr
                     key={l.clienteId}
@@ -286,7 +286,7 @@ export default async function Resultados({
                     <td className="py-2.5 pr-3">
                       <Link
                         href={`/relatorios/${l.clienteId}?periodo=${quinzena.chave}`}
-                        className="font-medium text-zinc-900 hover:underline"
+                        className="font-medium text-tinta hover:underline"
                       >
                         {l.cliente}
                       </Link>
@@ -329,7 +329,7 @@ export default async function Resultados({
                       {!l.saldo.acompanhando ? (
                         <Link
                           href={`/clientes/${l.clienteId}/saldo`}
-                          className="text-xs text-zinc-400 underline"
+                          className="text-xs text-tinta-4 underline"
                         >
                           sem recarga
                         </Link>
@@ -339,14 +339,14 @@ export default async function Resultados({
                           className={
                             l.saldo.abaixoDoLimite
                               ? "font-semibold text-rose-700"
-                              : "text-zinc-700"
+                              : "text-tinta-2"
                           }
                         >
                           {moeda(l.saldo.saldo, l.moeda)}
                         </Link>
                       )}
                     </td>
-                    <td className="py-2.5 text-right whitespace-nowrap text-zinc-600">
+                    <td className="py-2.5 text-right whitespace-nowrap text-tinta-2">
                       {l.posts.publicados}
                       {l.posts.aguardando > 0 && (
                         <span className="text-amber-700">
@@ -364,7 +364,7 @@ export default async function Resultados({
             </table>
           </div>
         )}
-        <p className="mt-3 text-xs text-zinc-500">
+        <p className="mt-3 text-xs text-tinta-3">
           Posts: publicados na quinzena; o numero em ambar e quanto ainda espera
           aprovacao. Investimento, resultado e CPR saem da mesma coleta que o
           cliente ve no relatorio dele.
@@ -428,20 +428,20 @@ function ListaDeCampanhas({
             <img
               src={c.criativo}
               alt=""
-              className="h-14 w-14 shrink-0 rounded-lg border border-zinc-200 object-cover"
+              className="h-14 w-14 shrink-0 rounded-lg border border-linha object-cover"
             />
           ) : (
-            <div className="h-14 w-14 shrink-0 rounded-lg border border-dashed border-zinc-200" />
+            <div className="h-14 w-14 shrink-0 rounded-lg border border-dashed border-linha" />
           )}
           <div className="min-w-0 flex-1">
             <Link
               href={`/relatorios/${c.clienteId}?periodo=${quinzena}`}
-              className="text-sm font-medium text-zinc-900 hover:underline"
+              className="text-sm font-medium text-tinta hover:underline"
             >
               {c.cliente}
             </Link>
             <p
-              className="truncate text-xs text-zinc-600"
+              className="truncate text-xs text-tinta-2"
               title={c.nomeOriginal}
             >
               {c.nome}
@@ -452,7 +452,7 @@ function ListaDeCampanhas({
               >
                 {moeda(c.custoPorResultado)}
               </span>
-              <span className="text-zinc-500">
+              <span className="text-tinta-3">
                 {" "}
                 por resultado · {numero(c.resultados)} resultado(s) ·{" "}
                 {moeda(c.investimento)} investidos

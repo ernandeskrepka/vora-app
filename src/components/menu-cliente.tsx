@@ -21,7 +21,7 @@ export function MenuCliente({ clienteId, pendencias }: { clienteId: string; pend
   const base = `/clientes/${clienteId}`;
 
   return (
-    <nav className="-mx-1 flex gap-1 overflow-x-auto border-b border-zinc-200 pb-px">
+    <nav className="-mx-1 flex gap-1 overflow-x-auto border-b border-linha pb-px">
       {ITENS.map((item) => {
         const href = `${base}${item.href}`;
         const ativo = item.href === "" ? caminho === base : caminho.startsWith(href);
@@ -33,8 +33,8 @@ export function MenuCliente({ clienteId, pendencias }: { clienteId: string; pend
             className={clsx(
               "relative shrink-0 rounded-t-lg px-3 py-2 text-sm whitespace-nowrap transition",
               ativo
-                ? "border-b-2 border-vora-preto font-semibold text-zinc-900"
-                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800",
+                ? "border-b-2 border-vora-preto font-semibold text-tinta"
+                : "text-tinta-3 hover:bg-superficie-3 hover:text-tinta",
             )}
           >
             {item.rotulo}
