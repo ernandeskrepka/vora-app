@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: "Creato"; src: url("creato-display-regular.ttf"); font-weight: 400; }
+  @font-face { font-family: "Creato"; src: url("creato-display-black.ttf"); font-weight: 900; }
+  :root {
+    --void: #141618; --char: #1e2024; --bone: #f1efea; --ash: #9ca1a3; --green: #02d89d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--void); }
+  body { font-family: "Inter", "Creato", sans-serif; color: var(--bone); position: relative; }
+  #fundo { position: absolute; inset: 0;
+    background:
+      radial-gradient(circle, rgba(241,239,234,.07) 1px, transparent 1.6px) 0 0 / 28px 28px,
+      radial-gradient(120% 90% at 85% -10%, rgba(2,216,157,.18), transparent 55%),
+      radial-gradient(90% 70% at 8% 105%, rgba(0,81,60,.25), transparent 60%),
+      #141618; }
+  #aurora { position: absolute; inset: -20%; pointer-events: none;
+    background: radial-gradient(40% 35% at 20% 25%, rgba(2,216,157,.12), transparent 70%),
+                radial-gradient(45% 40% at 80% 75%, rgba(2,216,157,.10), transparent 70%); }
+  .cena { position: absolute; inset: 0; opacity: 0; will-change: transform, filter, opacity; }
+  .tela { position: absolute; left: 50%; top: 50%; transform-origin: center;
+    border-radius: 14px; overflow: hidden; background: #1e2024;
+    box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 0 1px rgba(241,239,234,.12); }
+  .tela img { display: block; width: 100%; height: auto; }
+  .tela.celular { border-radius: 44px; box-shadow: 0 40px 120px rgba(0,0,0,.6), 0 0 0 10px #0d0e10, 0 0 0 12px rgba(241,239,234,.18); }
+  .legenda { position: absolute; left: 110px; bottom: 96px; max-width: 1100px; z-index: 3; }
+  .sombra { position: absolute; left: 0; bottom: 0; width: 1750px; height: 700px; z-index: 2; pointer-events: none;
+    background: radial-gradient(100% 100% at 0% 100%, rgba(20,22,24,.97) 0%, rgba(20,22,24,.9) 45%, rgba(20,22,24,.5) 65%, rgba(20,22,24,0) 82%); }
+  .eyebrow { font-family: "DejaVu Sans Mono", ui-monospace, monospace; font-size: 22px; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--green); margin-bottom: 18px; display: flex; align-items: center; gap: 14px; }
+  .eyebrow::before { content: ""; width: 34px; height: 2px; background: var(--green); }
+  .titulo { font-family: "Creato", "Inter", sans-serif; font-weight: 900; font-size: 74px; line-height: 1.02;
+    letter-spacing: -.02em; color: var(--bone); text-shadow: 0 8px 40px rgba(0,0,0,.7); }
+  .titulo em { font-style: normal; color: var(--green); }
+  .sub { margin-top: 16px; font-size: 28px; color: var(--ash); font-weight: 500; }
+  .capa { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .capa img.logo { width: 520px; height: auto; }
+  .capa .titulo { font-size: 110px; margin-top: 36px; }
+  .capa .sub { font-size: 34px; }
+  .contador { position: absolute; z-index: 5; right: 90px; top: 70px; font-family: "DejaVu Sans Mono", monospace;
+    font-size: 20px; letter-spacing: .2em; color: var(--ash); display: flex; gap: 12px; align-items: center; }
+  .contador .rec { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+  .hud { position: absolute; width: 36px; height: 36px; border: 2px solid rgba(241,239,234,.35); }
+  .hud.tl { top: 36px; left: 36px; border-right: 0; border-bottom: 0; }
+  .hud.tr { top: 36px; right: 36px; border-left: 0; border-bottom: 0; }
+  .hud.bl { bottom: 36px; left: 36px; border-right: 0; border-top: 0; }
+  .hud.br { bottom: 36px; right: 36px; border-left: 0; border-top: 0; }
+  .barra { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--green); box-shadow: 0 0 20px var(--green); }
+  .indice { position: absolute; left: 110px; top: 70px; font-family: "DejaVu Sans Mono", monospace; font-size: 20px; letter-spacing: .2em; color: var(--ash); }
+</style>
+</head>
+<body>
+<div id="fundo"></div>
+<div id="aurora"></div>
+<div class="hud tl"></div><div class="hud tr"></div><div class="hud bl"></div><div class="hud br"></div>
+<div id="palco"></div>
+<div class="contador"><span class="rec"></span><span id="tc">00:00:00</span></div>
+<div class="barra" id="barra"></div>
+
+<script>
+// Roteiro: 30 segundos, cortes a cada ~3s. Cada cena: tela (imagem), texto,
+// enquadramento (escala/posicao) e um movimento lento (ken burns) durante a cena.
+const DUR = 30;
+const CENAS = [
+  { tipo: "capa", t: 0, d: 2.6, eyebrow: "VORA · aprovacao e publicacao", titulo: "O sistema inteiro<br>em <em>30 segundos</em>", sub: "do planejamento ao post no ar" },
+  { tipo: "tela", t: 2.6, d: 3.0, img: "dashboard.png", eyebrow: "01 · dashboard", titulo: "Tarefas da equipe<br><em>direto do Notion</em>", sub: "quem esta com o que, para quando", enq: { w: 1500, x: 160, y: 20, rot: -2, zoom: [1.0, 1.06] }, foco: [0, -0.3] },
+  { tipo: "tela", t: 5.6, d: 2.8, img: "calendario.png", eyebrow: "02 · calendario", titulo: "Todos os clientes<br>num <em>calendario so</em>", sub: "posts e pautas, sincronizados com o Notion", enq: { w: 1500, x: 200, y: 40, rot: 2, zoom: [1.02, 1.08] }, foco: [0, -0.1] },
+  { tipo: "tela", t: 8.4, d: 2.8, img: "novo-post.png", eyebrow: "03 · novo post", titulo: "A designer sobe a arte.<br><em>Fica registrado</em> quem e quando", sub: "interno: o cliente nao ve", enq: { w: 1500, x: 180, y: 30, rot: -1.5, zoom: [1.0, 1.07] }, foco: [0, -0.06] },
+  { tipo: "celular", t: 11.2, d: 3.0, img: "aprovar.png", eyebrow: "04 · aprovacao", titulo: "O cliente aprova<br><em>pelo WhatsApp</em>, sem login", sub: "um link por versao; editou, aprova de novo", enq: { w: 470, x: 560, y: 0, rot: 3, zoom: [1.0, 1.03] }, foco: [0, 0] },
+  { tipo: "tela", t: 14.2, d: 2.8, img: "post.png", eyebrow: "05 · regra de ouro", titulo: "<em>Nada publica</em> sem aprovacao.<br>Silencio nunca publica.", sub: "o horario chega sem resposta: o post nao sai", enq: { w: 1500, x: 170, y: 20, rot: 1.5, zoom: [1.0, 1.06] }, foco: [0, 0] },
+  { tipo: "celular", t: 17.0, d: 2.8, img: "perfil-publico.png", eyebrow: "06 · link do perfil", titulo: "O cliente acompanha o perfil<br><em>tomando forma</em>", sub: "a grade se atualiza conforme a equipe sobe", enq: { w: 470, x: 580, y: 0, rot: -3, zoom: [1.0, 1.05] }, foco: [0, -0.02] },
+  { tipo: "tela", t: 19.8, d: 2.8, img: "resultados.png", eyebrow: "07 · resultados", titulo: "Resultados e <em>saldo de anuncios</em><br>de cada cliente", sub: "quem precisa de atencao primeiro", enq: { w: 1500, x: 190, y: 30, rot: -2, zoom: [1.0, 1.07] }, foco: [0, -0.04] },
+  { tipo: "tela", t: 22.6, d: 2.8, img: "historico.png", eyebrow: "08 · historico", titulo: "Um login por pessoa.<br><em>Tudo com nome e hora.</em>", sub: "auditoria que ninguem apaga", enq: { w: 1500, x: 170, y: 20, rot: 2, zoom: [1.0, 1.06] }, foco: [0, 0] },
+  { tipo: "capa", t: 25.4, d: 4.6, eyebrow: "vorabr.com", titulo: "Pronto para<br><em>o lancamento</em>", sub: "aprovacao, publicacao, resultados, equipe" },
+];
+
+const palco = document.getElementById("palco");
+const nos = [];
+for (const c of CENAS) {
+  const el = document.createElement("div");
+  el.className = "cena";
+  if (c.tipo === "capa") {
+    el.innerHTML = `<div class="capa"><img class="logo" src="vora-logo.svg" alt=""><div class="eyebrow" style="justify-content:center;margin-top:34px">${c.eyebrow}</div><div class="titulo">${c.titulo}</div><div class="sub">${c.sub}</div></div>`;
+  } else {
+    const cls = c.tipo === "celular" ? "tela celular" : "tela";
+    el.innerHTML = `<div class="${cls}" style="width:${c.enq.w}px"><img src="telas/${c.img}" alt=""></div>
+      <div class="sombra"></div><div class="indice">${c.eyebrow.split("·")[0].trim()} / 08</div>
+      <div class="legenda"><div class="eyebrow">${c.eyebrow}</div><div class="titulo">${c.titulo}</div><div class="sub">${c.sub}</div></div>`;
+  }
+  palco.appendChild(el);
+  nos.push(el);
+}
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const TRANS = 0.32; // duracao do whip entre cenas
+
+// Renderiza o estado no instante t (segundos). Chamado pelo capturador por quadro.
+window.render = function (t) {
+  document.getElementById("barra").style.width = `${(t / DUR) * 1920}px`;
+  const f = Math.floor((t % 1) * 30);
+  document.getElementById("tc").textContent = `00:${String(Math.floor(t)).padStart(2, "0")}:${String(f).padStart(2, "0")}`;
+  document.getElementById("aurora").style.transform = `translate(${Math.sin(t * 0.25) * 60}px, ${Math.cos(t * 0.2) * 40}px) scale(${1 + Math.sin(t * 0.15) * 0.03})`;
+
+  CENAS.forEach((c, i) => {
+    const el = nos[i];
+    const ini = c.t, fim = c.t + c.d;
+    // Janela com margem para o whip de entrada e de saida.
+    if (t < ini - TRANS || t > fim + TRANS) { el.style.opacity = 0; return; }
+    el.style.opacity = 1;
+
+    // Whip-pan: entra vindo da direita, sai para a esquerda, com desfoque proporcional a velocidade.
+    let dx = 0, blur = 0, op = 1, escala = 1;
+    if (t < ini) {
+      const p = clamp((t - (ini - TRANS)) / TRANS, 0, 1);
+      const e = easeOut(p);
+      dx = (1 - e) * 2200;
+      blur = (1 - e) * 42 + 4;
+      op = p;
+    } else if (t > fim) {
+      const p = clamp((t - fim) / TRANS, 0, 1);
+      const e = 1 - Math.pow(1 - p, 2);
+      dx = -e * 2200;
+      blur = e * 42 + 2;
+      op = 1 - p * 0.3;
+    } else {
+      // Dentro da cena: pequeno impacto na entrada (zoom punch) e ken burns lento.
+      const p = clamp((t - ini) / 0.35, 0, 1);
+      escala = 1.04 - 0.04 * easeOut(p);
+      blur = (1 - easeOut(p)) * 3;
+    }
+    el.style.filter = blur > 0.2 ? `blur(${blur.toFixed(1)}px)` : "none";
+    el.style.transform = `translateX(${dx.toFixed(1)}px) scale(${escala.toFixed(4)})`;
+    el.style.opacity = op;
+
+    if (c.tipo !== "capa") {
+      const tela = el.querySelector(".tela");
+      const img = tela.querySelector("img");
+      const p = clamp((t - ini) / c.d, 0, 1);
+      const z = c.enq.zoom[0] + (c.enq.zoom[1] - c.enq.zoom[0]) * easeInOut(p);
+      // Ponto de foco: desloca a imagem dentro da moldura para mostrar a parte que importa.
+      const alturaMoldura = c.tipo === "celular" ? 1000 : 940;
+      tela.style.height = `${alturaMoldura}px`;
+      const fx = c.foco[0], fy = c.foco[1];
+      img.style.transform = `translate(${(fx * 100).toFixed(2)}%, ${(fy * 100).toFixed(2)}%) scale(${z.toFixed(4)})`;
+      img.style.transformOrigin = "50% 0%";
+      tela.style.transform = `translate(-50%, -50%) translate(${c.enq.x}px, ${c.enq.y}px) rotate(${c.enq.rot}deg)`;
+      // Legenda: entra por baixo com atraso curto.
+      const leg = el.querySelector(".legenda");
+      const q = clamp((t - ini - 0.05) / 0.28, 0, 1);
+      leg.style.transform = `translateY(${(1 - easeOut(q)) * 60}px)`;
+      leg.style.opacity = q;
+    } else {
+      const capa = el.querySelector(".capa");
+      const p = clamp((t - ini) / c.d, 0, 1);
+      capa.style.transform = `scale(${(1 + p * 0.05).toFixed(4)})`;
+      const partes = capa.querySelectorAll(".eyebrow, .titulo, .sub, .logo");
+      partes.forEach((n, k) => {
+        const q = clamp((t - ini - k * 0.12) / 0.45, 0, 1);
+        n.style.opacity = q;
+        n.style.transform = `translateY(${(1 - easeOut(q)) * 40}px)`;
+      });
+    }
+  });
+};
+window.render(0);
+</script>
+</body>
+</html>
