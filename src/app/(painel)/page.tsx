@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db.ts";
 import { formatarDataHora } from "@/lib/datetime.ts";
 import { Cartao, BotaoLink, Etiqueta, IconeRede, Vazio, Aviso } from "@/components/ui.tsx";
 import type { PostStatus } from "@/domain/post-status.ts";
+import { atividadeRecente } from "@/services/historico.ts";
+import { ListaDeAtividade } from "@/components/atividade.tsx";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +89,10 @@ function LinhaPost({
 export default async function Dashboard() {
   const d = await buscarDados();
   const { clientesComSaldoBaixo } = await import("@/services/saldo.ts");
-  const saldoBaixo = await clientesComSaldoBaixo();
+  const [saldoBaixo, atividade] = await Promise.all([
+    clientesComSaldoBaixo(),
+    atividadeRecente({ limite: 15 }),
+  ]);
   const quebradas = d.conexoes.filter((c) => c.status !== "NAO_CONFIGURADO");
   const aguardando = d.conexoes.filter((c) => c.status === "NAO_CONFIGURADO");
 
@@ -215,6 +220,14 @@ export default async function Dashboard() {
               ))}
             </ul>
           )}
+        </Cartao>
+
+        <Cartao
+          titulo="Atividade da equipe"
+          descricao="Quem fez o que, e quando. O historico completo de cada cliente fica na aba Historico."
+          className="lg:col-span-2"
+        >
+          <ListaDeAtividade eventos={atividade} />
         </Cartao>
 
         <Cartao titulo="Falhas de publicacao" className="lg:col-span-2">

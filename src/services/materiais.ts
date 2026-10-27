@@ -118,6 +118,7 @@ export async function listarMateriais(clientId: string) {
   const itens = await prisma.clientAsset.findMany({
     where: { clientId },
     orderBy: { createdAt: "desc" },
+    include: { uploadedBy: { select: { id: true, name: true } } },
   });
 
   return Promise.all(

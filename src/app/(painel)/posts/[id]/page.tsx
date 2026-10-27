@@ -28,24 +28,11 @@ import {
   classeInput,
 } from "@/components/ui.tsx";
 import { legendaVisivel } from "@/domain/legenda.ts";
+import { rotuloDaAcao } from "@/domain/historico.ts";
+import { primeiroNome } from "@/domain/equipe.ts";
 
 export const dynamic = "force-dynamic";
 
-const ROTULO_ACAO: Record<string, string> = {
-  post_criado: "Post criado",
-  post_editado: "Post editado pela agencia",
-  pedido_de_aprovacao_enviado: "Pedido de aprovacao enviado",
-  link_reenviado: "Link reenviado ao cliente",
-  cliente_aprovou: "Cliente aprovou",
-  cliente_reprovou: "Cliente reprovou",
-  marcado_sem_resposta: "Virou POST SEM RESPOSTA",
-  publicacao_iniciada: "Publicacao iniciada",
-  post_publicado: "Post publicado",
-  publicacao_falhou: "Publicacao falhou",
-  publicacao_abortada: "Publicacao abortada na revalidacao",
-  post_cancelado: "Post cancelado",
-  reagendado_apos_falha: "Reagendado apos falha",
-};
 
 export default async function DetalhePost({
   params,
@@ -168,6 +155,13 @@ export default async function DetalhePost({
                   ),
                 )}
                 {midias.length === 0 && <Vazio>Sem criativo.</Vazio>}
+                {midias[0] && (
+                  <p className="text-[11px] text-tinta-4">
+                    Arte subida
+                    {midias[0].uploadedBy ? ` por ${primeiroNome(midias[0].uploadedBy.name)}` : ""} em{" "}
+                    {formatarDataHora(midias[0].createdAt)}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="whitespace-pre-wrap text-sm text-tinta">
@@ -192,7 +186,7 @@ export default async function DetalhePost({
                 {auditoria.map((a) => (
                   <li key={a.id} className="border-l-2 border-linha pl-3">
                     <p className="text-sm font-medium text-tinta">
-                      {ROTULO_ACAO[a.action] ?? a.action}
+                      {rotuloDaAcao(a.action)}
                     </p>
                     <p className="text-xs text-tinta-3">
                       {formatarDataHora(a.createdAt)} -{" "}

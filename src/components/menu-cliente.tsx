@@ -13,6 +13,7 @@ const ITENS = [
   { href: "/relatorio", rotulo: "Relatorio" },
   { href: "/saldo", rotulo: "Saldo" },
   { href: "/conexoes", rotulo: "Conexoes" },
+  { href: "/historico", rotulo: "Historico" },
   { href: "/ajustes", rotulo: "Ajustes" },
 ];
 

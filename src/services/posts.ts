@@ -31,7 +31,10 @@ const log = logger("posts");
 
 export const INCLUDE_POST_COMPLETO = {
   client: { include: { contacts: true, metaConnections: true } },
-  media: { orderBy: { position: "asc" } },
+  media: {
+    orderBy: { position: "asc" },
+    include: { uploadedBy: { select: { id: true, name: true } } },
+  },
   approvalRequests: {
     orderBy: { createdAt: "desc" },
     include: { decision: true },
@@ -145,6 +148,8 @@ async function gravarMidia(input: {
   postId: string;
   clientSlug: string;
   midias: MidiaPreparada[];
+  /** Quem subiu a arte: fica no historico interno, nunca vai ao cliente. */
+  uploadedById?: string | null;
 }) {
   const linhas = [];
   for (const [i, m] of input.midias.entries()) {
@@ -166,6 +171,7 @@ async function gravarMidia(input: {
       sizeBytes: m.sizeBytes,
       durationSeconds: m.durationSeconds,
       originalFilename: m.originalFilename,
+      uploadedById: input.uploadedById ?? null,
     });
   }
   await prisma.postMedia.createMany({ data: linhas });
@@ -236,7 +242,12 @@ export async function criarPost(input: {
     },
   });
 
-  await gravarMidia({ postId: post.id, clientSlug: cliente.slug, midias });
+  await gravarMidia({
+    postId: post.id,
+    clientSlug: cliente.slug,
+    midias,
+    uploadedById: input.ator.usuarioId ?? null,
+  });
 
   await registrarAuditoria({
     entityType: "post",
@@ -391,6 +402,7 @@ export async function atualizarPost(input: {
       postId: post.id,
       clientSlug: post.client.slug,
       midias,
+      uploadedById: input.ator.usuarioId ?? null,
     });
     // Arquivos antigos: remocao e melhor esforco, nao bloqueia a edicao.
     for (const key of chavesAntigas) {

@@ -1,4 +1,5 @@
-import { formatarData } from "@/lib/datetime.ts";
+import { formatarDataHora } from "@/lib/datetime.ts";
+import { primeiroNome } from "@/domain/equipe.ts";
 import { listarMateriais } from "@/services/materiais.ts";
 import { acaoAdicionarMateriais } from "@/app/actions/cliente-area.ts";
 import { BibliotecaMateriais, type MaterialCliente } from "@/components/biblioteca-materiais.tsx";
@@ -22,7 +23,7 @@ export default async function Materiais({ params }: { params: Promise<{ id: stri
     url: i.url,
     nome: i.originalFilename ?? "arquivo",
     tamanho: tamanho(i.sizeBytes),
-    quando: formatarData(i.createdAt),
+    quando: `${formatarDataHora(i.createdAt)}${i.uploadedBy ? ` por ${primeiroNome(i.uploadedBy.name)}` : ""}`,
     rotulo: i.label,
   }));
 
