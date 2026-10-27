@@ -6,6 +6,7 @@ import { enviarLembrete } from "./lembretes.ts";
 import { obterConfiguracoes } from "./configuracoes.ts";
 import { sincronizarTodosOsCalendarios } from "./notion-planejamento.ts";
 import { NotionNaoConfigurado } from "@/lib/notion/client.ts";
+import { sincronizarTarefas, ultimaLeituraDeTarefas } from "./tarefas-notion.ts";
 
 const log = logger("agenda");
 
@@ -16,7 +17,12 @@ export type ResultadoAgenda = {
   lembretes: number;
   /** Clientes cujo cronograma do Notion foi relido nesta rodada. */
   notion: number;
+  /** Tarefas da equipe relidas das bases do Notion nesta rodada. */
+  tarefas: number;
 };
+
+/** De quanto em quanto tempo as bases de tarefas sao relidas. */
+export const TAREFAS_RELEITURA_HORAS = 1;
 
 /** De quanto em quanto tempo o cronograma de cada cliente e relido. */
 export const NOTION_RELEITURA_HORAS = 6;
@@ -43,6 +49,7 @@ export async function processarPendencias(
     semResposta: 0,
     lembretes: 0,
     notion: 0,
+    tarefas: 0,
   };
 
   // 1. Posts aprovados cujo horario chegou.
@@ -112,12 +119,16 @@ export async function processarPendencias(
   //    calendario e decisao da equipe, pelo botao da tela.
   resultado.notion = await relerNotion(agora);
 
+  // 5. Tarefas da equipe (bases do Notion): de hora em hora.
+  resultado.tarefas = await relerTarefas(agora);
+
   if (
     resultado.publicados ||
     resultado.falhas ||
     resultado.semResposta ||
     resultado.lembretes ||
-    resultado.notion
+    resultado.notion ||
+    resultado.tarefas
   ) {
     log.info("agenda processou pendencias", resultado);
   }
@@ -143,6 +154,23 @@ async function relerNotion(agora: Date): Promise<number> {
     // Sem token nao e erro da agenda: e o Notion que ainda nao foi ligado.
     if (erro instanceof NotionNaoConfigurado) return 0;
     log.error("falha ao reler o Notion pela agenda", {
+      erro: erro instanceof Error ? erro.message : String(erro),
+    });
+    return 0;
+  }
+}
+
+async function relerTarefas(agora: Date): Promise<number> {
+  try {
+    const ultima = await ultimaLeituraDeTarefas();
+    if (ultima && agora.getTime() - ultima.getTime() < TAREFAS_RELEITURA_HORAS * 3_600_000) {
+      return 0;
+    }
+    const r = await sincronizarTarefas({ ator: { tipo: "SISTEMA", nome: "agenda" } });
+    return r.lidas;
+  } catch (erro) {
+    if (erro instanceof NotionNaoConfigurado) return 0;
+    log.warn("tarefas do Notion nao puderam ser relidas", {
       erro: erro instanceof Error ? erro.message : String(erro),
     });
     return 0;

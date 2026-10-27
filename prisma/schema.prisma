@@ -505,6 +505,37 @@ model AdInsightDaily {
   @@index([clientId, date])
 }
 
+// ------------------------------------------------------------ equipe/notion
+
+/// Tarefa da equipe lida de uma base do Notion (a do Notion Calendar).
+/// Copia local para o dashboard abrir rapido e funcionar sem o Notion no ar.
+model TeamTask {
+  id             String    @id @default(cuid())
+  notionPageId   String    @unique
+  databaseId     String
+  title          String
+  status         String?
+  /// Quem esta com a tarefa, pelo nome como aparece no Notion.
+  ownerNames     String[]  @default([])
+  kind           String?
+  platforms      String[]  @default([])
+  /// Data principal (publicacao/entrega) e data de filmagem, quando houver.
+  dueAt          DateTime?
+  filmingAt      DateTime?
+  url            String
+  arteUrl        String?
+  linkUrl        String?
+  /// Cliente reconhecido pelo titulo, quando bate com um cliente do sistema.
+  clientName     String?
+  concluida      Boolean   @default(false)
+  archived       Boolean   @default(false)
+  notionEditedAt DateTime
+  syncedAt       DateTime  @default(now())
+
+  @@index([dueAt])
+  @@index([databaseId, archived])
+}
+
 // ---------------------------------------------------------------- auditoria
 
 model AuditLog {

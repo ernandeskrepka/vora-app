@@ -97,6 +97,10 @@ export async function criarEquipeInicial(input: { sufixo: string; ator: Ator }) 
       if (existente.funcao === "OUTRA") {
         await atualizarFuncao({ usuarioId: existente.id, funcao: pessoa.funcao, ator: input.ator });
       }
+      // Conta criada pelo primeiro acesso vem com nome generico: corrige.
+      if (/^equipe\s+vora$/i.test(existente.name.trim())) {
+        await prisma.user.update({ where: { id: existente.id }, data: { name: pessoa.nome } });
+      }
       existentes.push(pessoa.email);
       continue;
     }

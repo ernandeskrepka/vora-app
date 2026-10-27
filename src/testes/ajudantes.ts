@@ -23,6 +23,7 @@ export async function limparBanco() {
     prisma.session.deleteMany(),
     prisma.user.deleteMany(),
     prisma.setting.deleteMany(),
+    prisma.teamTask.deleteMany(),
   ]);
 }
 

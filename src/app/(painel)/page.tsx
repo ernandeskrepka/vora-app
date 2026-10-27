@@ -4,6 +4,10 @@ import { formatarDataHora } from "@/lib/datetime.ts";
 import { Cartao, BotaoLink, Etiqueta, IconeRede, Vazio, Aviso } from "@/components/ui.tsx";
 import type { PostStatus } from "@/domain/post-status.ts";
 import { atividadeRecente } from "@/services/historico.ts";
+import { quadroDeTarefas } from "@/services/tarefas-notion.ts";
+import { TarefasDaEquipe } from "@/components/tarefas-equipe.tsx";
+import { exigirUsuario } from "@/lib/auth.ts";
+import { primeiroNome } from "@/domain/equipe.ts";
 import { ListaDeAtividade } from "@/components/atividade.tsx";
 
 export const dynamic = "force-dynamic";
@@ -87,11 +91,13 @@ function LinhaPost({
 }
 
 export default async function Dashboard() {
+  const usuario = await exigirUsuario();
   const d = await buscarDados();
   const { clientesComSaldoBaixo } = await import("@/services/saldo.ts");
-  const [saldoBaixo, atividade] = await Promise.all([
+  const [saldoBaixo, atividade, tarefas] = await Promise.all([
     clientesComSaldoBaixo(),
     atividadeRecente({ limite: 15 }),
+    quadroDeTarefas({ nomeDaPessoa: usuario.name }),
   ]);
   const quebradas = d.conexoes.filter((c) => c.status !== "NAO_CONFIGURADO");
   const aguardando = d.conexoes.filter((c) => c.status === "NAO_CONFIGURADO");
@@ -170,6 +176,8 @@ export default async function Dashboard() {
       )}
 
       <div className="grid gap-5 lg:grid-cols-2">
+        <TarefasDaEquipe quadro={tarefas} nomeDaPessoa={primeiroNome(usuario.name)} />
+
         <Cartao titulo="Aguardando aprovacao do cliente">
           {d.pendentes.length === 0 ? (
             <Vazio>Nenhum post esperando resposta.</Vazio>

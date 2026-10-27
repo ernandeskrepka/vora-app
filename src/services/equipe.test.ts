@@ -41,6 +41,25 @@ describe("equipe", () => {
     expect(auditoria).toBe(5);
   });
 
+  it("conta generica do primeiro acesso ganha o nome e a funcao da pessoa", async () => {
+    await prisma.user.create({
+      data: {
+        name: "Equipe VORA",
+        email: "ernandeskrepka@gmail.com",
+        passwordHash: "x",
+        role: "ADMIN",
+      },
+    });
+    const r = await criarEquipeInicial({ sufixo: "2026", ator });
+    expect(r.existentes).toEqual(["ernandeskrepka@gmail.com"]);
+    const ernande = await prisma.user.findUniqueOrThrow({
+      where: { email: "ernandeskrepka@gmail.com" },
+    });
+    expect(ernande.name).toBe("Ernande Skrepka");
+    expect(ernande.funcao).toBe("GESTAO");
+    expect(ernande.passwordHash).toBe("x");
+  });
+
   it("recusa senha fraca e e-mail repetido", async () => {
     await expect(
       criarUsuario({ nome: "Fulano", email: "f@vorabr.com", senha: "curta", funcao: "DESIGN", ator }),

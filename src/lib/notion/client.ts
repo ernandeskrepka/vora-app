@@ -34,14 +34,20 @@ export function idDaPagina(entrada: string): string | null {
   return `${so.slice(0, 8)}-${so.slice(8, 12)}-${so.slice(12, 16)}-${so.slice(16, 20)}-${so.slice(20)}`;
 }
 
-async function chamar<T>(caminho: string): Promise<T> {
+async function chamar<T>(
+  caminho: string,
+  opcoes: { metodo?: "GET" | "POST"; corpo?: unknown } = {},
+): Promise<T> {
   if (!env.NOTION_TOKEN) throw new NotionNaoConfigurado();
 
   const r = await fetch(`${BASE}${caminho}`, {
+    method: opcoes.metodo ?? "GET",
     headers: {
       Authorization: `Bearer ${env.NOTION_TOKEN}`,
       "Notion-Version": VERSAO,
+      ...(opcoes.corpo ? { "Content-Type": "application/json" } : {}),
     },
+    body: opcoes.corpo ? JSON.stringify(opcoes.corpo) : undefined,
   });
 
   if (!r.ok) {
@@ -140,4 +146,87 @@ export async function tituloDaPagina(pageId: string): Promise<string | null> {
     }
   }
   return null;
+}
+
+/* --------------------------------------------------------------- bases */
+
+/** Pagina de uma base (linha), como a API devolve em /databases/{id}/query. */
+export type PaginaDaBase = {
+  id: string;
+  url: string;
+  last_edited_time: string;
+  archived?: boolean;
+  in_trash?: boolean;
+  properties: Record<string, PropriedadeNotion>;
+};
+
+export type PropriedadeNotion = {
+  id?: string;
+  type: string;
+  [chave: string]: unknown;
+};
+
+export type EsquemaDaBase = {
+  titulo: string;
+  /** Nomes das opcoes de status que o Notion agrupa como "concluido". */
+  statusConcluidos: string[];
+};
+
+/** Titulo e grupos de status da base: diz quais status contam como feito. */
+export async function esquemaDaBase(databaseId: string): Promise<EsquemaDaBase> {
+  const r = await chamar<{
+    title?: Array<{ plain_text?: string }>;
+    properties?: Record<
+      string,
+      {
+        type: string;
+        status?: {
+          options?: Array<{ id: string; name: string }>;
+          groups?: Array<{ name: string; option_ids?: string[] }>;
+        };
+      }
+    >;
+  }>(`/databases/${databaseId}`);
+
+  const concluidos: string[] = [];
+  for (const prop of Object.values(r.properties ?? {})) {
+    if (prop.type !== "status" || !prop.status) continue;
+    const nomePorId = new Map((prop.status.options ?? []).map((o) => [o.id, o.name]));
+    for (const grupo of prop.status.groups ?? []) {
+      if (grupo.name.toLowerCase() !== "complete") continue;
+      for (const id of grupo.option_ids ?? []) {
+        const nome = nomePorId.get(id);
+        if (nome) concluidos.push(nome);
+      }
+    }
+  }
+  return {
+    titulo: (r.title ?? []).map((t) => t.plain_text ?? "").join("") || "Base do Notion",
+    statusConcluidos: concluidos,
+  };
+}
+
+/** Todas as linhas da base (ate 500), da mais recente editada para a mais antiga. */
+export async function linhasDaBase(databaseId: string): Promise<PaginaDaBase[]> {
+  const paginas: PaginaDaBase[] = [];
+  let cursor: string | undefined;
+
+  for (let i = 0; i < 5; i++) {
+    const r = await chamar<{
+      results: PaginaDaBase[];
+      next_cursor: string | null;
+      has_more: boolean;
+    }>(`/databases/${databaseId}/query`, {
+      metodo: "POST",
+      corpo: {
+        page_size: 100,
+        sorts: [{ timestamp: "last_edited_time", direction: "descending" }],
+        ...(cursor ? { start_cursor: cursor } : {}),
+      },
+    });
+    paginas.push(...r.results);
+    if (!r.has_more || !r.next_cursor) break;
+    cursor = r.next_cursor;
+  }
+  return paginas;
 }

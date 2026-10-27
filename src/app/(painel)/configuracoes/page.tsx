@@ -15,6 +15,8 @@ import {
   acaoSalvarConfiguracoes,
 } from "@/app/actions/configuracoes.ts";
 import { FUNCOES, ROTULO_FUNCAO } from "@/domain/equipe.ts";
+import { acaoAdicionarBase, acaoRemoverBase } from "@/app/actions/tarefas.ts";
+import { BASE_SUGERIDA, basesConfiguradas, ultimaLeituraDeTarefas } from "@/services/tarefas-notion.ts";
 import { carregarCarteira } from "@/services/carteira-arquivo.ts";
 import { acaoSalvarPix } from "@/app/actions/saldo.ts";
 import { obterConfiguracoesDeSaldo } from "@/services/saldo.ts";
@@ -25,13 +27,16 @@ export const dynamic = "force-dynamic";
 
 export default async function Configuracoes() {
   const usuario = await exigirUsuario();
-  const [config, usuarios, carteira, clientesNoBanco, saldoConfig] = await Promise.all([
-    obterConfiguracoes(),
-    prisma.user.findMany({ orderBy: { name: "asc" } }),
-    carregarCarteira().catch(() => []),
-    prisma.client.findMany({ select: { slug: true } }),
-    obterConfiguracoesDeSaldo(),
-  ]);
+  const [config, usuarios, carteira, clientesNoBanco, saldoConfig, bases, tarefasLidasEm] =
+    await Promise.all([
+      obterConfiguracoes(),
+      prisma.user.findMany({ orderBy: { name: "asc" } }),
+      carregarCarteira().catch(() => []),
+      prisma.client.findMany({ select: { slug: true } }),
+      obterConfiguracoesDeSaldo(),
+      basesConfiguradas(),
+      ultimaLeituraDeTarefas(),
+    ]);
   const jaNoBanco = new Set(clientesNoBanco.map((c) => c.slug));
   const faltando = carteira.filter((c) => !jaNoBanco.has(c.slug ?? ""));
   const comPendencia = carteira.filter((c) => c.pendencia);
@@ -94,6 +99,59 @@ export default async function Configuracoes() {
           </div>
         </Cartao>
       )}
+
+      <Cartao titulo="Tarefas da equipe (bases do Notion)">
+        <p className="text-sm text-tinta-2">
+          As bases de tarefas que o Notion Calendar mostra entram no dashboard de todo mundo. Para o
+          sistema enxergar uma base, abra-a no Notion, menu <strong>...</strong> &gt;{" "}
+          <strong>Conexoes</strong>, e compartilhe com a integracao da VORA (a mesma do NOTION_TOKEN).
+          {!env.NOTION_TOKEN && (
+            <span className="text-amber-700"> NOTION_TOKEN ainda nao esta configurado no ambiente.</span>
+          )}
+        </p>
+        {bases.length === 0 ? (
+          <p className="mt-3 text-xs text-tinta-3">
+            Nenhuma base ainda. Sugestao: a base <strong>{BASE_SUGERIDA.nome}</strong>, ID{" "}
+            <code>{BASE_SUGERIDA.id}</code>.
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-linha-suave text-sm">
+            {bases.map((b) => (
+              <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="text-tinta">
+                  {b.nome} <span className="text-xs text-tinta-4">{b.id}</span>
+                </span>
+                {usuario.role === "ADMIN" && (
+                  <form action={acaoRemoverBase}>
+                    <input type="hidden" name="id" value={b.id} />
+                    <button type="submit" className="text-xs text-rose-700 underline">
+                      remover
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-2 text-xs text-tinta-3">
+          {tarefasLidasEm ? `Ultima leitura ${formatarDataHora(tarefasLidasEm)}.` : "Nunca lido."} O
+          sistema rele de hora em hora; o dashboard tem o botao para ler agora.
+        </p>
+        {usuario.role === "ADMIN" && (
+          <div className="mt-3">
+            <FormAcao acao={acaoAdicionarBase} textoBotao="Adicionar base" variante="primario">
+              <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+                <Campo rotulo="Link ou ID da base" dica="Abra a base no Notion e copie o link da barra de enderecos.">
+                  <input name="link" required className={classeInput} placeholder={`https://www.notion.so/${BASE_SUGERIDA.id.replace(/-/g, "")}`} />
+                </Campo>
+                <Campo rotulo="Nome (opcional)" dica="Sem nome, usa o titulo da base.">
+                  <input name="nome" className={classeInput} />
+                </Campo>
+              </div>
+            </FormAcao>
+          </div>
+        )}
+      </Cartao>
 
       <Cartao titulo="PIX de recarga e aviso de saldo">
         <p className="text-sm text-tinta-2">
