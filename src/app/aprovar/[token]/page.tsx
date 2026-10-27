@@ -36,7 +36,7 @@ export default async function PaginaAprovacao({
   if (!visao) {
     return (
       <main className="grid min-h-screen place-items-center bg-vora-preto px-4">
-        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-superficie/[0.03] p-8 text-center">
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
           <img
             src="/marca/vora-logo.svg"
             alt="VORA"
