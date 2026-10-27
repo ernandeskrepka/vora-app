@@ -17,6 +17,17 @@ enum UserRole {
   EDITOR
 }
 
+/// Funcao da pessoa na VORA. Define o que aparece primeiro para ela e como
+/// o historico a identifica; a permissao (admin ou editor) e separada.
+enum UserFunction {
+  GESTAO
+  PLANEJAMENTO
+  EDICAO_DESIGN
+  DESIGN
+  COORDENACAO
+  OUTRA
+}
+
 enum PostStatus {
   RASCUNHO
   AGUARDANDO_APROVACAO
@@ -125,13 +136,18 @@ model User {
   email        String    @unique
   passwordHash String
   role         UserRole  @default(EDITOR)
+  funcao       UserFunction @default(OUTRA)
   active       Boolean   @default(true)
   lastLoginAt  DateTime?
+  /// Primeiro acesso ainda com a senha inicial: a tela pede para trocar.
+  mustChangePassword Boolean @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   sessions Session[]
   posts    Post[]
+  media    PostMedia[]
+  assets   ClientAsset[]
 }
 
 model Session {
@@ -258,7 +274,8 @@ model ClientAsset {
   uploadedById     String?
   createdAt        DateTime  @default(now())
 
-  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy User?  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([clientId, createdAt])
 }
@@ -315,9 +332,12 @@ model PostMedia {
   sizeBytes        Int
   durationSeconds  Float?
   originalFilename String?
+  /// Quem subiu a arte e quando (createdAt). Interno: o cliente nao ve.
+  uploadedById     String?
   createdAt        DateTime  @default(now())
 
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post       Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  uploadedBy User? @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@unique([postId, position])
   @@index([postId])

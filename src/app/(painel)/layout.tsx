@@ -4,6 +4,7 @@ import { exigirUsuario } from "@/lib/auth.ts";
 import { acaoLogout } from "@/app/actions/auth.ts";
 import { acaoTrocarTema } from "@/app/actions/tema.ts";
 import { env } from "@/env";
+import { ROTULO_FUNCAO } from "@/domain/equipe.ts";
 import {
   COOKIE_TEMA,
   ROTULO_TEMA,
@@ -97,7 +98,7 @@ export default async function LayoutPainel({
           <div className="hidden lg:block">
             <p className="truncate text-xs text-barra-texto">{usuario.name}</p>
             <p className="truncate text-[11px] text-barra-texto-fraco">
-              {usuario.email}
+              {ROTULO_FUNCAO[usuario.funcao]}
             </p>
             <form action={acaoLogout}>
               <button

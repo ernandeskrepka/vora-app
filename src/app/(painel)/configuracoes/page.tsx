@@ -3,13 +3,18 @@ import { prisma } from "@/lib/db.ts";
 import { exigirUsuario } from "@/lib/auth.ts";
 import { formatarDataHora } from "@/lib/datetime.ts";
 import { obterConfiguracoes } from "@/services/configuracoes.ts";
+import Link from "next/link";
 import {
+  acaoAlterarFuncao,
   acaoAlternarUsuario,
   acaoCarregarDemonstracao,
+  acaoCriarEquipe,
   acaoCriarUsuario,
   acaoImportarCarteira,
+  acaoRedefinirSenha,
   acaoSalvarConfiguracoes,
 } from "@/app/actions/configuracoes.ts";
+import { FUNCOES, ROTULO_FUNCAO } from "@/domain/equipe.ts";
 import { carregarCarteira } from "@/services/carteira-arquivo.ts";
 import { acaoSalvarPix } from "@/app/actions/saldo.ts";
 import { obterConfiguracoesDeSaldo } from "@/services/saldo.ts";
@@ -210,6 +215,11 @@ export default async function Configuracoes() {
         </Cartao>
 
         <Cartao titulo="Equipe" className="lg:col-span-2">
+          <p className="mb-3 text-sm text-tinta-2">
+            Um login por pessoa: cada acao no sistema fica com o nome de quem fez.
+            Gestao e coordenacao administram (equipe, configuracoes, conexoes); as
+            outras funcoes editam. Senha inicial e trocada na primeira entrada.
+          </p>
           <ul className="mb-4 divide-y divide-linha-suave">
             {usuarios.map((u) => (
               <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
@@ -218,22 +228,64 @@ export default async function Configuracoes() {
                     {u.name} {u.id === usuario.id && <span className="text-xs text-tinta-4">(voce)</span>}
                   </p>
                   <p className="text-xs text-tinta-3">
-                    {u.email} - {u.role === "ADMIN" ? "administrador" : "editor"}
-                    {u.lastLoginAt ? ` - ultimo acesso ${formatarDataHora(u.lastLoginAt)}` : ""}
+                    {u.email} - {ROTULO_FUNCAO[u.funcao]} - {u.role === "ADMIN" ? "administra" : "edita"}
+                    {u.lastLoginAt ? ` - ultimo acesso ${formatarDataHora(u.lastLoginAt)}` : " - nunca entrou"}
+                    {u.mustChangePassword ? " - senha inicial" : ""}
                     {!u.active ? " - inativo" : ""}
                   </p>
                 </div>
                 {usuario.role === "ADMIN" && u.id !== usuario.id && (
-                  <form action={acaoAlternarUsuario}>
-                    <input type="hidden" name="usuarioId" value={u.id} />
-                    <button type="submit" className="text-xs underline">
-                      {u.active ? "desativar" : "reativar"}
-                    </button>
-                  </form>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <form action={acaoAlterarFuncao} className="flex items-center gap-1">
+                      <input type="hidden" name="usuarioId" value={u.id} />
+                      <select name="funcao" defaultValue={u.funcao} className="rounded-lg border border-linha-forte bg-superficie px-2 py-1 text-xs">
+                        {FUNCOES.map((f) => (
+                          <option key={f} value={f}>
+                            {ROTULO_FUNCAO[f]}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" className="text-xs underline">
+                        salvar
+                      </button>
+                    </form>
+                    <details className="text-xs">
+                      <summary className="cursor-pointer underline">redefinir senha</summary>
+                      <FormAcao acao={acaoRedefinirSenha} textoBotao="Redefinir" className="mt-2">
+                        <input type="hidden" name="usuarioId" value={u.id} />
+                        <input
+                          name="senha"
+                          type="text"
+                          placeholder="senha temporaria (10+)"
+                          className="rounded-lg border border-linha-forte bg-superficie px-2 py-1 text-xs"
+                        />
+                      </FormAcao>
+                    </details>
+                    <form action={acaoAlternarUsuario}>
+                      <input type="hidden" name="usuarioId" value={u.id} />
+                      <button type="submit" className="text-xs underline">
+                        {u.active ? "desativar" : "reativar"}
+                      </button>
+                    </form>
+                  </div>
                 )}
               </li>
             ))}
           </ul>
+
+          <div className="mb-4 flex flex-wrap items-center gap-3 border-t border-linha-suave pt-4 text-sm">
+            <Link href="/senha" className="underline">
+              Trocar a minha senha
+            </Link>
+            {usuario.role === "ADMIN" && (
+              <FormAcao acao={acaoCriarEquipe} textoBotao="Criar as contas da equipe da VORA">
+                <span className="text-xs text-tinta-3">
+                  Ernande, Pamela, Victor, Natalia e Guilherme, cada um com sua funcao. Quem ja
+                  existe nao e mexido.
+                </span>
+              </FormAcao>
+            )}
+          </div>
 
           {usuario.role === "ADMIN" ? (
             <FormAcao acao={acaoCriarUsuario} textoBotao="Criar usuario" className="border-t border-linha-suave pt-4">
@@ -244,19 +296,22 @@ export default async function Configuracoes() {
                 <Campo rotulo="E-mail">
                   <input name="email" type="email" required className={classeInput} />
                 </Campo>
-                <Campo rotulo="Senha" dica="Minimo 10 caracteres.">
+                <Campo rotulo="Senha inicial" dica="Minimo 10 caracteres, letras e numeros. A pessoa troca ao entrar.">
                   <input name="senha" type="password" required className={classeInput} />
                 </Campo>
-                <Campo rotulo="Papel">
-                  <select name="papel" className={classeInput} defaultValue="EDITOR">
-                    <option value="EDITOR">Editor</option>
-                    <option value="ADMIN">Administrador</option>
+                <Campo rotulo="Funcao" dica="Gestao e coordenacao administram o sistema.">
+                  <select name="funcao" className={classeInput} defaultValue="DESIGN">
+                    {FUNCOES.map((f) => (
+                      <option key={f} value={f}>
+                        {ROTULO_FUNCAO[f]}
+                      </option>
+                    ))}
                   </select>
                 </Campo>
               </div>
             </FormAcao>
           ) : (
-            <p className="text-xs text-tinta-3">Somente administradores criam usuarios.</p>
+            <p className="text-xs text-tinta-3">Somente gestao e coordenacao criam usuarios.</p>
           )}
         </Cartao>
       </div>

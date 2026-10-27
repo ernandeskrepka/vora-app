@@ -1,19 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { contextoDaRequisicao, exigirAdmin, exigirUsuario } from "@/lib/auth.ts";
+import {
+  contextoDaRequisicao,
+  exigirAdmin,
+  exigirUsuario,
+  hashDaSessaoAtual,
+} from "@/lib/auth.ts";
 import { prisma } from "@/lib/db.ts";
-import { hashSenha } from "@/lib/crypto.ts";
-import { registrarAuditoria } from "@/lib/audit.ts";
 import { salvarConfiguracoes, type CanalInterno } from "@/services/configuracoes.ts";
 import { ErroDeRegra } from "@/services/erros.ts";
+import {
+  atualizarFuncao,
+  criarEquipeInicial,
+  criarUsuario,
+  normalizarFuncao,
+  redefinirSenha,
+  trocarSenha,
+} from "@/services/equipe.ts";
 import type { Ator } from "@/services/transicoes.ts";
 import type { EstadoSimples } from "./clientes.ts";
 
 export type EstadoConfig = { erro?: string; sucesso?: string } | null;
 
 async function atorAtual(): Promise<Ator> {
-  const usuario = await exigirUsuario();
+  const usuario = await exigirUsuario({ permitirSenhaPendente: true });
   const contexto = await contextoDaRequisicao();
   return {
     tipo: "USUARIO",
@@ -52,35 +63,91 @@ export async function acaoCriarUsuario(
   _estado: EstadoConfig,
   dados: FormData,
 ): Promise<EstadoConfig> {
-  const admin = await exigirAdmin();
-  const nome = String(dados.get("nome") ?? "").trim();
+  await exigirAdmin();
+  const ator = await atorAtual();
   const email = String(dados.get("email") ?? "").trim().toLowerCase();
-  const senha = String(dados.get("senha") ?? "");
-  const papel = String(dados.get("papel") ?? "EDITOR") === "ADMIN" ? "ADMIN" : "EDITOR";
-
-  if (nome.length < 2) return { erro: "Informe o nome." };
-  if (!email.includes("@")) return { erro: "E-mail invalido." };
-  if (senha.length < 10) return { erro: "A senha precisa ter pelo menos 10 caracteres." };
-  if (await prisma.user.findUnique({ where: { email } })) {
-    return { erro: "Ja existe usuario com esse e-mail." };
+  try {
+    await criarUsuario({
+      nome: String(dados.get("nome") ?? ""),
+      email,
+      senha: String(dados.get("senha") ?? ""),
+      funcao: normalizarFuncao(String(dados.get("funcao") ?? "")),
+      trocarSenhaNoPrimeiroAcesso: true,
+      ator,
+    });
+  } catch (erro) {
+    return { erro: erro instanceof ErroDeRegra ? erro.message : "Nao foi possivel criar." };
   }
 
-  const usuario = await prisma.user.create({
-    data: { name: nome, email, passwordHash: hashSenha(senha), role: papel },
-  });
-
-  await registrarAuditoria({
-    entityType: "user",
-    entityId: usuario.id,
-    action: "usuario_criado",
-    actorType: "USUARIO",
-    actorUserId: admin.id,
-    actorName: admin.name,
-    metadata: { email, papel },
-  });
-
   revalidatePath("/configuracoes");
-  return { sucesso: `Usuario ${email} criado.` };
+  return { sucesso: `Usuario ${email} criado. Na primeira entrada ele troca a senha.` };
+}
+
+export async function acaoCriarEquipe(
+  _estado: EstadoConfig,
+  _dados: FormData,
+): Promise<EstadoConfig> {
+  await exigirAdmin();
+  const ator = await atorAtual();
+  const r = await criarEquipeInicial({ sufixo: String(new Date().getFullYear()), ator });
+  revalidatePath("/configuracoes");
+  if (r.criados.length === 0) return { sucesso: "A equipe ja esta cadastrada." };
+  return {
+    sucesso:
+      "Contas criadas (senha inicial, trocar na primeira entrada): " +
+      r.criados.map((p) => `${p.email} = ${p.senha}`).join(" · "),
+  };
+}
+
+export async function acaoAlterarFuncao(dados: FormData) {
+  await exigirAdmin();
+  const ator = await atorAtual();
+  await atualizarFuncao({
+    usuarioId: String(dados.get("usuarioId") ?? ""),
+    funcao: normalizarFuncao(String(dados.get("funcao") ?? "")),
+    ator,
+  });
+  revalidatePath("/configuracoes");
+}
+
+export async function acaoRedefinirSenha(
+  _estado: EstadoConfig,
+  dados: FormData,
+): Promise<EstadoConfig> {
+  await exigirAdmin();
+  const ator = await atorAtual();
+  try {
+    await redefinirSenha({
+      usuarioId: String(dados.get("usuarioId") ?? ""),
+      novaSenha: String(dados.get("senha") ?? ""),
+      ator,
+    });
+  } catch (erro) {
+    return { erro: erro instanceof ErroDeRegra ? erro.message : "Nao foi possivel redefinir." };
+  }
+  revalidatePath("/configuracoes");
+  return { sucesso: "Senha redefinida. A pessoa troca na proxima entrada." };
+}
+
+export async function acaoTrocarSenha(
+  _estado: EstadoConfig,
+  dados: FormData,
+): Promise<EstadoConfig> {
+  const usuario = await exigirUsuario({ permitirSenhaPendente: true });
+  const ator = await atorAtual();
+  try {
+    await trocarSenha({
+      usuarioId: usuario.id,
+      senhaAtual: String(dados.get("senhaAtual") ?? ""),
+      novaSenha: String(dados.get("novaSenha") ?? ""),
+      manterSessaoTokenHash: await hashDaSessaoAtual(),
+      ator,
+    });
+  } catch (erro) {
+    return { erro: erro instanceof ErroDeRegra ? erro.message : "Nao foi possivel trocar." };
+  }
+  revalidatePath("/", "layout");
+  return { sucesso: "Senha trocada." };
 }
 
 export async function acaoAlternarUsuario(dados: FormData) {

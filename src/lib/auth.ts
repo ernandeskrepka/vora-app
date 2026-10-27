@@ -8,7 +8,13 @@ import type { Usuario } from "@/lib/tipos.ts";
 export const COOKIE_SESSAO = "vora_sessao";
 const DIAS_DE_SESSAO = 7;
 
-export type UsuarioLogado = Pick<Usuario, "id" | "name" | "email" | "role">;
+export type UsuarioLogado = Pick<
+  Usuario,
+  "id" | "name" | "email" | "role" | "funcao" | "mustChangePassword"
+>;
+
+/** Rota onde a pessoa troca a senha inicial; e a unica liberada ate trocar. */
+export const ROTA_TROCA_DE_SENHA = "/senha";
 
 /**
  * Sessao guardada no banco (hash do token no banco, token puro no cookie).
@@ -63,7 +69,14 @@ export async function autenticar(input: {
 
   return {
     ok: true,
-    usuario: { id: usuario.id, name: usuario.name, email: usuario.email, role: usuario.role },
+    usuario: {
+      id: usuario.id,
+      name: usuario.name,
+      email: usuario.email,
+      role: usuario.role,
+      funcao: usuario.funcao,
+      mustChangePassword: usuario.mustChangePassword,
+    },
   };
 }
 
@@ -83,13 +96,29 @@ export async function usuarioAtual(): Promise<UsuarioLogado | null> {
     name: sessao.user.name,
     email: sessao.user.email,
     role: sessao.user.role,
+    funcao: sessao.user.funcao,
+    mustChangePassword: sessao.user.mustChangePassword,
   };
 }
 
-/** Use nas paginas e acoes do painel. Manda para o login se nao houver sessao. */
-export async function exigirUsuario(): Promise<UsuarioLogado> {
+/** Hash do token da sessao atual, para manter so ela viva ao trocar a senha. */
+export async function hashDaSessaoAtual(): Promise<string | null> {
+  const token = (await cookies()).get(COOKIE_SESSAO)?.value;
+  return token ? hashToken(token) : null;
+}
+
+/**
+ * Use nas paginas e acoes do painel. Manda para o login se nao houver sessao
+ * e, enquanto a senha inicial nao for trocada, para a tela de troca.
+ */
+export async function exigirUsuario(opcoes?: {
+  permitirSenhaPendente?: boolean;
+}): Promise<UsuarioLogado> {
   const usuario = await usuarioAtual();
   if (!usuario) redirect("/login");
+  if (usuario.mustChangePassword && !opcoes?.permitirSenhaPendente) {
+    redirect(ROTA_TROCA_DE_SENHA);
+  }
   return usuario;
 }
 
