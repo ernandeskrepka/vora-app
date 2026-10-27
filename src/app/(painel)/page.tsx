@@ -5,6 +5,7 @@ import { Cartao, BotaoLink, Etiqueta, IconeRede, Vazio, Aviso } from "@/componen
 import type { PostStatus } from "@/domain/post-status.ts";
 import { atividadeRecente } from "@/services/historico.ts";
 import { quadroDeTarefas } from "@/services/tarefas-notion.ts";
+import { aprovadosQueNaoSairam } from "@/services/publicacao-pendente.ts";
 import { TarefasDaEquipe } from "@/components/tarefas-equipe.tsx";
 import { exigirUsuario } from "@/lib/auth.ts";
 import { primeiroNome } from "@/domain/equipe.ts";
@@ -94,10 +95,11 @@ export default async function Dashboard() {
   const usuario = await exigirUsuario();
   const d = await buscarDados();
   const { clientesComSaldoBaixo } = await import("@/services/saldo.ts");
-  const [saldoBaixo, atividade, tarefas] = await Promise.all([
+  const [saldoBaixo, atividade, tarefas, naoSairam] = await Promise.all([
     clientesComSaldoBaixo(),
     atividadeRecente({ limite: 15 }),
     quadroDeTarefas({ nomeDaPessoa: usuario.name }),
+    aprovadosQueNaoSairam(),
   ]);
   const quebradas = d.conexoes.filter((c) => c.status !== "NAO_CONFIGURADO");
   const aguardando = d.conexoes.filter((c) => c.status === "NAO_CONFIGURADO");
@@ -146,6 +148,29 @@ export default async function Dashboard() {
           </ul>
           <span className="mt-1 block text-xs">
             O PIX de recarga ja esta pronto na aba Saldo de cada um.
+          </span>
+        </Aviso>
+      )}
+
+      {naoSairam.length > 0 && (
+        <Aviso
+          tom="erro"
+          titulo={`${naoSairam.length} post(s) aprovado(s) que nao sairam no horario`}
+        >
+          <ul className="mt-1 space-y-0.5">
+            {naoSairam.map((p) => (
+              <li key={p.id}>
+                <Link href={`/posts/${p.id}`} className="underline">
+                  {p.cliente}
+                </Link>{" "}
+                - previsto para {formatarDataHora(p.scheduledAt, p.fuso)}
+                {p.motivo ? ` - ${p.motivo}` : " - a agenda ainda nao passou por ele"}
+              </li>
+            ))}
+          </ul>
+          <span className="mt-1 block text-xs">
+            O cliente aprovou, mas a revalidacao do disparo barrou. Resolva a causa (conexao,
+            criativo) e a agenda tenta de novo sozinha a cada minuto.
           </span>
         </Aviso>
       )}

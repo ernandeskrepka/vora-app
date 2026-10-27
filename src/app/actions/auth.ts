@@ -1,7 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { autenticar, contextoDaRequisicao, encerrarSessao } from "@/lib/auth.ts";
+import {
+  ROTA_TROCA_DE_SENHA,
+  autenticar,
+  contextoDaRequisicao,
+  encerrarSessao,
+} from "@/lib/auth.ts";
 
 export type EstadoLogin = { erro?: string } | null;
 
@@ -15,7 +20,8 @@ export async function acaoLogin(_estado: EstadoLogin, dados: FormData): Promise<
   const r = await autenticar({ email, senha, ...contexto });
   if (!r.ok) return { erro: r.motivo };
 
-  redirect("/");
+  // Senha inicial: vai direto para a troca, sem passar pelo painel.
+  redirect(r.usuario.mustChangePassword ? ROTA_TROCA_DE_SENHA : "/");
 }
 
 export async function acaoLogout() {

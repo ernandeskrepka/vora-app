@@ -126,6 +126,17 @@ celular.
 Material de cliente nao entra no repositorio: a pasta `demo-midia/` esta no
 `.gitignore`.
 
+### Teste de ponta a ponta sem o worker
+
+Apoio para testar o caminho inteiro com a agenda (o que o cron faz em
+producao), sem subir o worker:
+
+```bash
+npx tsx scripts/qa-reset-senha.ts natalia@vorabr.com vora-natalia-2026  # volta a senha inicial
+npx tsx scripts/qa-agenda.ts <postId>    # puxa o horario para o passado e roda a agenda
+npx tsx scripts/qa-post.ts <postId>      # status, tentativas, conexoes e trilha do post
+```
+
 ### Testes de fumaca (com o worker rodando)
 
 ```bash
@@ -363,7 +374,15 @@ Cada cliente tem o seu proprio espaco em `/clientes/<id>`, com menu proprio:
 | Posts | todos os posts daquele cliente, com filtro por status |
 | Relatorio | o relatorio mensal do cliente |
 | Conexoes | Instagram, Pagina e conta de anuncios, com teste |
+| Historico | quem fez o que com esse cliente, e quando (nada e apagado) |
 | Ajustes | dados do cliente e contatos aprovadores |
+
+A aba **Perfil** mostra a grade do feed como vai ficar e tem o **link do perfil
+para o cliente**: ele abre sem login e ve o que ja saiu e o que esta a caminho
+(so o que ja tem arte, com a data prevista). Conforme a equipe sobe o
+planejamento, o mesmo link mostra o perfil tomando forma. Nada interno
+(status, versao, quem subiu) aparece para ele. `npx tsx scripts/link-perfil.ts`
+imprime o link de cada cliente.
 
 O fluxo pensado para o dia a dia:
 
@@ -379,8 +398,10 @@ O fluxo pensado para o dia a dia:
 
 ### Geral
 
-- **Dashboard**: pendentes de aprovacao, proximas publicacoes, POST SEM RESPOSTA,
-  reprovados, falhas e conexoes com problema.
+- **Dashboard**: tarefas da equipe lidas do Notion (atrasadas, hoje, proximos
+  dias; em verde o que esta com voce), pendentes de aprovacao, proximas
+  publicacoes, aprovados que nao sairam no horario, POST SEM RESPOSTA,
+  reprovados, falhas, conexoes com problema e a atividade recente da equipe.
 - **Calendario**: visao de mes por cliente, com cor por status.
 - **Detalhe do post**: historico completo, link ativo, reenviar link, reagendar,
   cancelar.
@@ -388,7 +409,42 @@ O fluxo pensado para o dia a dia:
 - **Relatorios**: por cliente e mes, com resultados de anuncios, posts
   publicados, reprovados e POST SEM RESPOSTA. Para PDF, use a impressao do
   navegador (o layout de impressao esconde a navegacao).
-- **Configuracoes**: horarios dos lembretes, canal de aviso interno e equipe.
+- **Configuracoes**: horarios dos lembretes, canal de aviso interno, bases de
+  tarefas do Notion e equipe.
+
+### Equipe: um login por pessoa
+
+Cada pessoa entra com a propria conta e uma **funcao** (Gestao, Planejamento e
+Estrategia, Edicao e Design, Designer, Coordenacao). Gestao e coordenacao
+administram (equipe, configuracoes, conexoes); as outras funcoes editam. Toda
+acao fica no historico com o nome de quem fez: quem subiu a arte, quando, quem
+enviou para aprovacao, o que o cliente decidiu.
+
+```bash
+npx tsx scripts/criar-equipe.ts        # cria as contas da VORA que faltam
+```
+
+O script (ou o botao em Configuracoes > Equipe) cria as contas com uma senha
+inicial e imprime cada uma. Na primeira entrada a pessoa e obrigada a trocar a
+senha; so depois o painel abre. Quem esqueceu a senha pede a um administrador
+para redefinir em Configuracoes.
+
+### Tarefas da equipe (Notion)
+
+O calendario de tarefas que o Notion Calendar mostra e uma base do Notion. O
+sistema le essa base pela API e mostra no dashboard de todo mundo: quem esta
+com o que, para quando, com link para a pagina. Para ligar:
+
+1. Crie a integracao interna no Notion e coloque o token em `NOTION_TOKEN`
+   (a mesma integracao do planejamento dos clientes).
+2. Abra a base no Notion, menu **...** > **Conexoes**, e compartilhe com a
+   integracao. Sem isso a API responde 404.
+3. Em Configuracoes > Tarefas da equipe, cole o link da base. A sugestao e a
+   base DESIGNER da VORA; pode haver varias.
+
+O sistema rele de hora em hora (pela agenda); o botao do dashboard le agora. A
+leitura e generica: reconhece titulo, status (e o grupo "concluido" da base),
+pessoas, datas, tipo, plataformas e links, independente do nome das colunas.
 
 ## O que ainda nao esta pronto
 

@@ -29,6 +29,7 @@ import {
 } from "@/components/ui.tsx";
 import { legendaVisivel } from "@/domain/legenda.ts";
 import { rotuloDaAcao } from "@/domain/historico.ts";
+import { motivoDoUltimoAborto } from "@/services/publicacao-pendente.ts";
 import { primeiroNome } from "@/domain/equipe.ts";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +65,10 @@ export default async function DetalhePost({
   const pendente = completo.approvalRequests.find(
     (r) => r.status === "PENDENTE",
   );
+  const aprovadoVencido =
+    (completo.status === "APROVADO" || completo.status === "PUBLICANDO") &&
+    completo.scheduledAt.getTime() < Date.now();
+  const aborto = aprovadoVencido ? await motivoDoUltimoAborto(id) : null;
   const link = pendente ? linkDeAprovacao(tokenDoPedido(pendente.id)) : null;
   const status = completo.status as PostStatus;
   const eventos = eventosDisponiveis(status);
@@ -110,6 +115,16 @@ export default async function DetalhePost({
         </div>
       </header>
 
+      {aprovadoVencido && (
+        <Aviso tom="erro" titulo="Aprovado, mas nao saiu no horario">
+          {aborto
+            ? `A revalidacao do disparo barrou em ${formatarDataHora(aborto.quando)}: ${aborto.motivo}.`
+            : "A agenda ainda nao passou por este post ou o worker esta parado."}{" "}
+          Resolva a causa (conexao em Conexoes, criativo no post): a agenda tenta de novo sozinha a
+          cada minuto, com a mesma aprovacao. Se preferir outro horario, reagende abaixo - ai o
+          cliente aprova de novo, porque o horario faz parte do que ele aprovou.
+        </Aviso>
+      )}
       {status === "POST_SEM_RESPOSTA" && (
         <Aviso tom="atencao" titulo="POST SEM RESPOSTA">
           O cliente nao respondeu ate o horario previsto, por isso o post nao
