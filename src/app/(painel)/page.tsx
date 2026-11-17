@@ -1,7 +1,32 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db.ts";
-import { formatarDataHora } from "@/lib/datetime.ts";
-import { Cartao, BotaoLink, Etiqueta, IconeRede, Vazio, Aviso } from "@/components/ui.tsx";
+import { formatInTimeZone } from "date-fns-tz";
+import {
+  FUSO_PADRAO,
+  MESES,
+  chaveDiaLocal,
+  formatarDataHora,
+  formatarDiaExtenso,
+  formatarHora,
+} from "@/lib/datetime.ts";
+import {
+  Avatar,
+  BotaoLink,
+  CabecalhoPagina,
+  Cartao,
+  Etiqueta,
+  IconeRede,
+  Metrica,
+  Vazio,
+} from "@/components/ui.tsx";
+import {
+  IconeAlerta,
+  IconeCheck,
+  IconeDireita,
+  IconeEnviar,
+  IconeNovo,
+  IconeRelogio,
+} from "@/components/icones.tsx";
 import type { PostStatus } from "@/domain/post-status.ts";
 import { atividadeRecente } from "@/services/historico.ts";
 import { quadroDeTarefas } from "@/services/tarefas-notion.ts";
@@ -16,8 +41,17 @@ export const dynamic = "force-dynamic";
 async function buscarDados() {
   const agora = new Date();
 
-  const [proximos, pendentes, reprovados, semResposta, falhas, conexoes, totalMes] =
-    await Promise.all([
+  const [
+    proximos,
+    pendentes,
+    reprovados,
+    semResposta,
+    falhas,
+    conexoes,
+    totalMes,
+    totalPendentes,
+    totalNaFila,
+  ] = await Promise.all([
       prisma.post.findMany({
         where: { status: { in: ["APROVADO", "PUBLICANDO"] }, scheduledAt: { gte: agora } },
         include: { client: true },
@@ -58,223 +92,347 @@ async function buscarDados() {
           scheduledAt: { gte: new Date(agora.getFullYear(), agora.getMonth(), 1) },
         },
       }),
+      prisma.post.count({ where: { status: "AGUARDANDO_APROVACAO" } }),
+      prisma.post.count({
+        where: { status: { in: ["APROVADO", "PUBLICANDO"] }, scheduledAt: { gte: agora } },
+      }),
     ]);
 
-  return { proximos, pendentes, reprovados, semResposta, falhas, conexoes, totalMes };
+  return {
+    proximos,
+    pendentes,
+    reprovados,
+    semResposta,
+    falhas,
+    conexoes,
+    totalMes,
+    totalPendentes,
+    totalNaFila,
+  };
 }
 
-function LinhaPost({
-  post,
-  extra,
-}: {
-  post: { id: string; status: string; scheduledAt: Date; networks: string[]; client: { name: string; timezone: string } };
-  extra?: string | null;
-}) {
+type PostDaLista = {
+  id: string;
+  status: string;
+  scheduledAt: Date;
+  networks: string[];
+  client: { name: string; timezone: string };
+};
+
+function LinhaPost({ post, extra }: { post: PostDaLista; extra?: string | null }) {
   return (
-    <li className="flex flex-wrap items-center justify-between gap-2 border-b border-linha-suave py-2.5 last:border-0">
-      <div className="min-w-0">
-        <Link href={`/posts/${post.id}`} className="text-sm font-medium text-tinta hover:underline">
-          {post.client.name}
-        </Link>
-        <p className="text-xs text-tinta-3">
-          {formatarDataHora(post.scheduledAt, post.client.timezone)}
-          {extra ? ` - ${extra}` : ""}
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        {post.networks.map((n) => (
-          <IconeRede key={n} network={n as "INSTAGRAM" | "FACEBOOK"} />
-        ))}
-        <Etiqueta status={post.status as PostStatus} />
-      </div>
+    <li>
+      <Link
+        href={`/posts/${post.id}`}
+        className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-superficie-2"
+      >
+        <Avatar nome={post.client.name} tamanho={32} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-medium text-tinta">
+            {post.client.name}
+          </p>
+          <p className="truncate text-xs text-tinta-3">
+            {formatarDataHora(post.scheduledAt, post.client.timezone)}
+            {extra ? ` · ${extra}` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {post.networks.map((n) => (
+            <IconeRede key={n} network={n as "INSTAGRAM" | "FACEBOOK"} />
+          ))}
+          <Etiqueta status={post.status as PostStatus} />
+        </div>
+      </Link>
     </li>
   );
 }
 
+type Alerta = {
+  chave: string;
+  tom: "erro" | "atencao" | "info";
+  titulo: string;
+  detalhe: string;
+  href: string;
+  acao: string;
+};
+
+const COR_DO_ALERTA: Record<Alerta["tom"], string> = {
+  erro: "bg-rose-500",
+  atencao: "bg-amber-500",
+  info: "bg-tinta-4",
+};
+
+function saudacao(agora: Date): string {
+  const hora = Number(formatInTimeZone(agora, FUSO_PADRAO, "H"));
+  if (hora < 12) return "Bom dia";
+  if (hora < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+const reais = (valor: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor);
+
 export default async function Dashboard() {
   const usuario = await exigirUsuario();
+  const agora = new Date();
   const d = await buscarDados();
   const { clientesComSaldoBaixo } = await import("@/services/saldo.ts");
   const [saldoBaixo, atividade, tarefas, naoSairam] = await Promise.all([
     clientesComSaldoBaixo(),
-    atividadeRecente({ limite: 15 }),
+    atividadeRecente({ limite: 8 }),
     quadroDeTarefas({ nomeDaPessoa: usuario.name }),
     aprovadosQueNaoSairam(),
   ]);
   const quebradas = d.conexoes.filter((c) => c.status !== "NAO_CONFIGURADO");
   const aguardando = d.conexoes.filter((c) => c.status === "NAO_CONFIGURADO");
 
+  // Tudo que pede acao vira uma linha so, da mais grave para a menos grave.
+  // Um painel cheio de faixa colorida deixa de ser aviso.
+  const alertas: Alerta[] = [
+    ...naoSairam.map((p) => ({
+      chave: `saiu-${p.id}`,
+      tom: "erro" as const,
+      titulo: `${p.cliente}: aprovado, mas nao saiu no horario`,
+      detalhe: `Previsto para ${formatarDataHora(p.scheduledAt, p.fuso)}. ${
+        p.motivo ?? "A agenda ainda nao passou por ele"
+      }.`,
+      href: `/posts/${p.id}`,
+      acao: "Abrir post",
+    })),
+    ...quebradas.map((c) => ({
+      chave: `conexao-${c.id}`,
+      tom: "erro" as const,
+      titulo: `${c.client.name}: conexao com a Meta parou`,
+      detalhe: `${c.assetType}: ${c.status}${c.lastError ? ` (${c.lastError})` : ""}.`,
+      href: "/conexoes",
+      acao: "Abrir conexoes",
+    })),
+    ...saldoBaixo.map((s) => ({
+      chave: `saldo-${s.clienteId}`,
+      tom: "atencao" as const,
+      titulo: `${s.cliente}: saldo de anuncios no limite`,
+      detalhe: `Restam ${reais(s.saldo)}${
+        s.diasRestantes !== null ? `, cerca de ${s.diasRestantes} dia(s)` : ""
+      }. O PIX de recarga ja esta pronto.`,
+      href: `/clientes/${s.clienteId}/saldo`,
+      acao: "Gerar PIX",
+    })),
+    ...(aguardando.length > 0
+      ? [
+          {
+            chave: "meta",
+            tom: "info" as const,
+            titulo: `${aguardando.length} ativo(s) esperando o acesso da Meta`,
+            detalhe:
+              "Cadastrados e prontos, mas sem token do System User: por isso nenhum deles publica ainda.",
+            href: "/conexoes",
+            acao: "Ver a lista",
+          },
+        ]
+      : []),
+  ];
+
+  const hoje = chaveDiaLocal(agora);
+  const mesAtual = MESES[Number(formatInTimeZone(agora, FUSO_PADRAO, "M")) - 1];
+  const pendencias = [d.semResposta, d.reprovados, d.falhas].filter((l) => l.length > 0).length;
+  const saemHoje = d.proximos.filter((p) => chaveDiaLocal(p.scheduledAt) === hoje).length;
+  const tarefasEmAberto = tarefas.atrasadas.length + tarefas.hoje.length;
+  const tudoEmOrdem =
+    d.semResposta.length === 0 && d.reprovados.length === 0 && d.falhas.length === 0;
+
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-tinta">Dashboard</h1>
-          <p className="text-sm text-tinta-3">
-            {d.totalMes} post(s) no mes - {d.pendentes.length} aguardando o cliente
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <BotaoLink href="/calendario">Calendario</BotaoLink>
-          <BotaoLink href="/posts/novo" variante="primario">
-            Novo post
-          </BotaoLink>
-        </div>
-      </header>
+    <div className="space-y-7">
+      <CabecalhoPagina
+        sobre={`${formatarDiaExtenso(agora).split(",")[0]}, ${formatInTimeZone(agora, FUSO_PADRAO, "d")} de ${mesAtual}`}
+        titulo={`${saudacao(agora)}, ${primeiroNome(usuario.name)}`}
+        descricao={`${d.totalMes} post(s) em ${mesAtual} · ${d.totalPendentes} esperando o cliente · ${d.totalNaFila} na fila de publicacao`}
+        acoes={
+          <>
+            <BotaoLink href="/calendario">Calendario</BotaoLink>
+            <BotaoLink href="/posts/novo" variante="primario">
+              <IconeNovo tamanho={15} />
+              Novo post
+            </BotaoLink>
+          </>
+        }
+      />
 
-{/*
-        Duas coisas bem diferentes moravam no mesmo alerta vermelho: ativo que
-        nunca foi configurado (normal enquanto o token do System User nao
-        existe) e conexao que quebrou (urgente). Separado, porque um painel
-        vermelho o tempo todo deixa de ser aviso.
-      */}
-      {saldoBaixo.length > 0 && (
-        <Aviso
-          tom="atencao"
-          titulo={`${saldoBaixo.length} cliente(s) com o saldo de anuncios no limite`}
-        >
-          <ul className="mt-1 space-y-0.5">
-            {saldoBaixo.map((s) => (
-              <li key={s.clienteId}>
-                <Link href={`/clientes/${s.clienteId}/saldo`} className="underline">
-                  {s.cliente}
-                </Link>{" "}
-                - restam{" "}
-                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-                  s.saldo,
-                )}
-                {s.diasRestantes !== null ? ` (cerca de ${s.diasRestantes} dia(s))` : ""}
-              </li>
-            ))}
-          </ul>
-          <span className="mt-1 block text-xs">
-            O PIX de recarga ja esta pronto na aba Saldo de cada um.
-          </span>
-        </Aviso>
-      )}
-
-      {naoSairam.length > 0 && (
-        <Aviso
-          tom="erro"
-          titulo={`${naoSairam.length} post(s) aprovado(s) que nao sairam no horario`}
-        >
-          <ul className="mt-1 space-y-0.5">
-            {naoSairam.map((p) => (
-              <li key={p.id}>
-                <Link href={`/posts/${p.id}`} className="underline">
-                  {p.cliente}
-                </Link>{" "}
-                - previsto para {formatarDataHora(p.scheduledAt, p.fuso)}
-                {p.motivo ? ` - ${p.motivo}` : " - a agenda ainda nao passou por ele"}
-              </li>
-            ))}
-          </ul>
-          <span className="mt-1 block text-xs">
-            O cliente aprovou, mas a revalidacao do disparo barrou. Resolva a causa (conexao,
-            criativo) e a agenda tenta de novo sozinha a cada minuto.
-          </span>
-        </Aviso>
-      )}
-
-      {quebradas.length > 0 && (
-        <Aviso tom="erro" titulo={`${quebradas.length} conexao(oes) com a Meta pararam de responder`}>
-          <ul className="mt-1 space-y-0.5">
-            {quebradas.map((c) => (
-              <li key={c.id}>
-                {c.client.name} - {c.assetType}: {c.status}
-                {c.lastError ? ` (${c.lastError})` : ""}
-              </li>
-            ))}
-          </ul>
-          <Link href="/conexoes" className="mt-2 inline-block font-semibold underline">
-            Abrir conexoes
-          </Link>
-        </Aviso>
-      )}
-
-      {aguardando.length > 0 && (
-        <Aviso tom="atencao" titulo={`${aguardando.length} ativo(s) esperando o acesso da Meta`}>
-          Cadastrados e prontos, mas ainda sem token do System User - por isso nenhum deles publica.{" "}
-          <Link href="/conexoes" className="font-semibold underline">
-            Ver a lista
-          </Link>
-        </Aviso>
-      )}
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        <TarefasDaEquipe quadro={tarefas} nomeDaPessoa={primeiroNome(usuario.name)} />
-
-        <Cartao titulo="Aguardando aprovacao do cliente">
-          {d.pendentes.length === 0 ? (
-            <Vazio>Nenhum post esperando resposta.</Vazio>
-          ) : (
-            <ul>
-              {d.pendentes.map((p) => (
-                <LinhaPost key={p.id} post={p} />
-              ))}
-            </ul>
-          )}
-        </Cartao>
-
-        <Cartao titulo="Proximas publicacoes (aprovadas)">
-          {d.proximos.length === 0 ? (
-            <Vazio>Nada aprovado na fila.</Vazio>
-          ) : (
-            <ul>
-              {d.proximos.map((p) => (
-                <LinhaPost key={p.id} post={p} />
-              ))}
-            </ul>
-          )}
-        </Cartao>
-
-        <Cartao titulo="POST SEM RESPOSTA">
-          {d.semResposta.length === 0 ? (
-            <Vazio>Nenhum post perdeu a data por falta de resposta.</Vazio>
-          ) : (
-            <ul>
-              {d.semResposta.map((p) => (
-                <LinhaPost key={p.id} post={p} extra="nao publicado" />
-              ))}
-            </ul>
-          )}
-        </Cartao>
-
-        <Cartao titulo="Reprovados">
-          {d.reprovados.length === 0 ? (
-            <Vazio>Nenhuma reprovacao em aberto.</Vazio>
-          ) : (
-            <ul>
-              {d.reprovados.map((p) => (
-                <LinhaPost
-                  key={p.id}
-                  post={p}
-                  extra={p.decisions[0]?.comment?.slice(0, 60) ?? null}
-                />
-              ))}
-            </ul>
-          )}
-        </Cartao>
-
-        <Cartao
-          titulo="Atividade da equipe"
-          descricao="Quem fez o que, e quando. O historico completo de cada cliente fica na aba Historico."
-          className="lg:col-span-2"
-        >
-          <ListaDeAtividade eventos={atividade} />
-        </Cartao>
-
-        <Cartao titulo="Falhas de publicacao" className="lg:col-span-2">
-          {d.falhas.length === 0 ? (
-            <Vazio>Nenhuma falha pendente.</Vazio>
-          ) : (
-            <ul>
-              {d.falhas.map((p) => (
-                <LinhaPost key={p.id} post={p} extra={p.lastError?.slice(0, 80) ?? null} />
-              ))}
-            </ul>
-          )}
-        </Cartao>
+      {/* Numeros de decisao: o que muda o que a pessoa faz agora. */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metrica
+          rotulo="Esperando o cliente"
+          valor={d.totalPendentes}
+          icone={<IconeEnviar tamanho={15} />}
+          detalhe={
+            d.pendentes[0]
+              ? `Proximo vence ${formatarDataHora(d.pendentes[0].scheduledAt, d.pendentes[0].client.timezone)}`
+              : "Nenhum link em aberto"
+          }
+          href="#aguardando"
+        />
+        <Metrica
+          rotulo="Na fila de publicacao"
+          valor={d.totalNaFila}
+          icone={<IconeCheck tamanho={15} />}
+          detalhe={
+            d.proximos[0]
+              ? `${saemHoje > 0 ? `${saemHoje} sai(em) hoje · proximo ` : "Proximo "}${
+                  chaveDiaLocal(d.proximos[0].scheduledAt) === hoje
+                    ? `as ${formatarHora(d.proximos[0].scheduledAt, d.proximos[0].client.timezone)}`
+                    : formatarDataHora(d.proximos[0].scheduledAt, d.proximos[0].client.timezone)
+                }`
+              : "Nada aprovado aguardando horario"
+          }
+          href="#fila"
+        />
+        <Metrica
+          rotulo="Sem resposta"
+          valor={d.semResposta.length}
+          tom={d.semResposta.length > 0 ? "erro" : "neutro"}
+          icone={<IconeRelogio tamanho={15} />}
+          detalhe={
+            d.semResposta.length > 0
+              ? "Perderam o horario: reagende"
+              : "Nenhum post perdeu o horario"
+          }
+          href="#pendencias"
+        />
+        <Metrica
+          rotulo="Tarefas para hoje"
+          valor={tarefasEmAberto}
+          tom={tarefas.atrasadas.length > 0 ? "erro" : "neutro"}
+          icone={<IconeAlerta tamanho={15} />}
+          detalhe={
+            tarefas.bases.length === 0
+              ? "Notion ainda nao conectado"
+              : `${tarefas.atrasadas.length} atrasada(s) · ${tarefas.hoje.length} de hoje`
+          }
+          href="#tarefas"
+        />
       </div>
+
+      {alertas.length > 0 && (
+        <Cartao titulo="Precisa de atencao" contador={alertas.length}>
+          <ul className="divide-y divide-linha-suave">
+            {alertas.map((a) => (
+              <li key={a.chave} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${COR_DO_ALERTA[a.tom]}`} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium text-tinta">{a.titulo}</p>
+                  <p className="text-xs text-tinta-3">{a.detalhe}</p>
+                </div>
+                <Link
+                  href={a.href}
+                  className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-tinta-2 hover:text-tinta"
+                >
+                  {a.acao}
+                  <IconeDireita tamanho={13} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Cartao>
+      )}
+
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div id="tarefas" className="min-w-0 scroll-mt-6">
+          <TarefasDaEquipe quadro={tarefas} nomeDaPessoa={primeiroNome(usuario.name)} />
+        </div>
+
+        <div className="min-w-0 space-y-5">
+          <div id="aguardando" className="scroll-mt-6">
+            <Cartao titulo="Aguardando o cliente" contador={d.totalPendentes}>
+              {d.pendentes.length === 0 ? (
+                <Vazio>Nenhum post esperando resposta.</Vazio>
+              ) : (
+                <ul>
+                  {d.pendentes.map((p) => (
+                    <LinhaPost key={p.id} post={p} />
+                  ))}
+                </ul>
+              )}
+            </Cartao>
+          </div>
+
+          <div id="fila" className="scroll-mt-6">
+            <Cartao titulo="Proximas publicacoes" contador={d.totalNaFila}>
+              {d.proximos.length === 0 ? (
+                <Vazio
+                  acao={
+                    <Link href="/posts/novo" className="text-xs font-semibold text-destaque">
+                      Criar um post
+                    </Link>
+                  }
+                >
+                  Nada aprovado na fila. Post so entra aqui depois que o cliente aprova.
+                </Vazio>
+              ) : (
+                <ul>
+                  {d.proximos.map((p) => (
+                    <LinhaPost key={p.id} post={p} />
+                  ))}
+                </ul>
+              )}
+            </Cartao>
+          </div>
+        </div>
+      </div>
+
+      <div id="pendencias" className="scroll-mt-6">
+        {tudoEmOrdem ? (
+          <p className="flex items-center gap-2 rounded-2xl border border-dashed border-linha px-5 py-3.5 text-sm text-tinta-3">
+            <IconeCheck tamanho={16} className="text-destaque" />
+            Nenhum post sem resposta, nenhuma reprovacao em aberto e nenhuma falha de publicacao.
+          </p>
+        ) : (
+          <div
+            className={`grid items-start gap-5 ${pendencias >= 3 ? "lg:grid-cols-3" : "lg:grid-cols-2"}`}
+          >
+            {d.semResposta.length > 0 && (
+              <Cartao titulo="Sem resposta" contador={d.semResposta.length}>
+                <ul>
+                  {d.semResposta.map((p) => (
+                    <LinhaPost key={p.id} post={p} extra="nao publicado" />
+                  ))}
+                </ul>
+              </Cartao>
+            )}
+            {d.reprovados.length > 0 && (
+              <Cartao titulo="Reprovados" contador={d.reprovados.length}>
+                <ul>
+                  {d.reprovados.map((p) => (
+                    <LinhaPost
+                      key={p.id}
+                      post={p}
+                      extra={p.decisions[0]?.comment?.slice(0, 60) ?? null}
+                    />
+                  ))}
+                </ul>
+              </Cartao>
+            )}
+            {d.falhas.length > 0 && (
+              <Cartao titulo="Falhas de publicacao" contador={d.falhas.length}>
+                <ul>
+                  {d.falhas.map((p) => (
+                    <LinhaPost key={p.id} post={p} extra={p.lastError?.slice(0, 80) ?? null} />
+                  ))}
+                </ul>
+              </Cartao>
+            )}
+          </div>
+        )}
+      </div>
+
+      <Cartao
+        titulo="Atividade da equipe"
+        acao={
+          <span className="hidden text-xs text-tinta-4 sm:inline">
+            o historico completo fica na aba Historico de cada cliente
+          </span>
+        }
+      >
+        <ListaDeAtividade eventos={atividade} />
+      </Cartao>
     </div>
   );
 }

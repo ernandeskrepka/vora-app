@@ -49,6 +49,7 @@ export default async function NovoPost({
   return (
     <div className="space-y-5">
       <header>
+        <p className="sobre mb-2">Operacao</p>
         <h1 className="titulo text-xl text-tinta">Novo post</h1>
         <p className="text-sm text-tinta-3">
           Suba o criativo, escolha o cliente e o horario. O cliente aprova pelo WhatsApp.

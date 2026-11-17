@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db.ts";
 import { exigirUsuario } from "@/lib/auth.ts";
 import { MenuCliente } from "@/components/menu-cliente.tsx";
-import { BotaoLink } from "@/components/ui.tsx";
+import { Avatar, BotaoLink } from "@/components/ui.tsx";
+import { IconeNovo } from "@/components/icones.tsx";
 
 export const dynamic = "force-dynamic";
 
@@ -35,22 +36,25 @@ export default async function LayoutCliente({
   const instagram = cliente.metaConnections.find((c) => c.assetType === "INSTAGRAM");
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link href="/clientes" className="text-sm text-tinta-3 hover:underline">
-              Clientes
-            </Link>
-            <span className="text-zinc-300">/</span>
-            <h1 className="titulo text-xl text-tinta">{cliente.name}</h1>
-            {!cliente.active && <span className="text-xs text-tinta-4">(inativo)</span>}
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <Avatar nome={cliente.name} tamanho={48} />
+          <div className="min-w-0">
+            <p className="sobre mb-1">
+              <Link href="/clientes" className="hover:text-tinta-2">
+                Clientes
+              </Link>
+              {!cliente.active && " · inativo"}
+            </p>
+            <h1 className="truncate">{cliente.name}</h1>
+            <p className="mt-1 text-sm text-tinta-3">
+              {instagram?.assetName ?? cliente.slug} · {cliente._count.posts} post(s) no total
+            </p>
           </div>
-          <p className="text-sm text-tinta-3">
-            {instagram?.assetName ?? cliente.slug} · {cliente._count.posts} post(s) no total
-          </p>
         </div>
         <BotaoLink href={`/posts/novo?cliente=${cliente.id}`} variante="primario">
+          <IconeNovo tamanho={15} />
           Novo post
         </BotaoLink>
       </header>

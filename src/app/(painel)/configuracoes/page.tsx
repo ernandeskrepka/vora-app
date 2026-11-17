@@ -44,6 +44,7 @@ export default async function Configuracoes() {
   return (
     <div className="space-y-5">
       <header>
+        <p className="sobre mb-2">Sistema</p>
         <h1 className="text-xl font-semibold text-tinta">Configuracoes</h1>
         <p className="text-sm text-tinta-3">Lembretes, canal de aviso interno e equipe.</p>
       </header>

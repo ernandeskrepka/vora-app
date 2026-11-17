@@ -26,6 +26,7 @@ export default async function Conexoes() {
   return (
     <div className="space-y-5">
       <header>
+        <p className="sobre mb-2">Sistema</p>
         <h1 className="text-xl font-semibold text-tinta">Conexoes Meta</h1>
         <p className="text-sm text-tinta-3">
           Graph API fixada na versao {env.META_GRAPH_VERSION}.

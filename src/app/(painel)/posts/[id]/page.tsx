@@ -28,7 +28,7 @@ import {
   classeInput,
 } from "@/components/ui.tsx";
 import { legendaVisivel } from "@/domain/legenda.ts";
-import { rotuloDaAcao } from "@/domain/historico.ts";
+import { detalheDoEvento, rotuloDaAcao } from "@/domain/historico.ts";
 import { motivoDoUltimoAborto } from "@/services/publicacao-pendente.ts";
 import { primeiroNome } from "@/domain/equipe.ts";
 
@@ -199,7 +199,7 @@ export default async function DetalhePost({
             ) : (
               <ol className="space-y-3">
                 {auditoria.map((a) => (
-                  <li key={a.id} className="border-l-2 border-linha pl-3">
+                  <li key={a.id} className="border-l-2 border-linha pl-3.5">
                     <p className="text-sm font-medium text-tinta">
                       {rotuloDaAcao(a.action)}
                     </p>
@@ -218,10 +218,20 @@ export default async function DetalhePost({
                         : ""}
                       {a.ipAddress ? ` - IP ${a.ipAddress}` : ""}
                     </p>
+                    {detalheDoEvento(a.action, a.metadata) && (
+                      <p className="text-xs text-tinta-2">
+                        {detalheDoEvento(a.action, a.metadata)}
+                      </p>
+                    )}
                     {a.metadata ? (
-                      <pre className="mt-1 overflow-x-auto rounded bg-superficie-2 p-2 text-[11px] text-tinta-2">
-                        {JSON.stringify(a.metadata, null, 2)}
-                      </pre>
+                      <details className="mt-1">
+                        <summary className="cursor-pointer text-[11px] text-tinta-4 hover:text-tinta-2">
+                          dados tecnicos
+                        </summary>
+                        <pre className="mt-1 overflow-x-auto rounded-lg bg-superficie-2 p-2.5 font-mono text-[11px] text-tinta-2">
+                          {JSON.stringify(a.metadata, null, 2)}
+                        </pre>
+                      </details>
                     ) : null}
                   </li>
                 ))}

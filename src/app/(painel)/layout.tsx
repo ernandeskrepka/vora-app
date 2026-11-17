@@ -5,22 +5,10 @@ import { acaoLogout } from "@/app/actions/auth.ts";
 import { acaoTrocarTema } from "@/app/actions/tema.ts";
 import { env } from "@/env";
 import { ROTULO_FUNCAO } from "@/domain/equipe.ts";
-import {
-  COOKIE_TEMA,
-  ROTULO_TEMA,
-  TEMAS,
-  normalizarTema,
-} from "@/lib/tema.ts";
-
-const MENU = [
-  { href: "/", rotulo: "Dashboard" },
-  { href: "/calendario", rotulo: "Calendario" },
-  { href: "/posts/novo", rotulo: "Novo post" },
-  { href: "/clientes", rotulo: "Clientes" },
-  { href: "/conexoes", rotulo: "Conexoes Meta" },
-  { href: "/relatorios", rotulo: "Resultados" },
-  { href: "/configuracoes", rotulo: "Configuracoes" },
-];
+import { COOKIE_TEMA, ROTULO_TEMA, normalizarTema } from "@/lib/tema.ts";
+import { NavLateral } from "@/components/nav-lateral.tsx";
+import { Avatar } from "@/components/ui.tsx";
+import { IconeLua, IconeSair, IconeSol } from "@/components/icones.tsx";
 
 export default async function LayoutPainel({
   children,
@@ -29,91 +17,91 @@ export default async function LayoutPainel({
 }) {
   const usuario = await exigirUsuario();
   const tema = normalizarTema((await cookies()).get(COOKIE_TEMA)?.value);
+  const emTeste = env.META_DRY_RUN || env.WHATSAPP_MODE === "log";
+
+  // Troca de tema: um botao so, que leva para o outro tema.
+  const outroTema = tema === "vora" ? "padrao" : "vora";
+  const trocarTema = (
+    <form action={acaoTrocarTema}>
+      <button
+        type="submit"
+        name="tema"
+        value={outroTema}
+        title={`Mudar para o tema ${ROTULO_TEMA[outroTema].toLowerCase()}`}
+        aria-label={`Mudar para o tema ${ROTULO_TEMA[outroTema].toLowerCase()}`}
+        className="grid h-7 w-7 place-items-center rounded-lg text-barra-texto transition-colors hover:bg-barra-hover hover:text-tinta"
+      >
+        {tema === "vora" ? <IconeSol tamanho={16} /> : <IconeLua tamanho={16} />}
+      </button>
+    </form>
+  );
+  const sair = (
+    <form action={acaoLogout}>
+      <button
+        type="submit"
+        title="Sair"
+        aria-label="Sair"
+        className="grid h-7 w-7 place-items-center rounded-lg text-barra-texto transition-colors hover:bg-barra-hover hover:text-tinta"
+      >
+        <IconeSair tamanho={16} />
+      </button>
+    </form>
+  );
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col border-r border-barra-borda bg-barra px-5 py-6 lg:w-60">
-        <Link href="/" className="mb-6 block">
-          <img src="/marca/vora-logo.svg" alt="VORA" className="h-6 w-auto" />
-          <span className="mt-1.5 block text-[11px] uppercase tracking-widest text-barra-texto-fraco vora:font-mono">
-            Aprovacao e postagem
-          </span>
-        </Link>
+      <aside className="nao-imprimir flex shrink-0 flex-col gap-4 border-b border-barra-borda bg-barra px-3 py-3 lg:sticky lg:top-0 lg:h-screen lg:w-[232px] lg:gap-6 lg:border-r lg:border-b-0 lg:px-3 lg:py-5">
+        <div className="flex items-center justify-between px-2.5">
+          <Link href="/" aria-label="VORA - inicio" className="block">
+            <span className="logo-vora h-[18px]" />
+          </Link>
+          {/* No celular as acoes ficam aqui em cima. */}
+          <div className="flex items-center lg:hidden">
+            {trocarTema}
+            {sair}
+          </div>
+        </div>
 
-        <nav className="flex flex-wrap gap-1 lg:flex-col">
-          {MENU.map((item, i) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-barra-texto transition hover:bg-barra-hover hover:text-tinta"
+        <NavLateral />
+
+        <div className="mt-auto hidden space-y-3 lg:block">
+          {emTeste && (
+            <div
+              className="flex items-start gap-2 rounded-lg border border-barra-borda px-2.5 py-2 text-[11px] leading-snug text-barra-texto"
+              title={[
+                env.META_DRY_RUN ? "Meta em DRY-RUN: nada e publicado de verdade." : "",
+                env.WHATSAPP_MODE === "log" ? "WhatsApp em modo log: mensagens nao saem." : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
-              {/* Indice numerado, so no layout VORA (linguagem do site). */}
-              <span className="hidden font-mono text-[11px] tracking-wider text-barra-texto-fraco vora:inline">
-                {String(i + 1).padStart(2, "0")}
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+              <span>
+                <strong className="font-semibold text-tinta">Modo de teste.</strong>{" "}
+                {env.META_DRY_RUN ? "Nada e publicado" : "Publicacao ativa"}
+                {env.WHATSAPP_MODE === "log" ? " e o WhatsApp nao envia." : "."}
               </span>
-              {item.rotulo}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="mt-auto pt-6">
-          {(env.META_DRY_RUN || env.WHATSAPP_MODE === "log") && (
-            <div className="mb-4 hidden rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-200 lg:block">
-              {env.META_DRY_RUN && (
-                <p>Meta em DRY-RUN: nada e publicado de verdade.</p>
-              )}
-              {env.WHATSAPP_MODE === "log" && (
-                <p>WhatsApp em modo log: mensagens nao saem.</p>
-              )}
             </div>
           )}
 
-          {/* Seletor de layout: a escolha vale para este navegador. */}
-          <form
-            action={acaoTrocarTema}
-            className="mb-4 flex items-center gap-1 rounded-lg border border-barra-borda bg-barra-hover/60 p-1"
-            title="Layout do painel"
-          >
-            <span className="px-2 text-[10px] tracking-widest text-barra-texto-fraco uppercase vora:font-mono">
-              Layout
-            </span>
-            {TEMAS.map((t) => (
-              <button
-                key={t}
-                type="submit"
-                name="tema"
-                value={t}
-                aria-pressed={t === tema}
-                className={
-                  t === tema
-                    ? "rounded-md bg-acao px-2.5 py-1 text-[11px] font-semibold text-acao-texto"
-                    : "rounded-md px-2.5 py-1 text-[11px] font-medium text-barra-texto hover:text-tinta"
-                }
-              >
-                {ROTULO_TEMA[t]}
-              </button>
-            ))}
-          </form>
-
-          <div className="hidden lg:block">
-            <p className="truncate text-xs text-barra-texto">{usuario.name}</p>
-            <p className="truncate text-[11px] text-barra-texto-fraco">
-              {ROTULO_FUNCAO[usuario.funcao]}
-            </p>
-            <form action={acaoLogout}>
-              <button
-                type="submit"
-                className="mt-2 text-xs text-barra-texto underline hover:text-tinta"
-              >
-                Sair
-              </button>
-            </form>
+          <div className="flex items-center gap-2 rounded-lg px-1.5 py-1">
+            <Avatar nome={usuario.name} tamanho={30} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-tinta">
+                {usuario.name}
+              </p>
+              <p className="truncate text-[11px] text-barra-texto-fraco">
+                {ROTULO_FUNCAO[usuario.funcao]}
+              </p>
+            </div>
+            {trocarTema}
+            {sair}
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-        <div className="mx-auto max-w-6xl">{children}</div>
+      <main className="painel min-w-0 flex-1 overflow-x-clip px-4 py-6 lg:px-10 lg:py-9">
+        <div className="mx-auto max-w-[1180px]">{children}</div>
       </main>
     </div>
   );

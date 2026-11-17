@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizarTema, temaUsaFontesDoGoogle } from "./tema.ts";
+import { ROTULO_TEMA, TEMAS, normalizarTema } from "./tema.ts";
 
 describe("tema do painel", () => {
   it("sem cookie, ou com valor estranho, cai no padrao", () => {
@@ -15,8 +15,7 @@ describe("tema do painel", () => {
     expect(normalizarTema("padrao")).toBe("padrao");
   });
 
-  it("so o tema VORA precisa das fontes do Google", () => {
-    expect(temaUsaFontesDoGoogle("vora")).toBe(true);
-    expect(temaUsaFontesDoGoogle("padrao")).toBe(false);
+  it("todo tema tem rotulo para o seletor", () => {
+    for (const t of TEMAS) expect(ROTULO_TEMA[t]).toBeTruthy();
   });
 });

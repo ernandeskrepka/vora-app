@@ -22,7 +22,7 @@ export function MenuCliente({ clienteId, pendencias }: { clienteId: string; pend
   const base = `/clientes/${clienteId}`;
 
   return (
-    <nav className="-mx-1 flex gap-1 overflow-x-auto border-b border-linha pb-px">
+    <nav className="flex gap-0.5 overflow-x-auto border-b border-linha">
       {ITENS.map((item) => {
         const href = `${base}${item.href}`;
         const ativo = item.href === "" ? caminho === base : caminho.startsWith(href);
@@ -32,15 +32,15 @@ export function MenuCliente({ clienteId, pendencias }: { clienteId: string; pend
             key={item.rotulo}
             href={href}
             className={clsx(
-              "relative shrink-0 rounded-t-lg px-3 py-2 text-sm whitespace-nowrap transition",
+              "relative -mb-px shrink-0 border-b-2 px-3 py-2.5 text-[13px] whitespace-nowrap transition-colors",
               ativo
-                ? "border-b-2 border-vora-preto font-semibold text-tinta"
-                : "text-tinta-3 hover:bg-superficie-3 hover:text-tinta",
+                ? "border-destaque font-semibold text-tinta"
+                : "border-transparent font-medium text-tinta-3 hover:text-tinta",
             )}
           >
             {item.rotulo}
             {contador ? (
-              <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">
+              <span className="num ml-1.5 rounded-full bg-superficie-3 px-1.5 py-px text-[11px] font-semibold text-tinta-2">
                 {contador}
               </span>
             ) : null}

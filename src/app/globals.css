@@ -17,78 +17,91 @@
 }
 
 /*
- * Dois layouts, um conjunto de tokens.
+ * Dois temas, um conjunto de tokens.
  *
  * As paginas usam classes semanticas (bg-superficie, text-tinta, border-linha)
- * e cada tema define o valor das variaveis. "padrao" e o claro original;
- * "vora" (data-tema="vora" no <html>) e o escuro da identidade do site
- * vorabr.com. Troca-se pelo menu lateral; a escolha fica em cookie.
+ * e cada tema define o valor das variaveis. "padrao" e o claro; "vora"
+ * (data-tema="vora" no <html>) e o escuro. Troca-se pelo menu lateral; a
+ * escolha fica em cookie.
+ *
+ * Principios do desenho (ver docs/design.md): o menu recua e o conteudo
+ * aparece; hierarquia por brilho do texto, nao por tamanho; poucas bordas;
+ * cor saturada so para alerta e para a acao principal.
  */
 :root {
   color-scheme: light;
 
-  --fundo: #f5f6f7;
+  --fundo: #f5f4f1;
   --superficie: #ffffff;
-  --superficie-2: #fafafa;
-  --superficie-3: #f4f4f5;
-  --linha-suave: #f4f4f5;
-  --linha: #e4e4e7;
-  --linha-forte: #d4d4d8;
-  --tinta: #18181b;
-  --tinta-2: #3f3f46;
-  --tinta-3: #71717a;
-  --tinta-4: #a1a1aa;
+  --superficie-2: #faf9f7;
+  --superficie-3: #f0eeea;
+  --linha-suave: rgba(22, 24, 26, 0.06);
+  --linha: rgba(22, 24, 26, 0.1);
+  --linha-forte: rgba(22, 24, 26, 0.17);
+  --tinta: #16181a;
+  --tinta-2: #3b3f43;
+  --tinta-3: #6a6f74;
+  --tinta-4: #9b9fa3;
 
-  --acao: #0a0a0a;
-  --acao-hover: #27272a;
+  --acao: #16181a;
+  --acao-hover: #2c3034;
   --acao-texto: #ffffff;
 
-  --barra: #0a0a0a;
-  --barra-borda: #0a0a0a;
-  --barra-texto: #d4d4d8;
-  --barra-texto-fraco: #71717a;
-  --barra-hover: #27272a;
+  /* Verde da marca, escurecido para ter contraste sobre o claro. */
+  --destaque: #008f66;
+  --destaque-suave: rgba(0, 143, 102, 0.1);
+  --anel: rgba(0, 143, 102, 0.4);
+  --logo: #16181a;
 
-  --fonte-ui: "Creato Display", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --barra: #eceae5;
+  --barra-borda: rgba(22, 24, 26, 0.07);
+  --barra-texto: #4a4e52;
+  --barra-texto-fraco: #8b8f93;
+  --barra-hover: rgba(22, 24, 26, 0.05);
+  --barra-ativo: #ffffff;
+
+  --sombra-cartao: 0 1px 2px rgba(22, 24, 26, 0.05), 0 0 0 1px rgba(22, 24, 26, 0.02);
+  --sombra-alta: 0 12px 32px -12px rgba(22, 24, 26, 0.18), 0 2px 6px rgba(22, 24, 26, 0.06);
+
+  --fonte-ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --fonte-display: "Creato Display", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --fonte-mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+  --fonte-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* Tema VORA: grafite limpo (nao preto total), osso no texto, verde tungstenio. */
+/* Tema escuro: grafite em camadas (nao preto total), texto osso, verde vivo. */
 :root[data-tema="vora"] {
   color-scheme: dark;
 
-  --fundo: #141618;
-  --superficie: #1e2024;
-  --superficie-2: #25282d;
-  --superficie-3: #2e3238;
-  --linha-suave: rgba(241, 239, 234, 0.08);
-  --linha: rgba(241, 239, 234, 0.14);
-  --linha-forte: rgba(241, 239, 234, 0.24);
-  --tinta: #f1efea;
-  --tinta-2: #d2cfc8;
-  --tinta-3: #9ca1a3;
-  --tinta-4: #6f7477;
+  --fundo: #131517;
+  --superficie: #1a1d20;
+  --superficie-2: #202428;
+  --superficie-3: #282d32;
+  --linha-suave: rgba(241, 239, 234, 0.06);
+  --linha: rgba(241, 239, 234, 0.1);
+  --linha-forte: rgba(241, 239, 234, 0.18);
+  --tinta: #eeece7;
+  --tinta-2: #c9c6bf;
+  --tinta-3: #969b9e;
+  --tinta-4: #696e72;
 
   --acao: #02d89d;
-  --acao-hover: #21e3a8;
-  --acao-texto: #0a0908;
+  --acao-hover: #2be3ad;
+  --acao-texto: #06110d;
 
-  --barra: #191b1e;
-  --barra-borda: rgba(241, 239, 234, 0.1);
-  --barra-texto: #d2cfc8;
-  --barra-texto-fraco: #6f7477;
-  --barra-hover: #25282d;
+  --destaque: #02d89d;
+  --destaque-suave: rgba(2, 216, 157, 0.12);
+  --anel: rgba(2, 216, 157, 0.45);
+  --logo: #02d89d;
 
-  --fonte-ui: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --fonte-display: "Bricolage Grotesque", "Creato Display", ui-sans-serif, sans-serif;
-  --fonte-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --barra: #0f1113;
+  --barra-borda: rgba(241, 239, 234, 0.06);
+  --barra-texto: #a9aeb1;
+  --barra-texto-fraco: #666b6f;
+  --barra-hover: rgba(241, 239, 234, 0.05);
+  --barra-ativo: rgba(241, 239, 234, 0.08);
 
-  /* Cantos mais secos, como no site. */
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 10px;
+  --sombra-cartao: inset 0 1px 0 rgba(241, 239, 234, 0.04);
+  --sombra-alta: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -114,122 +127,159 @@
   --color-acao: var(--acao);
   --color-acao-hover: var(--acao-hover);
   --color-acao-texto: var(--acao-texto);
+  --color-destaque: var(--destaque);
+  --color-destaque-suave: var(--destaque-suave);
   --color-barra: var(--barra);
   --color-barra-borda: var(--barra-borda);
   --color-barra-texto: var(--barra-texto);
   --color-barra-texto-fraco: var(--barra-texto-fraco);
   --color-barra-hover: var(--barra-hover);
+  --color-barra-ativo: var(--barra-ativo);
+
+  --shadow-cartao: var(--sombra-cartao);
+  --shadow-alta: var(--sombra-alta);
 
   --font-sans: var(--fonte-ui);
   --font-display: var(--fonte-display);
   --font-mono: var(--fonte-mono);
 }
 
-/* Variante para classes que so valem no tema VORA: `vora:inline`, `vora:font-mono`. */
+/* Variante para classes que so valem no tema escuro: `vora:inline`. */
 @custom-variant vora (&:where([data-tema="vora"], [data-tema="vora"] *));
 
 body {
   background: var(--fundo);
   color: var(--tinta);
   font-family: var(--fonte-ui);
+  font-feature-settings: "cv11", "ss01", "calt";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Titulo com o peso Black da Creato (no tema VORA, Bricolage Grotesque). */
+::selection {
+  background: var(--destaque);
+  color: #fff;
+}
+
+/* Foco visivel e igual em tudo que e clicavel. */
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--anel);
+  outline-offset: 2px;
+}
+
+/* Numero em coluna alinha: tabelas e metricas usam algarismo tabular. */
+table,
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Titulo com a Creato Black, a fonte da marca. */
 .titulo {
   font-family: var(--fonte-display);
   font-weight: 900;
   letter-spacing: -0.02em;
 }
-:root[data-tema="vora"] .titulo,
-:root[data-tema="vora"] h1 {
+
+/* Dentro do painel, todo h1 e titulo de pagina. */
+.painel h1 {
   font-family: var(--fonte-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 900;
+  font-size: 1.75rem;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--tinta);
 }
-:root[data-tema="vora"] ::selection {
-  background: var(--acao);
-  color: var(--acao-texto);
+
+.painel header h1 + p {
+  margin-top: 0.375rem;
+}
+
+/* Rotulo pequeno em caixa alta (secoes do menu, sobre-titulos). */
+.sobre {
+  font-family: var(--fonte-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinta-4);
+}
+
+/* Logo recortado em mascara: assume a cor do tema. */
+.logo-vora {
+  display: block;
+  aspect-ratio: 1500 / 265;
+  background: var(--logo);
+  -webkit-mask: url("/marca/vora-logo.svg") left center / contain no-repeat;
+  mask: url("/marca/vora-logo.svg") left center / contain no-repeat;
 }
 
 /*
- * Fundo do tema VORA: aurora verde lenta sobre grafite com grade de pontos,
- * a mesma ideia do shader do Figma, em CSS puro.
+ * Fundo: uma luz verde bem discreta no canto, parada. No escuro ela e um
+ * pouco mais presente (a "aurora" do site), sem animacao para nao cansar.
  */
-:root[data-tema="vora"] body::before {
+body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: radial-gradient(70% 55% at 100% 0%, rgba(0, 143, 102, 0.07), transparent 60%);
+}
+:root[data-tema="vora"] body::before {
   background:
-    radial-gradient(circle, rgba(241, 239, 234, 0.07) 1px, transparent 1.6px) 0 0 / 28px 28px,
-    radial-gradient(120% 90% at 85% -10%, rgba(2, 216, 157, 0.16), transparent 55%),
-    radial-gradient(90% 70% at 8% 105%, rgba(0, 81, 60, 0.22), transparent 60%),
-    radial-gradient(140% 120% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.35));
+    radial-gradient(80% 60% at 100% -10%, rgba(2, 216, 157, 0.13), transparent 58%),
+    radial-gradient(70% 55% at 0% 110%, rgba(0, 81, 60, 0.2), transparent 60%);
 }
-:root[data-tema="vora"] body::after {
-  content: "";
-  position: fixed;
-  inset: -20%;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(40% 35% at 20% 25%, rgba(2, 216, 157, 0.1), transparent 70%),
-    radial-gradient(45% 40% at 80% 75%, rgba(2, 216, 157, 0.08), transparent 70%);
-  animation: aurora 28s ease-in-out infinite alternate;
-}
-@keyframes aurora {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(4%, -3%, 0) scale(1.06); }
-  100% { transform: translate3d(-3%, 4%, 0) scale(1.02); }
-}
-@media (prefers-reduced-motion: reduce) {
-  :root[data-tema="vora"] body::after { animation: none; }
-}
-/* O conteudo fica acima da aurora. */
-:root[data-tema="vora"] body > * {
+body > * {
   position: relative;
   z-index: 1;
 }
 
-/* Liquid glass: cartoes translucidos com desfoque, so no tema VORA. */
+/* Vidro: no escuro os cartoes deixam a luz do fundo passar. */
 :root[data-tema="vora"] .vidro {
-  background: rgba(30, 32, 36, 0.66);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
-  backdrop-filter: blur(14px) saturate(1.15);
-  box-shadow:
-    inset 0 1px 0 rgba(241, 239, 234, 0.06),
-    0 0 0 1px rgba(0, 0, 0, 0.2);
+  background: rgba(26, 29, 32, 0.78);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  backdrop-filter: blur(16px) saturate(1.1);
 }
 
-/* Status: uma cor por status, usada no calendario, nas listas e nos cartoes. */
-.status-RASCUNHO { @apply bg-zinc-100 text-zinc-700 border-zinc-300; }
-.status-AGUARDANDO_APROVACAO { @apply bg-amber-50 text-amber-800 border-amber-300; }
-.status-APROVADO { @apply bg-emerald-50 text-emerald-800 border-emerald-300; }
-.status-PUBLICANDO { @apply bg-sky-50 text-sky-800 border-sky-300; }
-.status-PUBLICADO { @apply bg-teal-50 text-teal-800 border-teal-300; }
-.status-REPROVADO { @apply bg-rose-50 text-rose-800 border-rose-300; }
-.status-POST_SEM_RESPOSTA { @apply bg-orange-100 text-orange-900 border-orange-400; }
-.status-FALHOU { @apply bg-red-50 text-red-800 border-red-300; }
-.status-CANCELADO { @apply bg-zinc-100 text-zinc-500 border-zinc-300; }
+/* Barra de rolagem discreta. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--linha-forte) transparent;
+}
 
-/* No escuro, os status viram tinta translucida sobre o grafite. */
-:root[data-tema="vora"] .status-RASCUNHO { @apply bg-white/5 text-zinc-300 border-white/15; }
-:root[data-tema="vora"] .status-AGUARDANDO_APROVACAO { @apply bg-amber-400/10 text-amber-300 border-amber-400/40; }
-:root[data-tema="vora"] .status-APROVADO { @apply bg-emerald-400/10 text-emerald-300 border-emerald-400/40; }
-:root[data-tema="vora"] .status-PUBLICANDO { @apply bg-sky-400/10 text-sky-300 border-sky-400/40; }
-:root[data-tema="vora"] .status-PUBLICADO { @apply bg-teal-400/10 text-teal-300 border-teal-400/40; }
-:root[data-tema="vora"] .status-REPROVADO { @apply bg-rose-400/10 text-rose-300 border-rose-400/40; }
-:root[data-tema="vora"] .status-POST_SEM_RESPOSTA { @apply bg-orange-400/15 text-orange-300 border-orange-400/50; }
-:root[data-tema="vora"] .status-FALHOU { @apply bg-red-400/10 text-red-300 border-red-400/40; }
-:root[data-tema="vora"] .status-CANCELADO { @apply bg-white/5 text-zinc-500 border-white/10; }
+/*
+ * Status: uma cor por status (--st). O fundo, o texto e a borda saem dela
+ * por mistura, entao funcionam nos dois temas sem regra duplicada.
+ */
+:is(
+  .status-RASCUNHO, .status-AGUARDANDO_APROVACAO, .status-APROVADO,
+  .status-PUBLICANDO, .status-PUBLICADO, .status-REPROVADO,
+  .status-POST_SEM_RESPOSTA, .status-FALHOU, .status-CANCELADO
+) {
+  background-color: color-mix(in srgb, var(--st) 11%, transparent);
+  color: color-mix(in srgb, var(--st) 68%, var(--tinta));
+  border-color: color-mix(in srgb, var(--st) 26%, transparent);
+}
+.status-RASCUNHO { --st: #8a8f94; }
+.status-AGUARDANDO_APROVACAO { --st: #d98a00; }
+.status-APROVADO { --st: #0f9d6b; }
+.status-PUBLICANDO { --st: #2f8fd8; }
+.status-PUBLICADO { --st: #0e9aa7; }
+.status-REPROVADO { --st: #e0455e; }
+.status-POST_SEM_RESPOSTA { --st: #e8590c; }
+.status-FALHOU { --st: #d92d20; }
+.status-CANCELADO { --st: #8a8f94; }
 
-/* Avisos coloridos (Aviso, cartoes de alerta) no escuro. */
-:root[data-tema="vora"] .aviso-info { @apply border-sky-400/30 bg-sky-400/10 text-sky-200; }
-:root[data-tema="vora"] .aviso-erro { @apply border-rose-400/30 bg-rose-400/10 text-rose-200; }
-:root[data-tema="vora"] .aviso-sucesso { @apply border-emerald-400/30 bg-emerald-400/10 text-emerald-200; }
-:root[data-tema="vora"] .aviso-atencao { @apply border-amber-400/30 bg-amber-400/10 text-amber-200; }
+/* Avisos: mesma ideia, um tom (--tom) por tipo. */
+.aviso {
+  background-color: color-mix(in srgb, var(--tom) 8%, var(--superficie));
+  border-color: color-mix(in srgb, var(--tom) 24%, transparent);
+  color: color-mix(in srgb, var(--tom) 45%, var(--tinta));
+}
+.aviso-info { --tom: #2f8fd8; }
+.aviso-erro { --tom: #e0455e; }
+.aviso-sucesso { --tom: #0f9d6b; }
+.aviso-atencao { --tom: #d98a00; }
 
 /*
  * Tons claros fixos (rosa-50, ambar-50...) usados em fichas e linhas de
