@@ -1,0 +1,28 @@
+VORA NO SEU COMPUTADOR
+======================
+
+Como instalar (uma vez):
+  1. Extraia este zip inteiro para a pasta VORA.
+  2. De dois cliques em INSTALAR.cmd e espere terminar (10-20 min
+     na primeira vez: ele baixa Node, PostgreSQL e compila o site).
+  3. No final ele abre o site e mostra o endereco publico.
+     Login e senha ficam em resumo-instalacao.txt. Troque a senha
+     em Configuracoes depois de entrar.
+
+No dia a dia:
+  - Ligou o computador: o site sobe sozinho (atalho na Inicializacao
+    do Windows). O endereco publico do momento fica no
+    resumo-instalacao.txt.
+  - Parar tudo: clique com o direito em parar.ps1 > Executar com o
+    PowerShell.
+  - Subir de novo / ver o endereco: iniciar.ps1 do mesmo jeito.
+
+Limitacoes deste modo (por ser um PC, nao um servidor):
+  - O site so existe com o computador ligado e com internet.
+  - O endereco publico (xxxx.trycloudflare.com) MUDA a cada inicio.
+    Link de aprovacao enviado ontem para por quando o endereco troca.
+    Para teste da equipe esta otimo; para cliente de verdade, suba
+    na VPS (o DEPLOY.md do projeto explica).
+  - Nada e publicado na Meta e nenhum WhatsApp sai (modo de teste).
+
+Se der qualquer erro: me mande o arquivo logs\instalacao.log no chat.
