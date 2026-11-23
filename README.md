@@ -71,7 +71,7 @@ npm run worker       # fila: publicacao, lembretes e corte de sem resposta
    ```
 6. **Crie um post do zero** em Novo post, com uma imagem sua. Experimente subir
    uma imagem 1080x1920 para Instagram: a validacao recusa pela proporcao.
-7. `npm test` para rodar os 97 testes.
+7. `npm test` para rodar os 247 testes.
 
 Nada e publicado na Meta e nenhuma mensagem de WhatsApp sai: `META_DRY_RUN=true`
 e `WHATSAPP_MODE=log`. As publicacoes aparecem marcadas como `dry-run`.
