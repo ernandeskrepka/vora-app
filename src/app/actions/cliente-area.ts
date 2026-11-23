@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { contextoDaRequisicao, exigirUsuario } from "@/lib/auth.ts";
 import { doFusoParaUtc } from "@/lib/datetime.ts";
-import { adicionarMateriais, removerMaterial } from "@/services/materiais.ts";
+import {
+  adicionarMateriais,
+  adicionarMateriaisPorLink,
+  removerMaterial,
+} from "@/services/materiais.ts";
 import { criarPauta, moverPauta, removerPauta } from "@/services/planejamento.ts";
 import { ErroDeRegra } from "@/services/erros.ts";
 import type { StatusPauta } from "@/domain/planejamento.ts";
@@ -100,6 +104,31 @@ export async function acaoAdicionarMateriais(
     revalidatePath(`/clientes/${clienteId}/materiais`);
     revalidatePath(`/clientes/${clienteId}`);
     return { sucesso: `${criados.length} arquivo(s) na biblioteca.` };
+  } catch (erro) {
+    return { erro: mensagem(erro) };
+  }
+}
+
+export async function acaoAdicionarMateriaisPorLink(
+  _estado: EstadoArea,
+  dados: FormData,
+): Promise<EstadoArea> {
+  const ator = await atorAtual();
+  const clienteId = String(dados.get("clienteId") ?? "");
+  const links = String(dados.get("links") ?? "")
+    .split(/\s+/)
+    .filter(Boolean);
+
+  try {
+    const criados = await adicionarMateriaisPorLink({
+      clientId: clienteId,
+      links,
+      label: String(dados.get("rotulo") ?? "") || null,
+      ator,
+    });
+    revalidatePath(`/clientes/${clienteId}/materiais`);
+    revalidatePath(`/clientes/${clienteId}`);
+    return { sucesso: `${criados.length} arquivo(s) importado(s) do link.` };
   } catch (erro) {
     return { erro: mensagem(erro) };
   }

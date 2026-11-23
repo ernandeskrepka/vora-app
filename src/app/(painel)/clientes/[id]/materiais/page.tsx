@@ -1,7 +1,10 @@
 import { formatarDataHora } from "@/lib/datetime.ts";
 import { primeiroNome } from "@/domain/equipe.ts";
 import { listarMateriais } from "@/services/materiais.ts";
-import { acaoAdicionarMateriais } from "@/app/actions/cliente-area.ts";
+import {
+  acaoAdicionarMateriais,
+  acaoAdicionarMateriaisPorLink,
+} from "@/app/actions/cliente-area.ts";
 import { BibliotecaMateriais, type MaterialCliente } from "@/components/biblioteca-materiais.tsx";
 import { FormAcao } from "@/components/form-acao.tsx";
 import { Campo, Cartao, Vazio, classeInput } from "@/components/ui.tsx";
@@ -51,6 +54,28 @@ export default async function Materiais({ params }: { params: Promise<{ id: stri
               />
             </Campo>
             <Campo rotulo="Rotulo (opcional)" dica="Ex.: Sessao de outubro">
+              <input name="rotulo" className={classeInput} />
+            </Campo>
+          </div>
+        </FormAcao>
+      </Cartao>
+
+      <Cartao titulo="Importar por link (Google Drive)">
+        <FormAcao acao={acaoAdicionarMateriaisPorLink} textoBotao="Baixar dos links" variante="secundario">
+          <input type="hidden" name="clienteId" value={id} />
+          <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+            <Campo
+              rotulo="Links (um por linha)"
+              dica='No Drive: Compartilhar > Acesso geral "Qualquer pessoa com o link" > Copiar link.'
+            >
+              <textarea
+                name="links"
+                rows={3}
+                placeholder={"https://drive.google.com/file/d/...\nhttps://drive.google.com/file/d/..."}
+                className={`${classeInput} min-h-20 font-mono text-xs`}
+              />
+            </Campo>
+            <Campo rotulo="Rotulo (opcional)" dica="Ex.: Artes de novembro">
               <input name="rotulo" className={classeInput} />
             </Campo>
           </div>

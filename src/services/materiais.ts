@@ -5,6 +5,7 @@ import { registrarAuditoria } from "@/lib/audit.ts";
 import { processarArquivo, type ArquivoRecebido } from "@/lib/media/processar.ts";
 import { MIME_IMAGEM_ACEITOS, MIME_VIDEO_ACEITOS } from "@/domain/formatos.ts";
 import { ErroDeRegra } from "./erros.ts";
+import { baixarDeLink } from "./importar-link.ts";
 import type { Ator } from "./transicoes.ts";
 
 const log = logger("materiais");
@@ -112,6 +113,33 @@ export async function adicionarMateriais(input: {
 
   log.info("materiais adicionados", { clientId: cliente.id, arquivos: criados.length });
   return criados;
+}
+
+/**
+ * Importa arquivos por link (Google Drive ou link direto): o servidor baixa
+ * cada link e segue a mesma esteira do upload manual.
+ */
+export async function adicionarMateriaisPorLink(input: {
+  clientId: string;
+  links: string[];
+  label?: string | null;
+  ator: Ator;
+}) {
+  const limpos = input.links.map((l) => l.trim()).filter(Boolean);
+  if (limpos.length === 0) throw new ErroDeRegra("Cole ao menos um link.");
+  if (limpos.length > 10) throw new ErroDeRegra("No maximo 10 links por vez.");
+
+  const arquivos: ArquivoRecebido[] = [];
+  for (const link of limpos) {
+    arquivos.push(await baixarDeLink(link));
+  }
+
+  return adicionarMateriais({
+    clientId: input.clientId,
+    arquivos,
+    label: input.label ?? null,
+    ator: input.ator,
+  });
 }
 
 export async function listarMateriais(clientId: string) {
