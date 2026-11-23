@@ -86,11 +86,27 @@ foreach ($tentativa in 1..60) {
   } catch { Start-Sleep 3 }
 }
 
-# 7. Resumo
+# 7. Resumo: sempre reescrito por inteiro, com login lido do .env, para a
+#    senha nunca se perder (ja aconteceu de so a linha do endereco sobrar).
 $resumo = Join-Path $raiz "resumo-instalacao.txt"
-$linhas = @()
-if (Test-Path $resumo) { $linhas = @(Get-Content $resumo | Where-Object { $_ -notmatch "^Endereco" }) }
-$linhas += "Endereco em $(Get-Date -Format 'dd/MM HH:mm'): $urlFinal"
+$envTexto = Get-Content $envArq -Raw
+$adminEmail = ([regex]::Match($envTexto, "(?m)^ADMIN_EMAIL=(.+)$")).Groups[1].Value.Trim()
+$adminSenha = ([regex]::Match($envTexto, "(?m)^ADMIN_SENHA=(.+)$")).Groups[1].Value.Trim()
+$linhas = @(
+  "VORA - resumo de $(Get-Date -Format 'dd/MM/yyyy HH:mm')",
+  "",
+  "Login do painel:",
+  "  e-mail: $adminEmail",
+  "  senha:  $adminSenha",
+  "",
+  "Endereco publico: $urlFinal",
+  "",
+  "A senha acima e a da instalacao. Se voce ja trocou a senha em",
+  "Configuracoes, vale a que voce escolheu.",
+  "Se o login falhar mesmo assim: rode parar.ps1, apague a pasta",
+  "dados-banco e rode INSTALAR.cmd de novo (uns 2 minutos) - o banco",
+  "renasce com a senha deste arquivo."
+)
 [IO.File]::WriteAllLines($resumo, $linhas, [Text.Encoding]::ASCII)
 
 if (-not $Invisivel) {
