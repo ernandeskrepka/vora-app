@@ -60,14 +60,17 @@ $conteudo = Get-Content $envArq -Raw
 $conteudo = [regex]::Replace($conteudo, "(?m)^APP_URL=.*$", "APP_URL=$urlFinal")
 [IO.File]::WriteAllText($envArq, $conteudo, [Text.Encoding]::ASCII)
 
-# 4. Site (se a porta 3000 ja responde, aproveita o que esta rodando)
-$jaRodando = [bool](Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue)
-if (-not $jaRodando) {
-  $npx = Join-Path $fer "node\npx.cmd"
-  $webLog = Join-Path $logs "site.log"
-  Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", `
-    "& { `$env:Path = '$($fer)\node;' + `$env:Path; Set-Location '$app'; & '$npx' next start -H 127.0.0.1 -p 3000 *>> '$webLog' }" | Out-Null
-}
+# 4. Site. Sempre reiniciado: o servidor le o APP_URL so na partida, e e o
+#    APP_URL que valida o formulario de login (CSRF). Aproveitar um servidor
+#    antigo com o endereco do tunel ja trocado derruba o login com erro 500.
+Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue |
+  Select-Object -ExpandProperty OwningProcess -Unique |
+  ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+Start-Sleep 1
+$npx = Join-Path $fer "node\npx.cmd"
+$webLog = Join-Path $logs "site.log"
+Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", `
+  "& { `$env:Path = '$($fer)\node;' + `$env:Path; Set-Location '$app'; & '$npx' next start -H 127.0.0.1 -p 3000 *>> '$webLog' }" | Out-Null
 
 # 5. Agenda de minuto em minuto
 if (-not (Vivo (Join-Path $pids "agenda.pid"))) {
