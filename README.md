@@ -225,7 +225,7 @@ auditoria.
 ## Testes
 
 ```bash
-npm test          # 97 testes
+npm test          # 247 testes
 npm run typecheck
 ```
 
